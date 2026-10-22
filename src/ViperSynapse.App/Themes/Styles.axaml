@@ -197,6 +197,28 @@
         <Setter Property="Background" Value="{StaticResource RowSelectedBrush}" />
     </Style>
 
+    <!-- A cell of the two-column key list. -->
+    <Style Selector="Button.keyCell">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Button.keyCell:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#2A2A2A" />
+    </Style>
+    <Style Selector="Button.keyCell.selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource RowSelectedBrush}" />
+    </Style>
+    <Style Selector="Button.keyCell:disabled /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+
     <Style Selector="ComboBox">
         <Setter Property="Background" Value="#111111" />
         <Setter Property="BorderBrush" Value="#3A3A3A" />

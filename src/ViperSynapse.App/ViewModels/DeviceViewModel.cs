@@ -23,6 +23,15 @@ public sealed partial class KeyRowViewModel(DeviceKey key) : ObservableObject
     [ObservableProperty]
     public partial string Category { get; set; } = "";
 
+    /// <summary>The list's shorter caption: KEYBOARD, not KEYBOARD FUNCTION, as Synapse 4 prints it there.</summary>
+    public string ListCategory => Category.EndsWith(" FUNCTION", StringComparison.Ordinal) ? Category[..^" FUNCTION".Length] : Category;
+
+    partial void OnCategoryChanged(string value) => OnPropertyChanged(nameof(ListCategory));
+
+    /// <summary>The key whose binding is open: its cell in the list is highlighted.</summary>
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
+
     [ObservableProperty]
     public partial string Value { get; set; } = "";
 
@@ -47,6 +56,14 @@ public sealed record KeymapItem(int Index, string Name)
 
 public sealed record KeyGroup(string Title, IReadOnlyList<KeyRowViewModel> Keys);
 
+/// <summary>A line of the key list: a group heading, or one key or two side by side (Synapse 4 runs a long group
+/// down two columns).</summary>
+public sealed record KeyListLine(string? Title, KeyRowViewModel? Left, KeyRowViewModel? Right);
+
+/// <summary>A button the device's firmware handles itself (the keypad's Hypershift, keymap and profile buttons): listed
+/// with what it does, not remappable.</summary>
+public sealed record FirmwareButtonLine(string Category, string Value);
+
 /// <summary>A device tab: its pages (Customize, Lighting, ...), profiles, keymaps and the key list.</summary>
 public sealed partial class DeviceViewModel : TabViewModel
 {
@@ -63,6 +80,10 @@ public sealed partial class DeviceViewModel : TabViewModel
         Groups = Rows.GroupBy(r => r.Key.Group).Select(g => new KeyGroup(GroupTitle(g.Key), g.ToList())).ToList();
         foreach (var group in Groups)
             group.Keys[0].GroupTitle = group.Title;
+        KeyFilters = ["All Buttons", .. Groups.Select(g => FilterName(g.Title))];
+        SelectedKeyFilter = KeyFilters[0];
+        if (Model?.Has("keypad_buttons") == true)
+            FirmwareButtons = [new("RAZER HYPERSHIFT", "Razer Hypershift"), new("SWITCH KEYMAP", "Cycle Keymap"), new("SWITCH PROFILE", "Cycle Profile")];
         Lighting = new LightingViewModel(Model, l => PushProfile(p => p with { Lighting = l }));
         Lighting.ApplyToOthers += effect =>
         {
@@ -141,6 +162,52 @@ public sealed partial class DeviceViewModel : TabViewModel
 
     public IReadOnlyList<KeyRowViewModel> Rows { get; }
     public IReadOnlyList<KeyGroup> Groups { get; }
+
+    /// <summary>The key list's "All Buttons" box: everything, or one group.</summary>
+    public IReadOnlyList<string> KeyFilters { get; }
+
+    [ObservableProperty]
+    public partial string SelectedKeyFilter { get; set; } = "";
+
+    partial void OnSelectedKeyFilterChanged(string value) => OnPropertyChanged(nameof(KeyLines));
+
+    static string FilterName(string upper) => System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(upper.ToLowerInvariant());
+
+    /// <summary>The key list as Synapse 4 lays it out: groups of more than six keys run down two columns (1-13 on the
+    /// left, 14-27 on the right). Keys the firmware keeps for itself are left to <see cref="FirmwareButtons"/>.</summary>
+    public IReadOnlyList<KeyListLine> KeyLines
+    {
+        get
+        {
+            var lines = new List<KeyListLine>();
+            foreach (var group in Groups)
+            {
+                if (SelectedKeyFilter != KeyFilters[0] && SelectedKeyFilter != FilterName(group.Title))
+                    continue;
+                var keys = group.Keys.Where(k => k.Bindable || FirmwareButtons.Count == 0).ToList();
+                if (keys.Count == 0)
+                    continue;
+                lines.Add(new KeyListLine(group.Title, null, null));
+                if (keys.Count <= 6)
+                {
+                    lines.AddRange(keys.Select(k => new KeyListLine(null, k, null)));
+                    continue;
+                }
+                // An odd count leaves the extra key on the right, as Synapse puts 1-13 beside 14-27.
+                int half = keys.Count / 2;
+                for (int i = 0; i < keys.Count - half; i++)
+                    lines.Add(new KeyListLine(null, i < half ? keys[i] : null, keys[half + i]));
+            }
+            return lines;
+        }
+    }
+
+    public IReadOnlyList<FirmwareButtonLine> FirmwareButtons { get; } = [];
+
+    public bool HasFirmwareButtons => FirmwareButtons.Count > 0;
+
+    [RelayCommand]
+    void SelectKey(KeyRowViewModel row) => SelectedKey = row;
     public IReadOnlyList<string> Pages { get; }
     public LightingViewModel Lighting { get; }
     public PerformanceViewModel Performance { get; }
@@ -437,7 +504,16 @@ public sealed partial class DeviceViewModel : TabViewModel
             OpenEditor(SelectedKey);
     }
 
-    partial void OnSelectedKeyChanged(KeyRowViewModel? value)
+    partial void OnSelectedKeyChanged(KeyRowViewModel? oldValue, KeyRowViewModel? newValue)
+    {
+        if (oldValue != null)
+            oldValue.IsSelected = false;
+        if (newValue != null)
+            newValue.IsSelected = true;
+        OnKeyChosen(newValue);
+    }
+
+    void OnKeyChosen(KeyRowViewModel? value)
     {
         if (value == null || !value.Bindable)
         {
