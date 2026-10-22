@@ -151,6 +151,10 @@
         <Setter Property="Foreground" Value="#CCCCCC" />
         <Setter Property="Padding" Value="6,2" />
     </Style>
+    <Style Selector="Button.flat:disabled /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#555555" />
+    </Style>
     <Style Selector="Button.flat:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />

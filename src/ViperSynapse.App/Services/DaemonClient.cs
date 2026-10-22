@@ -167,20 +167,22 @@ public sealed class DaemonClient : IAsyncDisposable
     /// <summary>Stops the service: Quit from the tray ends bindings and macros with the app.</summary>
     public Task QuitServiceAsync() => CallAsync("Quit", null);
 
-    public async Task<IReadOnlyList<MacroStep>> StopRecordingAsync(RecordDelayMode mode, int defaultDelayMs)
+    public async Task<IReadOnlyList<MacroStep>> StopRecordingAsync(RecordDelayMode mode, int defaultDelayMs, int randomMinMs = 0, int randomMaxMs = 0)
     {
         var connection = Connection;
-        string json = await connection.CallMethodAsync(StopRecordingMessage(connection, mode, defaultDelayMs),
+        string json = await connection.CallMethodAsync(StopRecordingMessage(connection, mode, defaultDelayMs, randomMinMs, randomMaxMs),
             static (Message m, object? _) => m.GetBodyReader().ReadString(), null).ConfigureAwait(false);
         return SettingsJson.ReadSteps(json);
     }
 
-    static MessageBuffer StopRecordingMessage(DBusConnection connection, RecordDelayMode mode, int defaultDelayMs)
+    static MessageBuffer StopRecordingMessage(DBusConnection connection, RecordDelayMode mode, int defaultDelayMs, int randomMinMs, int randomMaxMs)
     {
         using var writer = connection.GetMessageWriter();
-        writer.WriteMethodCallHeader(destination: BusName, path: ObjectPath, @interface: Interface, member: "StopRecording", signature: "si");
+        writer.WriteMethodCallHeader(destination: BusName, path: ObjectPath, @interface: Interface, member: "StopRecording", signature: "siii");
         writer.WriteString(mode.ToString());
         writer.WriteInt32(defaultDelayMs);
+        writer.WriteInt32(randomMinMs);
+        writer.WriteInt32(randomMaxMs);
         return writer.CreateMessage();
     }
 

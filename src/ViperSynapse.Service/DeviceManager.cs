@@ -495,6 +495,15 @@ public sealed class DeviceManager : IDisposable
 
         // Switching changes the keymap the engine runs, which must not happen on the engine's own input thread
         // while it is mid-event; the pool takes it.
+        public void Open(string target)
+        {
+            try { CommandLine.Open(target); }
+            catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                Console.Error.WriteLine($"Could not open \"{target}\": {e.Message}");
+            }
+        }
+
         public void SwitchProfile(CycleDirection direction, Guid? profileId) =>
             ThreadPool.QueueUserWorkItem(_ => manager.SetSettings(key, manager.GetSettings(key).SwitchProfile(direction, profileId)));
 

@@ -15,9 +15,25 @@ public sealed partial class MacrosView : UserControl
             var code = PhysicalKeys.ToLinux(e.PhysicalKey);
             if (code != 0 && DataContext is MacrosViewModel macros)
             {
-                macros.AddKeystroke(code);
+                macros.InsertKeystroke(code);
                 e.Handled = true;
             }
         }, RoutingStrategies.Tunnel);
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is MacrosViewModel macros)
+                macros.RecordOptionsRequested += () => RecordOptions.Flyout?.ShowAt(RecordOptions);
+        };
+        AssignTile.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(AssignTile).Properties.IsLeftButtonPressed && DataContext is MacrosViewModel macros)
+                macros.StartAssigningCommand.Execute(null);
+        };
+    }
+
+    void CancelAssign(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MacrosViewModel macros)
+            macros.Assigning = false;
     }
 }

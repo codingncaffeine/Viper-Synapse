@@ -19,6 +19,7 @@ public class EngineTests
         public void Relative(ushort axis, int value) { lock (_events) _events.Add($"REL{axis}:{value}"); }
         public void Sync() { }
         public void Launch(string command) { lock (_events) Launched.Add(command); }
+        public void Open(string target) { lock (_events) Launched.Add("open " + target); }
         public void SwitchProfile(CycleDirection direction, Guid? profileId) { lock (_events) _events.Add($"profile:{direction}"); }
         public void SwitchKeymap(CycleDirection direction, int keymap) { lock (_events) _events.Add($"keymap:{direction}"); }
         public Macro? FindMacro(Guid id) => Macros.GetValueOrDefault(id);
@@ -258,5 +259,90 @@ public class EngineTests
         var steps = TextTyper.Steps("Hi!").Select(s => $"{KeyCodes.Name(s.Code)}:{(s.Down ? 1 : 0)}");
         Assert.Equal(["KEY_LEFTSHIFT:1", "KEY_H:1", "KEY_H:0", "KEY_LEFTSHIFT:0", "KEY_I:1", "KEY_I:0",
             "KEY_LEFTSHIFT:1", "KEY_1:1", "KEY_1:0", "KEY_LEFTSHIFT:0"], steps);
+    }
+}
+
+public class MacroFeatureTests
+{
+    sealed class Host : IInputSink, IEngineHost
+    {
+        public readonly List<string> Events = [];
+        public readonly Dictionary<Guid, Macro> Macros = [];
+        public void Key(ushort code, int value) { lock (Events) Events.Add($"{code}:{value}"); }
+        public void Relative(ushort axis, int value) { }
+        public void Sync() { }
+        public void Launch(string command) { lock (Events) Events.Add("run " + command); }
+        public void Open(string target) { lock (Events) Events.Add("open " + target); }
+        public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
+        public void SwitchKeymap(CycleDirection direction, int keymap) { }
+        public Macro? FindMacro(Guid id) => Macros.GetValueOrDefault(id);
+        public void Report(Exception error) => throw error;
+    }
+
+    static (MacroRunner, Host) Runner()
+    {
+        var host = new Host();
+        return (new MacroRunner(host, host, new Microsoft.Extensions.Time.Testing.FakeTimeProvider()), host);
+    }
+
+    [Fact]
+    public async Task Loops_repeat_their_steps_and_nest()
+    {
+        var (runner, host) = Runner();
+        await runner.PlayAsync([new LoopStartStep(2), new KeyStep(1, true), new LoopStartStep(3), new KeyStep(2, true), new LoopEndStep(), new LoopEndStep(), new KeyStep(9, true)],
+            TestContext.Current.CancellationToken);
+        Assert.Equal(["1:1", "2:1", "2:1", "2:1", "1:1", "2:1", "2:1", "2:1", "9:1"], host.Events.Take(9));
+        // Keys the macro left down are let go at the end, in no particular order.
+        Assert.Equal(["1:0", "2:0", "9:0"], host.Events.Skip(9).Order());
+    }
+
+    [Fact]
+    public async Task A_macro_plays_another_and_a_macro_calling_itself_stops()
+    {
+        var (runner, host) = Runner();
+        var inner = Macro.Create("inner", [new KeyStep(5, true), new KeyStep(5, false)]);
+        var self = Macro.Create("self", []);
+        self = self with { Steps = [new KeyStep(7, true), new KeyStep(7, false), new MacroCallStep(self.Id)] };
+        host.Macros[inner.Id] = inner;
+        host.Macros[self.Id] = self;
+        await runner.PlayAsync([new MacroCallStep(inner.Id), new LaunchStep("https://example.org")], TestContext.Current.CancellationToken);
+        Assert.Equal(["5:1", "5:0", "open https://example.org"], host.Events);
+        host.Events.Clear();
+        await runner.PlayAsync(self.Steps, TestContext.Current.CancellationToken);
+        Assert.Equal(2 * (MacroRunner.MaxNesting + 1), host.Events.Count);
+    }
+
+    [Fact]
+    public void A_sequence_macro_splits_into_actions_at_its_delays_and_duration_counts_loops()
+    {
+        var macro = Macro.Create("seq", [new KeyStep(1, true), new KeyStep(1, false), new DelayStep(100), new KeyStep(2, true), new KeyStep(2, false),
+            new RandomDelayStep(100, 300), new LoopStartStep(3), new DelayStep(10), new LoopEndStep()]);
+        Assert.Equal(2, macro.Actions().Count);
+        Assert.Equal(TimeSpan.FromMilliseconds(100 + 200 + 30), macro.Duration);
+    }
+
+    [Fact]
+    public void Each_press_of_a_sequence_macro_plays_the_next_action()
+    {
+        var host = new Host();
+        var macro = Macro.Create("seq", [new KeyStep(1, true), new KeyStep(1, false), new DelayStep(50), new KeyStep(2, true), new KeyStep(2, false)]) with { Type = MacroType.Sequence };
+        host.Macros[macro.Id] = macro;
+        var engine = new RemapEngine(host, host) { Keymap = Keymap.Empty("k").With(30, new MacroBinding(macro.Id)) };
+        for (int i = 0; i < 3; i++)
+        {
+            engine.Key(30, 1);
+            engine.Key(30, 0);
+            var deadline = DateTime.UtcNow.AddSeconds(5);
+            while (host.Events.Count < (i + 1) * 2 && DateTime.UtcNow < deadline)
+                Thread.Sleep(2);
+        }
+        Assert.Equal(["1:1", "1:0", "2:1", "2:0", "1:1", "1:0"], host.Events);
+    }
+
+    [Fact]
+    public void Randomized_recording_puts_a_random_delay_between_every_event()
+    {
+        var steps = MacroRecording.ToSteps([new(TimeSpan.Zero, 30, 1), new(TimeSpan.FromMilliseconds(80), 30, 0)], RecordDelayMode.Randomized, randomMinMs: 20, randomMaxMs: 60);
+        Assert.Equal<MacroStep>([new KeyStep(30, true), new RandomDelayStep(20, 60), new KeyStep(30, false)], steps);
     }
 }

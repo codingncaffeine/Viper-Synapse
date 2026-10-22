@@ -69,6 +69,7 @@ public class StickTests
         public void Relative(ushort axis, int value) { }
         public void Sync() { }
         public void Launch(string command) { }
+        public void Open(string target) { }
         public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => null;

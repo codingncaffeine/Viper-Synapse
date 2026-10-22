@@ -48,6 +48,14 @@ public static class CommandLine
         return words;
     }
 
+    /// <summary>Opens a file, program or web address with the desktop's default handler (xdg-open), detached.</summary>
+    public static void Open(string target)
+    {
+        var info = new ProcessStartInfo("xdg-open") { UseShellExecute = false };
+        info.ArgumentList.Add(target);
+        using var process = Process.Start(info);
+    }
+
     public static void Start(string command)
     {
         var words = Split(command);

@@ -6,22 +6,36 @@ namespace ViperSynapse.Core.Engine;
 /// cancelled macro never leaves a key stuck.</summary>
 public sealed class MacroRunner(IInputSink sink, IEngineHost host, TimeProvider time)
 {
+    /// <summary>A macro may play another, which may play another: this deep and no deeper, so two macros that call
+    /// each other stop instead of running forever.</summary>
+    public const int MaxNesting = 8;
+
     /// <summary>Plays <paramref name="steps"/> once. Returns normally when cancelled.</summary>
-    public async Task PlayAsync(IReadOnlyList<MacroStep> steps, CancellationToken cancel)
+    public async Task PlayAsync(IReadOnlyList<MacroStep> steps, CancellationToken cancel) => await PlayAsync(steps, cancel, 0).ConfigureAwait(false);
+
+    async Task PlayAsync(IReadOnlyList<MacroStep> steps, CancellationToken cancel, int depth)
     {
         var down = new HashSet<ushort>();
+        // Open loops: where each starts and how many passes it has left.
+        var loops = new Stack<(int Start, int Left)>();
         try
         {
-            foreach (var step in steps)
+            for (int i = 0; i < steps.Count; i++)
             {
                 cancel.ThrowIfCancellationRequested();
-                switch (step)
+                switch (steps[i])
                 {
                     case KeyStep key:
                         Press(key, down);
                         break;
                     case DelayStep delay when delay.Milliseconds > 0:
                         await Task.Delay(TimeSpan.FromMilliseconds(delay.Milliseconds), time, cancel).ConfigureAwait(false);
+                        break;
+                    case RandomDelayStep random:
+                        int lo = Math.Min(random.MinMilliseconds, random.MaxMilliseconds), hi = Math.Max(random.MinMilliseconds, random.MaxMilliseconds);
+                        int ms = Random.Shared.Next(lo, hi + 1);
+                        if (ms > 0)
+                            await Task.Delay(TimeSpan.FromMilliseconds(ms), time, cancel).ConfigureAwait(false);
                         break;
                     case ScrollStep scroll:
                         sink.Relative(scroll.Horizontal ? RelativeAxes.HWheel : RelativeAxes.Wheel, scroll.Clicks);
@@ -34,6 +48,23 @@ public sealed class MacroRunner(IInputSink sink, IEngineHost host, TimeProvider 
                         break;
                     case RunStep run:
                         host.Launch(run.Command);
+                        break;
+                    case LaunchStep launch:
+                        host.Open(launch.Target);
+                        break;
+                    case MacroCallStep call when depth < MaxNesting && host.FindMacro(call.MacroId) is { } inner:
+                        await PlayAsync(inner.Steps, cancel, depth + 1).ConfigureAwait(false);
+                        break;
+                    case LoopStartStep loop:
+                        loops.Push((i, Math.Max(1, loop.Count) - 1));
+                        break;
+                    case LoopEndStep when loops.Count > 0:
+                        var (start, left) = loops.Pop();
+                        if (left > 0)
+                        {
+                            loops.Push((start, left - 1));
+                            i = start;   // the loop's first step comes next
+                        }
                         break;
                 }
             }

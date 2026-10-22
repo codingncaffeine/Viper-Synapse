@@ -2,93 +2,338 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ViperSynapse.App.ViewModels"
              xmlns:bindings="using:ViperSynapse.Core.Bindings"
+             xmlns:devices="using:ViperSynapse.Core.Devices"
              x:Class="ViperSynapse.App.Views.MacrosView"
              x:DataType="vm:MacrosViewModel">
-    <Grid RowDefinitions="Auto,*">
-        <TextBlock Classes="title" Text="MACRO" HorizontalAlignment="Center" Margin="0,12,0,14" />
+    <UserControl.Styles>
+        <!-- The ADD panel's rows: a coloured icon and a caption, highlighted while their settings show. -->
+        <Style Selector="Button.add">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="CornerRadius" Value="2" />
+        </Style>
+        <Style Selector="Button.add:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#2A2A2A" />
+        </Style>
+        <Style Selector="TextBlock.addIcon">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Panel.assignTile">
+            <Setter Property="Width" Value="230" />
+            <Setter Property="Height" Value="182" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Panel.assignTile > Rectangle">
+            <Setter Property="Stroke" Value="#6A6A6A" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeDashArray" Value="4,3" />
+        </Style>
+        <Style Selector="Panel.assignTile:pointerover > Rectangle">
+            <Setter Property="Stroke" Value="#44D62C" />
+        </Style>
+    </UserControl.Styles>
 
-        <Grid Grid.Row="1" ColumnDefinitions="260,*,320">
-            <!-- The library. -->
-            <Border Background="{StaticResource SideBrush}">
+    <Grid RowDefinitions="40,Auto,*">
+        <!-- The macro dropdown, its ••• menu and New Macro; the MY MACROS / KEY BINDS pills in the middle. -->
+        <Grid ColumnDefinitions="*,Auto,*" Margin="10,0">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="☰" Foreground="#BBBBBB" FontSize="14" VerticalAlignment="Center" />
+                <ComboBox ItemsSource="{Binding Macros}" SelectedItem="{Binding SelectedMacro}" Width="180" PlaceholderText="No macros">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="bindings:Macro">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Classes="flat" Content="•••" ToolTip.Tip="Rename, duplicate or delete" IsEnabled="{Binding HasMacro}">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <StackPanel Spacing="8" Width="240">
+                                <TextBlock Classes="caption" Text="NAME" />
+                                <TextBox Text="{Binding MacroName}" />
+                                <Button Classes="cancel" Content="DUPLICATE" Command="{Binding DuplicateMacroCommand}" HorizontalAlignment="Stretch" />
+                                <Button Classes="cancel" Content="DELETE" Command="{Binding DeleteMacroCommand}" HorizontalAlignment="Stretch" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Border Width="1" Height="18" Background="#4A4A4A" VerticalAlignment="Center" />
+                <Button Classes="flat" Command="{Binding NewMacroCommand}">
+                    <TextBlock Text="New Macro" TextDecorations="Underline" Foreground="#DDDDDD" />
+                </Button>
+            </StackPanel>
+            <ListBox Grid.Column="1" Classes="pills" VerticalAlignment="Center" ItemsSource="{x:Static vm:MacrosViewModel.Pages}"
+                     SelectedItem="{Binding SelectedPage}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+        </Grid>
+        <Border Grid.Row="1" Height="1" Background="#3A3A3A" />
+
+        <!-- MY MACROS: the ADD panel beside the editor. -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,*" IsVisible="{Binding ShowMyMacros}" Margin="0,14,0,8">
+            <Border Grid.Column="1" Background="#151515" Width="180" VerticalAlignment="Top" Padding="6,8" Margin="0,0,8,0">
+                <StackPanel>
+                    <TextBlock Text="ADD" Foreground="#DDDDDD" FontSize="12" Margin="8,2,0,6" />
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="delay">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text="⏱" Foreground="#BBBBBB" /><TextBlock Text="DELAY" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="key">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text="⌨" Foreground="#44D62C" /><TextBlock Text="KEYBOARD FUNCTION" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="mouse">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text="🖱" Foreground="#E8902E" /><TextBlock Text="MOUSE FUNCTION" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="macro">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Border Width="18" Height="18" CornerRadius="9" Background="#44D62C" Margin="2,0">
+                                <TextBlock Text="M" FontSize="10" FontWeight="Bold" Foreground="#000000" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="MACRO" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="launch">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text="↗" Foreground="#E040A0" /><TextBlock Text="LAUNCH" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="run">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text=">_" FontSize="11" Foreground="#2EC4D6" /><TextBlock Text="RUN COMMAND" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="text">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text="≡" Foreground="#3D8BFD" /><TextBlock Text="TEXT FUNCTION" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                    <Button Classes="add" Command="{Binding StartAddingCommand}" CommandParameter="loop">
+                        <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Classes="addIcon" Text="⟳" Foreground="#E5484D" /><TextBlock Text="LOOP" VerticalAlignment="Center" /></StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Background="#151515" Width="470">
                 <DockPanel>
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="12,10,6,8">
-                        <TextBlock Classes="caption" Text="MACRO LIST" VerticalAlignment="Center" />
-                        <Button Grid.Column="1" Classes="flat" Content="＋" FontSize="16" ToolTip.Tip="New macro" Command="{Binding NewMacroCommand}" />
-                        <Button Grid.Column="2" Classes="flat" Content="🗑" ToolTip.Tip="Delete macro" Command="{Binding DeleteMacroCommand}" />
+                    <!-- Toolbar: select, duration, RECORD with its options, undo/redo, SAVE. -->
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" Height="38" Margin="8,0">
+                        <CheckBox IsChecked="{Binding SelectedStep, Converter={x:Static ObjectConverters.IsNotNull}, Mode=OneWay}" IsHitTestVisible="False" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="6,0" VerticalAlignment="Center">
+                            <TextBlock Text="⏱" Foreground="#BBBBBB" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Duration}" Foreground="#DDDDDD" FontSize="12" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Classes="cancel" Command="{Binding RecordCommand}" Height="24" Padding="10,0" MinWidth="0" CornerRadius="2,0,0,2">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <Ellipse Width="9" Height="9" Fill="#E5484D" Stroke="#FFFFFF" StrokeThickness="1" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding RecordLabel}" FontSize="10" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="cancel" Name="RecordOptions" Content="▾" Height="24" Padding="6,0" MinWidth="0" Width="24" CornerRadius="0,2,2,0" Margin="1,0,0,0" ToolTip.Tip="Recording options">
+                                <Button.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedLeft">
+                                        <StackPanel Spacing="8" Width="200">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Classes="caption" Text="START DELAY" VerticalAlignment="Center" />
+                                                <ComboBox Grid.Column="1" ItemsSource="{x:Static vm:MacrosViewModel.StartDelays}" SelectedItem="{Binding StartDelay}" />
+                                            </Grid>
+                                            <Border Height="1" Background="#3A3A3A" />
+                                            <TextBlock Classes="caption" Text="MACRO TYPE" />
+                                            <RadioButton GroupName="type" Content="Standard Macro" IsChecked="{Binding !SequenceMacro}" />
+                                            <RadioButton GroupName="type" Content="Sequence Macro" IsChecked="{Binding SequenceMacro}"
+                                                         ToolTip.Tip="Each press plays the next action: the actions are the stretches between delays." />
+                                            <Border Height="1" Background="#3A3A3A" />
+                                            <TextBlock Classes="caption" Text="DELAY SETTINGS" />
+                                            <RadioButton GroupName="delay" Content="Record delay" IsChecked="{Binding DelayRecorded}" />
+                                            <RadioButton GroupName="delay" IsChecked="{Binding DelayFixed}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <NumericUpDown Value="{Binding FixedDelaySeconds}" Minimum="0" Maximum="60" Increment="0.01" FormatString="0.000" Width="100" ShowButtonSpinner="False" />
+                                                    <TextBlock Text="sec delay" VerticalAlignment="Center" />
+                                                </StackPanel>
+                                            </RadioButton>
+                                            <RadioButton GroupName="delay" Content="Randomized delay" IsChecked="{Binding DelayRandom}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="26,0,0,0">
+                                                <NumericUpDown Value="{Binding RandomMinSeconds}" Minimum="0" Maximum="60" Increment="0.01" FormatString="0.000" Width="64" ShowButtonSpinner="False" />
+                                                <TextBlock Text="-" VerticalAlignment="Center" />
+                                                <NumericUpDown Value="{Binding RandomMaxSeconds}" Minimum="0" Maximum="60" Increment="0.01" FormatString="0.000" Width="64" ShowButtonSpinner="False" />
+                                                <TextBlock Text="secs" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <RadioButton GroupName="delay" Content="No delay" IsChecked="{Binding DelayNone}" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="2" Margin="10,0" VerticalAlignment="Center">
+                            <Button Classes="flat" Content="↶" FontSize="16" ToolTip.Tip="Undo" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}" />
+                            <Button Classes="flat" Content="↷" FontSize="16" ToolTip.Tip="Redo" Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo}" />
+                        </StackPanel>
+                        <Button Grid.Column="5" Classes="save" Content="SAVE" Command="{Binding SaveCommand}" IsEnabled="{Binding Dirty}"
+                                Width="72" Height="24" VerticalAlignment="Center" />
                     </Grid>
-                    <ListBox Classes="keys" ItemsSource="{Binding Macros}" SelectedItem="{Binding SelectedMacro}">
+                    <Border DockPanel.Dock="Top" Height="1" Background="#2A2A2A" />
+
+                    <!-- The chosen ADD item's settings. -->
+                    <Border DockPanel.Dock="Bottom" Background="#1C1C1C" Padding="12" IsVisible="{Binding Adding, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding AddingDelay}">
+                                <NumericUpDown Value="{Binding InsertDelayMs}" Minimum="1" Maximum="600000" FormatString="0" Width="130" />
+                                <TextBlock Text="ms" VerticalAlignment="Center" Foreground="#999999" />
+                                <Button Classes="save" Content="ADD" Command="{Binding InsertDelayCommand}" MinWidth="60" />
+                            </StackPanel>
+                            <StackPanel Spacing="6" IsVisible="{Binding AddingKey}">
+                                <TextBlock Classes="caption" Text="CLICK THE BOX, THEN PRESS A KEY: IT GOES IN AS A PRESS AND A RELEASE" />
+                                <Border Name="KeystrokeCapture" Focusable="True" Background="#111111" BorderBrush="#4A4A4A" BorderThickness="1" Height="32" Cursor="Hand">
+                                    <TextBlock Text="Press a key to add it" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#999999" />
+                                </Border>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding AddingMouse}">
+                                <ComboBox ItemsSource="{x:Static vm:MacrosViewModel.MouseChoices}" SelectedItem="{Binding InsertMouse}" Width="220" />
+                                <Button Classes="save" Content="ADD" Command="{Binding InsertMouseFunctionCommand}" MinWidth="60" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding AddingMacro}">
+                                <ComboBox ItemsSource="{Binding OtherMacros}" SelectedItem="{Binding InsertMacro}" Width="220" PlaceholderText="Pick a macro">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="bindings:Macro">
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button Classes="save" Content="ADD" Command="{Binding InsertMacroCallCommand}" MinWidth="60" />
+                            </StackPanel>
+                            <StackPanel Spacing="6" IsVisible="{Binding AddingLaunch}">
+                                <TextBlock Classes="caption" Text="A PROGRAM, FILE OR WEB ADDRESS" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBox Text="{Binding InsertText}" Width="300" PlaceholderText="https://… or /path/to/file" />
+                                    <Button Classes="save" Content="ADD" Command="{Binding InsertLaunchCommand}" MinWidth="60" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Spacing="6" IsVisible="{Binding AddingRun}">
+                                <TextBlock Classes="caption" Text="A COMMAND LINE" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBox Text="{Binding InsertText}" Width="300" PlaceholderText="program --option" />
+                                    <Button Classes="save" Content="ADD" Command="{Binding InsertRunCommand}" MinWidth="60" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Spacing="6" IsVisible="{Binding AddingText}">
+                                <TextBlock Classes="caption" Text="TEXT TO TYPE" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBox Text="{Binding InsertText}" Width="300" />
+                                    <Button Classes="save" Content="ADD" Command="{Binding InsertTextStepCommand}" MinWidth="60" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Spacing="6" IsVisible="{Binding AddingLoop}">
+                                <TextBlock Classes="caption" Text="LOOPS AROUND THE SELECTED ACTION" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <NumericUpDown Value="{Binding LoopCount}" Minimum="1" Maximum="1000" FormatString="0" Width="110" />
+                                    <TextBlock Text="times" VerticalAlignment="Center" Foreground="#999999" />
+                                    <Button Classes="save" Content="ADD" Command="{Binding InsertLoopCommand}" MinWidth="60" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Editing the selected action. -->
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="8,6"
+                                IsVisible="{Binding SelectedStep, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <Button Classes="flat" Content="▲" ToolTip.Tip="Move up" Command="{Binding MoveUpCommand}" />
+                        <Button Classes="flat" Content="▼" ToolTip.Tip="Move down" Command="{Binding MoveDownCommand}" />
+                        <Button Classes="flat" Content="🗑" ToolTip.Tip="Delete" Command="{Binding DeleteStepCommand}" />
+                        <Button Classes="flat" Content="Remove all delays" FontSize="11" Command="{Binding RemoveDelaysCommand}" />
+                    </StackPanel>
+
+                    <ListBox Classes="keys" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}" Background="Transparent" MinHeight="420">
                         <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="bindings:Macro">
-                                <TextBlock Text="{Binding Name}" Margin="14,12" />
+                            <DataTemplate x:DataType="vm:StepRow">
+                                <Grid ColumnDefinitions="34,Auto,*" Height="30">
+                                    <TextBlock Text="{Binding Number}" Foreground="#777777" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Glyph}" Foreground="{Binding GlyphBrush}" VerticalAlignment="Center"
+                                               Margin="{Binding Indent}" MinWidth="28" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Text}" VerticalAlignment="Center" Margin="6,0" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </DockPanel>
             </Border>
-
-            <!-- The action list. -->
-            <DockPanel Grid.Column="1" Margin="18,0,18,16" IsEnabled="{Binding HasMacro}">
-                <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,8,0,10">
-                    <TextBlock Classes="caption" Text="MACRO NAME" />
-                    <TextBox Text="{Binding MacroName}" Width="320" HorizontalAlignment="Left" />
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,10,0,0">
-                    <Button Classes="cancel" Content="MOVE UP" Command="{Binding MoveUpCommand}" />
-                    <Button Classes="cancel" Content="MOVE DOWN" Command="{Binding MoveDownCommand}" />
-                    <Button Classes="cancel" Content="DELETE" Command="{Binding DeleteStepCommand}" />
-                    <Button Classes="cancel" Content="REMOVE ALL DELAYS" Command="{Binding RemoveDelaysCommand}" />
-                </StackPanel>
-                <Border Background="{StaticResource PanelBrush}">
-                    <ListBox Classes="keys" ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:StepRow">
-                                <Grid ColumnDefinitions="44,30,*" Height="30">
-                                    <TextBlock Text="{Binding Number}" Foreground="#777777" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Glyph}" Foreground="#44D62C" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Text}" VerticalAlignment="Center" Margin="6,0" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Border>
-            </DockPanel>
-
-            <!-- Recording and inserting. -->
-            <Border Grid.Column="2" Background="{StaticResource PanelBrush}" Padding="18" IsEnabled="{Binding HasMacro}">
-                <StackPanel Spacing="10">
-                    <TextBlock Classes="heading" Text="RECORD" />
-                    <TextBlock Classes="caption" Text="DELAY SETTINGS" />
-                    <ComboBox ItemsSource="{x:Static vm:MacrosViewModel.DelayModes}" SelectedItem="{Binding DelayMode}" HorizontalAlignment="Stretch" />
-                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding DefaultDelayVisible}">
-                        <NumericUpDown Minimum="1" Maximum="10000" Value="{Binding DefaultDelayMs}" FormatString="0" Width="130" />
-                        <TextBlock Text="ms" VerticalAlignment="Center" Foreground="#999999" />
-                    </StackPanel>
-                    <CheckBox Content="Start delay" IsChecked="{Binding UseStartDelay}" />
-                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding UseStartDelay}">
-                        <NumericUpDown Minimum="1" Maximum="5" Value="{Binding StartDelaySeconds}" FormatString="0" Width="130" />
-                        <TextBlock Text="s" VerticalAlignment="Center" Foreground="#999999" />
-                    </StackPanel>
-                    <Button Classes="save" Content="{Binding RecordLabel}" Command="{Binding RecordCommand}" HorizontalAlignment="Stretch" Height="34" />
-
-                    <TextBlock Classes="heading" Text="INSERT" Margin="0,14,0,0" />
-                    <TextBlock Classes="caption" Text="KEYSTROKE: CLICK, THEN PRESS A KEY" />
-                    <Border Name="KeystrokeCapture" Focusable="True" Background="#1E1E1E" BorderBrush="#4A4A4A" BorderThickness="1" Height="32" Cursor="Hand">
-                        <TextBlock Text="Press a key to insert it" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#999999" />
-                    </Border>
-                    <TextBlock Classes="caption" Text="DELAY" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <NumericUpDown Minimum="1" Maximum="600000" Value="{Binding InsertDelayMs}" FormatString="0" Width="130" />
-                        <TextBlock Text="ms" VerticalAlignment="Center" Foreground="#999999" />
-                        <Button Classes="cancel" Content="ADD" Command="{Binding AddDelayCommand}" MinWidth="60" />
-                    </StackPanel>
-                    <TextBlock Classes="caption" Text="TEXT OR COMMAND" />
-                    <TextBox Text="{Binding InsertText}" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Classes="cancel" Content="TYPE TEXT" Command="{Binding AddTextCommand}" />
-                        <Button Classes="cancel" Content="RUN COMMAND" Command="{Binding AddRunCommand}" />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
         </Grid>
+
+        <!-- KEY BINDS: the dashed tile to assign a macro, then a tile per key that plays one. -->
+        <ScrollViewer Grid.Row="2" IsVisible="{Binding ShowKeyBinds}">
+            <StackPanel Margin="26,20" Spacing="14">
+                <WrapPanel>
+                    <Panel Classes="assignTile" Margin="0,0,12,12" Name="AssignTile">
+                        <Rectangle />
+                        <StackPanel Spacing="18" VerticalAlignment="Center">
+                            <TextBlock Text="+" FontSize="40" FontWeight="Light" Foreground="#9A9A9A" HorizontalAlignment="Center" />
+                            <TextBlock Text="ASSIGN MACRO TO YOUR DEVICES" FontSize="11" Foreground="#DDDDDD" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Panel>
+                    <ItemsControl ItemsSource="{Binding Assignments}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MacroAssignment">
+                                <Border Width="230" Height="182" Background="#151515" Margin="0,0,12,12" Padding="14">
+                                    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
+                                        <TextBlock Text="{Binding MacroName}" Foreground="#44D62C" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Row="1" Text="{Binding Playback}" Foreground="#999999" FontSize="11" Margin="0,4,0,0" />
+                                        <TextBlock Grid.Row="3" Text="{Binding DeviceName}" Foreground="#DDDDDD" FontSize="12" />
+                                        <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding KeyName}" Foreground="#BBBBBB" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                            <Button Grid.Column="1" Classes="flat" Content="🗑" ToolTip.Tip="Unassign"
+                                                    Command="{Binding $parent[UserControl].((vm:MacrosViewModel)DataContext).UnassignCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </WrapPanel>
+
+                <Border Classes="card" Width="440" HorizontalAlignment="Left" IsVisible="{Binding Assigning}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="heading" Text="ASSIGN MACRO" />
+                        <TextBlock Classes="caption" Text="MACRO" />
+                        <ComboBox ItemsSource="{Binding Macros}" SelectedItem="{Binding AssignMacro}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="bindings:Macro">
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Classes="caption" Text="DEVICE" />
+                        <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding AssignDevice}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DeviceViewModel">
+                                    <TextBlock Text="{Binding ShortName}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Classes="caption" Text="KEY (IN THE KEYMAP IN USE)" />
+                        <ComboBox ItemsSource="{Binding AssignKeys}" SelectedItem="{Binding AssignKey}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="devices:DeviceKey">
+                                    <TextBlock>
+                                        <Run Text="{Binding Number}" /><Run Text="  " /><Run Text="{Binding Label}" />
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Classes="caption" Text="PLAYBACK OPTIONS" />
+                        <ComboBox ItemsSource="{x:Static vm:MacrosViewModel.Playbacks}" SelectedItem="{Binding AssignPlayback}" HorizontalAlignment="Stretch" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                            <Button Classes="cancel" Content="CANCEL" Click="CancelAssign" />
+                            <Button Classes="save" Content="ASSIGN" Command="{Binding AssignCommand}" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

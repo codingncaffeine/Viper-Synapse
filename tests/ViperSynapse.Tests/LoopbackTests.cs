@@ -18,6 +18,7 @@ public class LoopbackTests
     sealed class NoHost : IEngineHost
     {
         public void Launch(string command) { }
+        public void Open(string target) { }
         public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => null;

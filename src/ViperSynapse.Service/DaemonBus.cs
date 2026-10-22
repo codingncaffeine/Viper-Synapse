@@ -32,7 +32,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <signal name="StickMoved"><arg type="s" name="device"/><arg type="d" name="x"/><arg type="d" name="y"/></signal>
           <method name="Quit"/>
           <method name="StartRecording"/>
-          <method name="StopRecording"><arg direction="in" type="s" name="delayMode"/><arg direction="in" type="i" name="defaultDelayMs"/><arg direction="out" type="s" name="steps"/></method>
+          <method name="StopRecording"><arg direction="in" type="s" name="delayMode"/><arg direction="in" type="i" name="defaultDelayMs"/><arg direction="in" type="i" name="randomMinMs"/><arg direction="in" type="i" name="randomMaxMs"/><arg direction="out" type="s" name="steps"/></method>
           <signal name="DevicesChanged"/>
           <signal name="SettingsChanged"><arg type="s" name="device"/></signal>
         </interface>
@@ -183,13 +183,14 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
             {
                 var mode = Enum.Parse<RecordDelayMode>(reader.ReadString(), ignoreCase: true);
                 int defaultDelay = reader.ReadInt32();
+                int randomMin = reader.ReadInt32(), randomMax = reader.ReadInt32();
                 IReadOnlyList<RecordedEvent> events;
                 lock (_recordGate)
                 {
                     events = _recorder?.Stop() ?? [];
                     _recorder = null;
                 }
-                ReplyString(context, SettingsJson.Write(MacroRecording.ToSteps(TrimStopClick(events), mode, defaultDelay)));
+                ReplyString(context, SettingsJson.Write(MacroRecording.ToSteps(TrimStopClick(events), mode, defaultDelay, randomMin, randomMax)));
                 break;
             }
             default:

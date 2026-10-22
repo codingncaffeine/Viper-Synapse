@@ -18,6 +18,8 @@ public sealed class RemapEngine
     readonly Dictionary<ushort, Binding> _held = [];
     readonly Dictionary<ushort, CancellationTokenSource> _running = [];
     readonly Dictionary<Guid, CancellationTokenSource> _toggled = [];
+    // Where each sequence macro is up to, per key.
+    readonly Dictionary<(ushort, Guid), int> _sequence = [];
     int _hypershiftHeld;
 
     public RemapEngine(IInputSink sink, IEngineHost host, TimeProvider? time = null)
@@ -222,6 +224,18 @@ public sealed class RemapEngine
         var macro = _host.FindMacro(binding.MacroId);
         if (macro == null)
             return;
+        if (macro.Type == MacroType.Sequence)
+        {
+            // Each press plays the next action, round and round; the playback mode does not apply.
+            var actions = macro.Actions();
+            if (actions.Count == 0)
+                return;
+            var slot = (code, macro.Id);
+            int next = _sequence.TryGetValue(slot, out var at) ? at % actions.Count : 0;
+            _sequence[slot] = next + 1;
+            Run(code, ct => _macros.PlayAsync(actions[next], ct));
+            return;
+        }
         if (binding.Playback == MacroPlayback.Toggle)
         {
             if (_toggled.Remove(binding.MacroId, out var running))

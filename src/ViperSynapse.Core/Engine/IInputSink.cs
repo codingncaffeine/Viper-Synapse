@@ -18,6 +18,9 @@ public interface IInputSink
 public interface IEngineHost
 {
     void Launch(string command);
+
+    /// <summary>Opens a program, file or web address with the desktop's default handler.</summary>
+    void Open(string target);
     void SwitchProfile(Bindings.CycleDirection direction, Guid? profileId);
     void SwitchKeymap(Bindings.CycleDirection direction, int keymap);
     Bindings.Macro? FindMacro(Guid id);

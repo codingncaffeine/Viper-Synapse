@@ -12,7 +12,7 @@ public static class MacroRecording
     /// started) is dropped too, so a macro never lets go of a key it did not press. Delays below a
     /// millisecond are not worth a step.
     /// </summary>
-    public static IReadOnlyList<MacroStep> ToSteps(IEnumerable<RecordedEvent> events, RecordDelayMode mode, int defaultDelayMs = 50)
+    public static IReadOnlyList<MacroStep> ToSteps(IEnumerable<RecordedEvent> events, RecordDelayMode mode, int defaultDelayMs = 50, int randomMinMs = 0, int randomMaxMs = 0)
     {
         var steps = new List<MacroStep>();
         var down = new HashSet<ushort>();
@@ -30,6 +30,13 @@ public static class MacroRecording
             }
             if (last is TimeSpan previous)
             {
+                if (mode == RecordDelayMode.Randomized)
+                {
+                    steps.Add(new RandomDelayStep(Math.Max(0, randomMinMs), Math.Max(randomMinMs, randomMaxMs)));
+                    last = e.Time;
+                    steps.Add(e.IsWheel ? new ScrollStep(e.Value, e.Horizontal) : new KeyStep(e.Code, e.Value == 1));
+                    continue;
+                }
                 int gap = mode switch
                 {
                     RecordDelayMode.Recorded => (int)Math.Round((e.Time - previous).TotalMilliseconds),

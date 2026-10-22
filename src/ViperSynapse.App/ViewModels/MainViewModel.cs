@@ -89,6 +89,8 @@ public sealed partial class MainViewModel : ObservableObject
         (newValue as DeviceViewModel)?.Shown();
         if (newValue == LinkedGames)
             LinkedGames.Refresh();
+        if (newValue == Macros)
+            Macros.KeymapsChanged();
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(CanGoBack));
         OnPropertyChanged(nameof(CanGoForward));
@@ -195,7 +197,8 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>For screenshots and checks: VIPER_SYNAPSE_OPEN=02eb opens a device tab, 02eb/LIGHTING a page of it,
-    /// 02eb:5 also opens key 5's flyout; macros, settings, games and home open those tabs. Applied once, when the
+    /// 02eb:5 also opens key 5's flyout; macros, settings, games and home open those tabs. macros/KEY BINDS, macros:delay
+    /// and macros:record open a MACRO page, an ADD item or the RECORD options. Applied once, when the
     /// devices first arrive.</summary>
     void OpenRequested()
     {
@@ -213,6 +216,19 @@ public sealed partial class MainViewModel : ObservableObject
         if (fixedTab != null)
         {
             SelectedTab = fixedTab;
+            return;
+        }
+        if (open.StartsWith("macros", StringComparison.Ordinal))
+        {
+            // macros/KEY BINDS opens a page; macros:delay opens an ADD item's settings, macros:record the RECORD options.
+            SelectedTab = Macros;
+            var (page, extra) = open.Split(':') is [var p, var x] ? (p, x) : (open, "");
+            if (page.Split('/') is [_, var name] && MacrosViewModel.Pages.Contains(name))
+                Macros.SelectedPage = name;
+            if (extra == "record")
+                Dispatcher.UIThread.Post(Macros.ShowRecordOptions, DispatcherPriority.Background);
+            else if (extra.Length > 0)
+                Macros.Adding = extra;
             return;
         }
         var parts = open.Split(':');

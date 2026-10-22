@@ -370,6 +370,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         {
             _loading = false;
         }
+        _main.Macros.KeymapsChanged();
     }
 
     Core.Lighting.PerformanceSettings? _deviceDefaults;
@@ -477,6 +478,16 @@ public sealed partial class DeviceViewModel : TabViewModel
         keymap = Hypershift ? keymap with { Hypershift = layer } : keymap with { Standard = layer };
         Push(ReplaceKeymap(keymap));
         SelectedKey = null;
+    }
+
+    /// <summary>Binds a key in the Standard layer of the keymap in use (the MACRO tab's KEY BINDS assigns this way).</summary>
+    public void Bind(DeviceKey key, Binding binding)
+    {
+        var keymap = CurrentKeymap;
+        var layer = new Dictionary<ushort, Binding>(keymap.Standard);
+        if (binding is DefaultBinding) layer.Remove(key.Source);
+        else layer[key.Source] = binding;
+        Push(ReplaceKeymap(keymap with { Standard = layer }));
     }
 
     DeviceSettings ReplaceKeymap(Keymap keymap)
