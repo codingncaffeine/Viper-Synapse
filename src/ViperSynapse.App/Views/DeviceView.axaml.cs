@@ -13,4 +13,10 @@ public sealed partial class DeviceView : UserControl
         if (DataContext is DeviceViewModel device)
             device.ShowPhoto = false;
     }
+
+    void ActivateStage(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: StageRow row } && DataContext is DeviceViewModel device)
+            device.Performance.Activate(row);
+    }
 }

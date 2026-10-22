@@ -34,6 +34,7 @@
                                        ErrorText="#E5484D" />
             </FluentTheme.Palettes>
         </FluentTheme>
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <StyleInclude Source="/Themes/Styles.axaml" />
     </Application.Styles>
 </Application>

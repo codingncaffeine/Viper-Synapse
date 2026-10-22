@@ -20,6 +20,7 @@ static class Program
                 "probe" when args.Length >= 2 => Probe(args[1]),
                 "scan" when args.Length >= 2 => Scan(args[1]),
                 "get" when args.Length >= 4 => Get(args[1], args[2..]),
+                "set" when args.Length >= 4 => Set(args[1], args[2..]),
                 "inputs" => Inputs(),
                 "watch" when args.Length >= 2 => Watch(args[1..]),
                 _ => Usage(),
@@ -44,6 +45,7 @@ static class Program
             viper-cli probe NODE      read-only commands against a control node (e.g. /dev/hidraw17)
             viper-cli scan NODE       every "get" command (id 0x80-0xFF) in classes 0x00-0x0F; prints the supported ones
             viper-cli get NODE CLASS ID [ARG...]   one "get" command (hex bytes; the id must have bit 7 set)
+            viper-cli set NODE CLASS ID [ARG...]   one "set": lighting (0F), DPI (04 05/06) and polling rate (00 05/40) only
             viper-cli inputs          Razer input nodes and what each can send
             viper-cli watch NODE...   print events from input nodes (no grab)
             """);
@@ -108,6 +110,25 @@ static class Program
         bytes.AsSpan(2).CopyTo(arguments);
         using var transport = new RazerTransport(HidrawDevice.Open(path)) { AnswerDelay = TimeSpan.FromMilliseconds(2) };
         Console.WriteLine(Describe(transport.Send(RazerReport.Create(0x1F, bytes[0], bytes[1], arguments, RazerReport.MaxArguments))));
+        return 0;
+    }
+
+    /// <summary>Only commands known to be safe on any Razer device: lighting, DPI and polling rate. Device mode
+    /// (00 04) resets some keypads and is refused, as is everything else.</summary>
+    static int Set(string path, string[] hex)
+    {
+        var bytes = hex.Select(h => byte.Parse(h, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToArray();
+        bool allowed = bytes[0] == 0x0F && bytes[1] is 0x02 or 0x03 or 0x04
+            || bytes[0] == 0x04 && bytes[1] is 0x05 or 0x06
+            || bytes[0] == 0x00 && bytes[1] is 0x05 or 0x40;
+        if (!allowed)
+        {
+            Console.Error.WriteLine("Refusing: only lighting (0F 02/03/04), DPI (04 05/06) and polling rate (00 05/40) may be set from here.");
+            return 64;
+        }
+        var arguments = bytes.AsSpan(2).ToArray();
+        using var transport = new RazerTransport(HidrawDevice.Open(path)) { AnswerDelay = TimeSpan.FromMilliseconds(2) };
+        Console.WriteLine(Describe(transport.Send(RazerReport.Create(0x1F, bytes[0], bytes[1], arguments))));
         return 0;
     }
 

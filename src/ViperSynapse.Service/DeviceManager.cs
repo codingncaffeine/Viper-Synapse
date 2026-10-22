@@ -69,6 +69,7 @@ public sealed class DeviceManager : IDisposable
         public List<string> InputNodes { get; set; } = [];
         public RemapEngine? Engine { get; set; }
         public DeviceSession? Session { get; set; }
+        public DeviceControl? Control { get; set; }
         public string? Problem { get; set; }
     }
 
@@ -116,6 +117,7 @@ public sealed class DeviceManager : IDisposable
             foreach (var gone in _devices.Keys.Where(port => !ports.ContainsKey(port)).ToList())
             {
                 _devices[gone].Session?.Dispose();
+                _devices[gone].Control?.Dispose();
                 _devices.Remove(gone);
                 changed = true;
             }
@@ -149,10 +151,18 @@ public sealed class DeviceManager : IDisposable
             {
                 try
                 {
-                    using var transport = new RazerTransport(HidrawDevice.Open(control.DevicePath));
+                    var transport = new RazerTransport(HidrawDevice.Open(control.DevicePath));
                     device.Identity = RazerProbe.Identify(transport);
                     if (device.Identity == null)
+                    {
+                        transport.Dispose();
                         device.Problem = "The device did not answer on its control interface.";
+                    }
+                    else
+                    {
+                        // Kept open while the device is plugged in: lighting and sensitivity go through it.
+                        device.Control = new DeviceControl(transport, device.Identity.TransactionId, device.Model);
+                    }
                 }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                 {
@@ -173,6 +183,16 @@ public sealed class DeviceManager : IDisposable
     }
 
     public DeviceSettings GetSettings(string key) => _store.LoadDevice(key);
+
+    /// <summary>The device's own sensitivity, polling rate and battery, read now. Null when no device of the model is
+    /// plugged in or it has no control interface.</summary>
+    public DeviceState? ReadState(string key)
+    {
+        DeviceControl? control;
+        lock (_gate)
+            control = _devices.Values.FirstOrDefault(d => d.Key == key && d.Control != null)?.Control;
+        return control?.ReadState();
+    }
 
     public void SetSettings(string key, DeviceSettings settings)
     {
@@ -196,7 +216,8 @@ public sealed class DeviceManager : IDisposable
     /// <summary>Brings every connected device of a model in line with its stored settings.</summary>
     public void Apply(string key)
     {
-        var keymap = _store.LoadDevice(key).ActiveKeymapOrFirst;
+        var settings = _store.LoadDevice(key);
+        var keymap = settings.ActiveKeymapOrFirst;
         bool bindsAnything = keymap.Standard.Values.Concat(keymap.Hypershift.Values).Any(b => b is not DefaultBinding);
         bool changed = false;
         lock (_gate)
@@ -232,6 +253,16 @@ public sealed class DeviceManager : IDisposable
                 changed = true;
             }
         }
+        // Lighting, sensitivity and power talk to the hardware: outside the lock.
+        List<DeviceControl> controls;
+        lock (_gate)
+            controls = _devices.Values.Where(d => d.Key == key && d.Control != null).Select(d => d.Control!).ToList();
+        foreach (var control in controls)
+        {
+            control.Apply(settings.Active);
+            if (control.LastProblem != null)
+                Console.Error.WriteLine($"{key}: {control.LastProblem}");
+        }
         if (changed)
             DevicesChanged?.Invoke();
     }
@@ -266,7 +297,10 @@ public sealed class DeviceManager : IDisposable
         lock (_gate)
         {
             foreach (var device in _devices.Values)
+            {
                 device.Session?.Dispose();
+                device.Control?.Dispose();
+            }
             _devices.Clear();
         }
     }

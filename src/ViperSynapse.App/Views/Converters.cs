@@ -23,6 +23,8 @@ public static class Converters
     /// <summary>Full strength when true, faded when false: controls the device handles by itself.</summary>
     public static readonly IValueConverter Dim = new FuncValueConverter<bool, double>(on => on ? 1 : 0.5);
 
+    public static readonly IValueConverter ZoneLabel = new FuncValueConverter<string?, string>(z => ViewModels.LightingViewModel.ZoneLabel(z ?? ""));
+
     public static readonly IValueConverter Equal = new FuncValueConverter<object?, object?, bool>((value, parameter) =>
         Equals(value?.ToString(), parameter?.ToString()));
 }

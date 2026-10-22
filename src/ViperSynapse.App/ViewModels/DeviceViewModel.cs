@@ -49,6 +49,9 @@ public sealed partial class DeviceViewModel : TabViewModel
         Groups = Rows.GroupBy(r => r.Key.Group).Select(g => new KeyGroup(GroupTitle(g.Key), g.ToList())).ToList();
         foreach (var group in Groups)
             group.Keys[0].GroupTitle = group.Title;
+        Lighting = new LightingViewModel(Model, l => PushProfile(p => p with { Lighting = l }));
+        Performance = new PerformanceViewModel(Model, p => PushProfile(x => x with { Performance = p }));
+        Power = new PowerViewModel(p => PushProfile(x => x with { Power = p }));
         Pages = BuildPages();
         SelectedPage = Pages[0];
         _ = Services.DeviceImages.LoadAsync(Model).ContinueWith(t =>
@@ -85,6 +88,9 @@ public sealed partial class DeviceViewModel : TabViewModel
     public IReadOnlyList<KeyRowViewModel> Rows { get; }
     public IReadOnlyList<KeyGroup> Groups { get; }
     public IReadOnlyList<string> Pages { get; }
+    public LightingViewModel Lighting { get; }
+    public PerformanceViewModel Performance { get; }
+    public PowerViewModel Power { get; }
 
     [ObservableProperty]
     public partial string SelectedPage { get; set; }
@@ -149,7 +155,6 @@ public sealed partial class DeviceViewModel : TabViewModel
         if (Model?.Zones.Count > 0 || IsKeypad) pages.Add("LIGHTING");
         if (Model?.Has("dpi") == true || Model?.Has("poll_rate") == true) pages.Add("PERFORMANCE");
         if (Model?.Has("battery") == true) pages.Add("POWER");
-        if (Model?.Type == "mouse") pages.Add("CALIBRATION");
         return pages;
     }
 
@@ -168,6 +173,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         {
             var settings = await _main.Client.GetSettingsAsync(Key).ConfigureAwait(false);
             await Dispatcher.UIThread.InvokeAsync(() => Load(settings));
+            await ReadDeviceAsync().ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -190,11 +196,48 @@ public sealed partial class DeviceViewModel : TabViewModel
             // The index often stays 0 across a load, which raises nothing; the box must still re-read its selection.
             OnPropertyChanged(nameof(SelectedKeymapName));
             RefreshRows();
+            Lighting.Load(settings.Active.Lighting);
+            Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
+            Power.Load(settings.Active.Power ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
         }
         finally
         {
             _loading = false;
         }
+    }
+
+    Core.Lighting.PerformanceSettings? _deviceDefaults;
+    int? _battery;
+    bool? _charging;
+
+    /// <summary>Reads what the device itself is set to, so Performance and Power show real values before the user
+    /// changes anything.</summary>
+    async Task ReadDeviceAsync()
+    {
+        try
+        {
+            if (await _main.Client.GetDeviceStateAsync(Key).ConfigureAwait(false) is not { } state)
+                return;
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (state.Stages is { Count: > 0 } stages)
+                    _deviceDefaults = new Core.Lighting.PerformanceSettings(stages, state.ActiveStage, state.PollingRate);
+                (_battery, _charging) = (state.BatteryPercent, state.Charging);
+                Load(_settings);
+            });
+        }
+        catch (Exception e)
+        {
+            _main.Fail("Could not read the device", e);
+        }
+    }
+
+    void PushProfile(Func<Profile, Profile> change)
+    {
+        if (_loading)
+            return;
+        var profile = change(_settings.Active);
+        Push(_settings with { Profiles = _settings.Profiles.Select(p => p.Id == profile.Id ? profile : p).ToList() });
     }
 
     Keymap CurrentKeymap => _settings.ActiveKeymapOrFirst;

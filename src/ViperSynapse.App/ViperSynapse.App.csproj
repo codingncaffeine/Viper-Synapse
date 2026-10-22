@@ -19,6 +19,7 @@
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="$(AvaloniaVersion)" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="$(MvvmToolkitVersion)" />
     <PackageReference Include="Tmds.DBus.Protocol" Version="$(TmdsDBusVersion)" />
   </ItemGroup>

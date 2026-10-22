@@ -199,6 +199,10 @@
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="MinHeight" Value="28" />
     </Style>
+    <Style Selector="NumericUpDown">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
     <Style Selector="TextBox">
         <Setter Property="Background" Value="#111111" />
         <Setter Property="BorderBrush" Value="#3A3A3A" />
@@ -293,5 +297,29 @@
     <Style Selector="RadioButton.thumb:checked /template/ Border#Frame">
         <Setter Property="BorderBrush" Value="{StaticResource GreenBrush}" />
         <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <!-- Setting cards on the Lighting, Performance and Power pages. -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="Margin" Value="8" />
+        <Setter Property="Width" Value="380" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+    </Style>
+
+    <!-- Sensitivity stage numbers: the active stage is green. -->
+    <Style Selector="Button.stage">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="#2A2A2A" />
+        <Setter Property="Foreground" Value="#CCCCCC" />
+    </Style>
+    <Style Selector="Button.stage.active">
+        <Setter Property="Background" Value="{StaticResource GreenBrush}" />
+        <Setter Property="Foreground" Value="#000000" />
     </Style>
 </Styles>

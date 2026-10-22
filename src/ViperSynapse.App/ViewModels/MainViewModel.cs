@@ -98,7 +98,7 @@ public sealed partial class MainViewModel : ObservableObject
         });
     }
 
-    /// <summary>For screenshots and checks: VIPER_SYNAPSE_OPEN=02eb opens a device tab, 02eb:5 also opens key 5's
+    /// <summary>For screenshots and checks: VIPER_SYNAPSE_OPEN=02eb opens a device tab, 02eb/LIGHTING a page of it, 02eb:5 also opens key 5's
     /// flyout, macros opens the MACROS tab. Applied once, when the devices first arrive.</summary>
     void OpenRequested()
     {
@@ -111,9 +111,12 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
         var parts = open.Split(':');
-        if (Tabs.OfType<DeviceViewModel>().FirstOrDefault(d => d.Key == parts[0]) is not { } device)
+        var target = parts[0].Split('/');
+        if (Tabs.OfType<DeviceViewModel>().FirstOrDefault(d => d.Key == target[0]) is not { } device)
             return;
         SelectedTab = device;
+        if (target.Length > 1 && device.Pages.Contains(target[1]))
+            device.SelectedPage = target[1];
         if (parts.Length > 1 && int.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var number))
             Dispatcher.UIThread.Post(() => device.SelectedKey = device.Rows.FirstOrDefault(r => r.Key.Number == number), DispatcherPriority.Background);
     }

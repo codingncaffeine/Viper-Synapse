@@ -36,7 +36,9 @@
         { "number" : 27, "label" : "Space", "code" : "KEY_SPACE", "hw" : "3d" },
         { "number" : 28, "label" : "Hypershift", "code" : "", "hw" : "3b", "group" : "other" }
       ],
-      "zones" : {},
+      "zones" : {
+        "main" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "starlight_dual", "starlight_random", "starlight_single", "static", "wave" ] }
+      },
       "features" : [],
       "verified" : [],
       "source" : "Viper Synapse probe"

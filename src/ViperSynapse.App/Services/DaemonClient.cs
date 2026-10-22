@@ -7,12 +7,16 @@ using ViperSynapse.Core.Bindings;
 namespace ViperSynapse.App.Services;
 
 /// <summary>A connected device as the service describes it.</summary>
+/// <summary>The device's own sensitivity, polling rate and battery.</summary>
+public sealed record DeviceState(IReadOnlyList<ViperSynapse.Core.Lighting.DpiStage>? Stages, int ActiveStage, int PollingRate, int? BatteryPercent, bool? Charging);
+
 public sealed record DeviceInfo(
     string Key, string ProductId, string Name, string Type, string Port, bool Known, bool Verified,
     string? Serial, string? Firmware, string? ControlNode, IReadOnlyList<string> InputNodes, bool Remapping, string? Problem);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(List<DeviceInfo>))]
+[JsonSerializable(typeof(DeviceState))]
 internal sealed partial class ClientJson : JsonSerializerContext;
 
 /// <summary>
@@ -90,6 +94,9 @@ public sealed class DaemonClient : IAsyncDisposable
 
     public async Task<IReadOnlyList<DeviceInfo>> GetDevicesAsync() =>
         JsonSerializer.Deserialize(await CallStringAsync("GetDevices").ConfigureAwait(false), ClientJson.Default.ListDeviceInfo) ?? [];
+
+    public async Task<DeviceState?> GetDeviceStateAsync(string device) =>
+        JsonSerializer.Deserialize(await CallStringAsync("GetDeviceState", device).ConfigureAwait(false), ClientJson.Default.DeviceState);
 
     public async Task<DeviceSettings> GetSettingsAsync(string device) =>
         SettingsJson.ReadSettings(await CallStringAsync("GetSettings", device).ConfigureAwait(false));

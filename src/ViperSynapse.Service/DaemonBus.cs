@@ -23,6 +23,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <method name="GetDevices"><arg direction="out" type="s" name="json"/></method>
           <method name="GetSettings"><arg direction="in" type="s" name="device"/><arg direction="out" type="s" name="json"/></method>
           <method name="SetSettings"><arg direction="in" type="s" name="device"/><arg direction="in" type="s" name="json"/></method>
+          <method name="GetDeviceState"><arg direction="in" type="s" name="device"/><arg direction="out" type="s" name="json"/></method>
           <method name="GetMacros"><arg direction="out" type="s" name="json"/></method>
           <method name="SetMacros"><arg direction="in" type="s" name="json"/></method>
           <method name="StartRecording"/>
@@ -109,6 +110,12 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
                 string key = DeviceKey(reader.ReadString());
                 _devices.SetSettings(key, SettingsJson.ReadSettings(reader.ReadString()));
                 ReplyEmpty(context);
+                break;
+            }
+            case "GetDeviceState":
+            {
+                var state = _devices.ReadState(DeviceKey(reader.ReadString()));
+                ReplyString(context, state == null ? "null" : System.Text.Json.JsonSerializer.Serialize(state, DeviceStateJson.Default.DeviceState));
                 break;
             }
             case "GetMacros":
