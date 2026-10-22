@@ -64,6 +64,11 @@ public sealed partial class DeviceViewModel : TabViewModel
         foreach (var group in Groups)
             group.Keys[0].GroupTitle = group.Title;
         Lighting = new LightingViewModel(Model, l => PushProfile(p => p with { Lighting = l }));
+        Lighting.ApplyToOthers += effect =>
+        {
+            foreach (var other in _main.Devices.Where(d => d != this))
+                other.Lighting.Take(effect);
+        };
         Performance = new PerformanceViewModel(Model, p => PushProfile(x => x with { Performance = p }));
         Power = new PowerViewModel(p => PushProfile(x => x with { Power = p }));
         Calibration = new CalibrationViewModel(c => PushProfile(x => x with { Calibration = c }));

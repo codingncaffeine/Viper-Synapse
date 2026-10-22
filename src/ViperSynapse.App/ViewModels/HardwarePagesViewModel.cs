@@ -187,6 +187,10 @@ public sealed partial class LightingViewModel : ObservableObject
         try
         {
             _zones = settings?.Zones.ToDictionary(z => z.Key, z => z.Value) ?? [];
+            LightingOn = settings?.Off != true;
+            OffWhenDisplayOff = settings?.OffWhenDisplayOff == true;
+            OffWhenIdle = settings?.OffWhenIdleMinutes > 0;
+            IdleMinutes = settings?.OffWhenIdleMinutes > 0 ? settings.OffWhenIdleMinutes : 1;
             _frame = settings?.Frame is { } f && f.Rows == _model?.MatrixRows && f.Columns == _model?.MatrixColumns
                 ? f
                 : CustomFrame.Filled(Math.Max(1, _model?.MatrixRows ?? 1), Math.Max(1, _model?.MatrixColumns ?? 1), Rgb.RazerGreen);
@@ -225,6 +229,9 @@ public sealed partial class LightingViewModel : ObservableObject
 
     void Notify()
     {
+        OnPropertyChanged(nameof(EffectTab));
+        OnPropertyChanged(nameof(ShowQuick));
+        OnPropertyChanged(nameof(QuickEffects));
         OnPropertyChanged(nameof(ShowFrameEditor));
         OnPropertyChanged(nameof(ShowKeyCanvas));
         OnPropertyChanged(nameof(ShowLedGrid));
@@ -279,8 +286,65 @@ public sealed partial class LightingViewModel : ObservableObject
         _debounce.Poke();
     }
 
-    void Commit() => _save(new LightingSettings(new Dictionary<string, ZoneLighting>(_zones),
-        _zones.Values.Any(z => z.Effect.Kind == EffectKind.Custom) ? _frame : null));
+    void Commit() => _save(Current());
+
+    LightingSettings Current() => new(new Dictionary<string, ZoneLighting>(_zones),
+        _zones.Values.Any(z => z.Effect.Kind == EffectKind.Custom) ? _frame : null,
+        Off: !LightingOn, OffWhenDisplayOff: OffWhenDisplayOff, OffWhenIdleMinutes: OffWhenIdle ? (int)IdleMinutes : 0);
+
+    // ---- Synapse 4 cards: the Brightness switch, Switch off lighting, Quick and Advanced effects ---------
+
+    [ObservableProperty] public partial bool LightingOn { get; set; } = true;
+    [ObservableProperty] public partial bool OffWhenDisplayOff { get; set; }
+    [ObservableProperty] public partial bool OffWhenIdle { get; set; }
+    [ObservableProperty] public partial double IdleMinutes { get; set; } = 1;
+
+    public static IReadOnlyList<string> EffectTabs { get; } = ["Quick Effects", "Advanced Effects"];
+
+    /// <summary>Advanced is Synapse's Chroma Studio; here it is the per-key frame.</summary>
+    public string EffectTab
+    {
+        get => SelectedEffect?.Kind == EffectKind.Custom ? EffectTabs[1] : EffectTabs[0];
+        set
+        {
+            if (value == EffectTab)
+                return;
+            SelectedEffect = value == EffectTabs[1]
+                ? Effects.FirstOrDefault(e => e.Kind == EffectKind.Custom)
+                : Effects.FirstOrDefault(e => e.Kind == EffectKind.Spectrum) ?? Effects.FirstOrDefault(e => e.Kind != EffectKind.Custom);
+        }
+    }
+
+    public bool ShowQuick => EffectTab == EffectTabs[0];
+
+    /// <summary>The quick effects, without the per-key one (that is the Advanced side).</summary>
+    public IReadOnlyList<EffectChoice> QuickEffects => Effects.Where(e => e.Kind != EffectKind.Custom).ToList();
+
+    partial void OnLightingOnChanged(bool value) => Changed();
+    partial void OnOffWhenDisplayOffChanged(bool value) => Changed();
+    partial void OnOffWhenIdleChanged(bool value) => Changed();
+    partial void OnIdleMinutesChanged(double value) => Changed();
+
+    /// <summary>Synapse's "Apply to other Chroma-enabled devices": the chosen quick effect goes to every other device
+    /// that can show it.</summary>
+    public event Action<ZoneEffect>? ApplyToOthers;
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    void ApplyToOtherDevices()
+    {
+        if (SelectedEffect is { Kind: not EffectKind.Custom } effect)
+            ApplyToOthers?.Invoke(new ZoneEffect(effect.Kind, new Rgb(Color1.R, Color1.G, Color1.B), new Rgb(Color2.R, Color2.G, Color2.B), SelectedColorMode, (int)Speed, Reverse));
+    }
+
+    /// <summary>Takes a quick effect from another device: every zone that can show it.</summary>
+    public void Take(ZoneEffect effect)
+    {
+        foreach (var zone in Zones)
+            if (EffectsFor(zone).Any(e => e.Kind == effect.Kind))
+                _zones[zone] = new ZoneLighting(effect, _zones.TryGetValue(zone, out var z) ? z.Brightness : 100);
+        Load(Current());
+        _debounce.Poke();
+    }
 }
 
 /// <summary>One row of the sensitivity stages.</summary>

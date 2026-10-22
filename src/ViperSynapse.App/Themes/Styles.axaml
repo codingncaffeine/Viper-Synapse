@@ -453,4 +453,25 @@
     <Style Selector="Button.deviceCard:pointerover /template/ ContentPresenter, Button.moduleCard:pointerover /template/ ContentPresenter">
         <Setter Property="Background" Value="#1C1C1C" />
     </Style>
+    <!-- Two-way switches inside a card (Quick Effects / Advanced Effects): a rounded track, the chosen half green. -->
+    <Style Selector="ListBox.segmentList">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#4A4A4A" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Padding" Value="2" />
+    </Style>
+    <Style Selector="ListBox.segmentList ListBoxItem">
+        <Setter Property="Padding" Value="12,4" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="ListBox.segmentList ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="ListBox.segmentList ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource GreenBrush}" />
+        <Setter Property="Foreground" Value="#000000" />
+    </Style>
 </Styles>

@@ -43,6 +43,9 @@ static class Program
 
         devices.Refresh();
 
+        using var idle = new IdleWatcher();
+        idle.Changed += devices.Idle;
+        await idle.StartAsync(Tmds.DBus.Protocol.DBusAddress.Session).ConfigureAwait(false);
         using var focus = new FocusWatcher(devices.Focused);
         bus.ActiveWindow += focus.ReportFromKWin;
         await focus.StartAsync(Tmds.DBus.Protocol.DBusAddress.Session).ConfigureAwait(false);

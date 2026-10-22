@@ -47,6 +47,8 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                 _sentKeymap = keymap;
                 Send(DeviceCommands.SelectKeymap(transactionId, keymap + 1), "keymap");
             }
+            if (profile.Lighting is { IsEmpty: false } current)
+                _lighting = current;
             if (profile.Lighting is { IsEmpty: false } lighting && Changed(ref _sentLighting, lighting))
                 SendLighting(lighting);
             if (profile.Performance is { } performance && (model?.Has("dpi") == true || model?.Has("poll_rate") == true) && Changed(ref _sentPerformance, performance))
@@ -89,7 +91,32 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                 Send(DeviceCommands.Effect(transactionId, led, settings.Effect), $"{zone} effect");
             }
             if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
-                Send(DeviceCommands.Brightness(transactionId, led, settings.Brightness), $"{zone} brightness");
+                Send(DeviceCommands.Brightness(transactionId, led, lighting.Off || _dimmed ? 0 : settings.Brightness), $"{zone} brightness");
+        }
+    }
+
+    bool _dimmed;
+    LightingSettings? _lighting;
+
+    /// <summary>The profile's switch-off rules, for the idle watcher.</summary>
+    public LightingSettings? Lighting
+    {
+        get { lock (_gate) return _lighting; }
+    }
+
+    /// <summary>Darkens the device (the screen went off, the user went idle) or brings its brightness back, without
+    /// touching the effects.</summary>
+    public void SetDimmed(bool dimmed)
+    {
+        lock (_gate)
+        {
+            if (dimmed == _dimmed || _lighting is not { } lighting)
+                return;
+            _dimmed = dimmed;
+            string type = model?.Type ?? "keyboard";
+            foreach (var (zone, settings) in lighting.Zones)
+                if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
+                    Send(DeviceCommands.Brightness(transactionId, DeviceCommands.LedId(zone, type), lighting.Off || dimmed ? 0 : settings.Brightness), $"{zone} brightness");
         }
     }
 

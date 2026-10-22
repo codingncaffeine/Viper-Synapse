@@ -175,19 +175,40 @@
 
         <!-- LIGHTING -->
         <ScrollViewer Grid.Row="1" IsVisible="{Binding SelectedPage, Converter={x:Static views:Converters.Equal}, ConverterParameter=LIGHTING}">
-            <WrapPanel HorizontalAlignment="Center" Margin="20" DataContext="{Binding Lighting}" x:DataType="vm:LightingViewModel">
-                <Border Classes="card">
+            <WrapPanel HorizontalAlignment="Center" Margin="20,8" DataContext="{Binding Lighting}" x:DataType="vm:LightingViewModel">
+                <!-- Left column: Brightness, Switch off lighting. -->
+                <StackPanel>
+                    <Border Classes="card" Width="440">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <TextBlock Classes="heading" Text="BRIGHTNESS" VerticalAlignment="Center" />
+                                <ToggleSwitch IsChecked="{Binding LightingOn}" OnContent="" OffContent="" MinWidth="0" Margin="0,-4,0,0" />
+                            </StackPanel>
+                            <controls:ValueSlider Value="{Binding Brightness}" Minimum="0" Maximum="100" IsEnabled="{Binding LightingOn}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="card" Width="440">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="heading" Text="SWITCH OFF LIGHTING" />
+                            <CheckBox Content="When display is turned off" IsChecked="{Binding OffWhenDisplayOff}" />
+                            <CheckBox Content="When idle for (minutes)" IsChecked="{Binding OffWhenIdle}" />
+                            <controls:ValueSlider Value="{Binding IdleMinutes}" Minimum="1" Maximum="15" IsEnabled="{Binding OffWhenIdle}" Margin="26,0,0,0" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <Border Classes="card" Width="440">
                     <StackPanel Spacing="10">
-                        <TextBlock Classes="heading" Text="BRIGHTNESS" />
-                        <Grid ColumnDefinitions="*,50">
-                            <Slider Minimum="0" Maximum="100" Value="{Binding Brightness}" IsSnapToTickEnabled="True" TickFrequency="1" />
-                            <TextBlock Grid.Column="1" Text="{Binding Brightness, StringFormat='{}{0:0}%'}" VerticalAlignment="Center" HorizontalAlignment="Right" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-                <Border Classes="card">
-                    <StackPanel Spacing="10">
-                        <TextBlock Classes="heading" Text="EFFECT" />
+                        <TextBlock Classes="heading" Text="EFFECTS" />
+                        <ListBox Classes="segmentList" ItemsSource="{x:Static vm:LightingViewModel.EffectTabs}" SelectedItem="{Binding EffectTab}"
+                                 IsVisible="{Binding HasFrame}" HorizontalAlignment="Left">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                        <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding ShowQuick}"
+                                   Text="Quick effects are presets that are saved to the device's profile and can be applied to your other Razer devices." />
+                        <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding !ShowQuick}"
+                                   Text="Advanced effects give every key its own colour: paint them below." />
                         <StackPanel Spacing="8" IsVisible="{Binding HasZones}">
                             <CheckBox Content="Same effect on every zone" IsChecked="{Binding SyncAll}" />
                             <TextBlock Classes="caption" Text="ZONE" />
@@ -197,8 +218,10 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
-                        <TextBlock Classes="caption" Text="QUICK EFFECTS" />
-                        <ComboBox ItemsSource="{Binding Effects}" SelectedItem="{Binding SelectedEffect}" HorizontalAlignment="Stretch" />
+                        <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowQuick}">
+                            <ComboBox ItemsSource="{Binding QuickEffects}" SelectedItem="{Binding SelectedEffect}" Width="200" />
+                            <Button Classes="link" Content="Apply to other devices" Command="{Binding ApplyToOtherDevicesCommand}" VerticalAlignment="Center" />
+                        </StackPanel>
                         <ComboBox ItemsSource="{Binding ColorModes}" SelectedItem="{Binding SelectedColorMode}" HorizontalAlignment="Stretch" IsVisible="{Binding ShowModes}" />
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <ColorPicker Color="{Binding Color1}" IsVisible="{Binding ShowColor1}" />

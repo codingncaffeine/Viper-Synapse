@@ -406,6 +406,23 @@ public sealed class DeviceManager : IDisposable
         StickMoved?.Invoke(device.Key, x, y);
     }
 
+    /// <summary>The screen went off or on, or the idle time moved: each device whose profile asks for it goes dark or
+    /// comes back.</summary>
+    public void Idle(bool screenOff, TimeSpan idle)
+    {
+        List<DeviceControl> controls;
+        lock (_gate)
+            controls = _devices.Values.Where(d => d.Control != null).Select(d => d.Control!).ToList();
+        foreach (var control in controls)
+        {
+            if (control.Lighting is not { } rules)
+                continue;
+            bool dark = rules.OffWhenDisplayOff && screenOff
+                || rules.OffWhenIdleMinutes > 0 && idle >= TimeSpan.FromMinutes(rules.OffWhenIdleMinutes);
+            control.SetDimmed(dark);
+        }
+    }
+
     /// <summary>What a control with no key of its own does by default: the key the catalogue names for it (W for the
     /// thumbstick's up).</summary>
     static Binding? DefaultFor(DeviceModel? model, ushort source) =>

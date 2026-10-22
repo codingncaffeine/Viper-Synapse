@@ -71,7 +71,17 @@ public sealed record CustomFrame(int Rows, int Columns, IReadOnlyList<Rgb> Color
 
 /// <summary>A profile's lighting: zone name (main, logo, scroll, right, ...) to its settings, and the per-key frame a
 /// Custom effect shows. An empty map leaves the device's lighting alone.</summary>
-public sealed record LightingSettings(IReadOnlyDictionary<string, ZoneLighting> Zones, CustomFrame? Frame = null)
+/// <param name="Zones">Each zone's effect and brightness.</param>
+/// <param name="Frame">The per-key colours a Custom effect shows.</param>
+/// <param name="Off">The Brightness switch turned off: every zone dark, effects kept for when it comes back on.</param>
+/// <param name="OffWhenDisplayOff">Go dark while the screen is locked or blanked.</param>
+/// <param name="OffWhenIdleMinutes">Go dark after this many minutes without input; 0 never.</param>
+public sealed record LightingSettings(
+    IReadOnlyDictionary<string, ZoneLighting> Zones,
+    CustomFrame? Frame = null,
+    bool Off = false,
+    bool OffWhenDisplayOff = false,
+    int OffWhenIdleMinutes = 0)
 {
     public static LightingSettings None { get; } = new(new Dictionary<string, ZoneLighting>());
 
