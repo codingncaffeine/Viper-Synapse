@@ -68,7 +68,9 @@ public sealed class RemapEngine
                 return;
             if (Interruption == MacroInterruption.AnyKey)
                 StopMacros();
-            var binding = Keymap.Resolve(code, HypershiftActive);
+            // A global shortcut this press completes beats the keymap; the keys held before it keep doing what
+            // they started.
+            var binding = _host.Shortcuts.Completed(code, _held.ContainsKey)?.Binding ?? Keymap.Resolve(code, HypershiftActive);
             if (binding is DefaultBinding && SourceKeys.IsStick(code))
                 binding = Defaults?.Invoke(code) ?? new DisableBinding();
             _held[code] = binding;

@@ -197,7 +197,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>For screenshots and checks: VIPER_SYNAPSE_OPEN=02eb opens a device tab, 02eb/LIGHTING a page of it,
-    /// 02eb:5 also opens key 5's flyout; macros, settings, games and home open those tabs. macros/KEY BINDS, macros:delay
+    /// 02eb:5 also opens key 5's flyout; macros, settings, games, home and shortcuts (GLOBAL SHORTCUTS; shortcuts:add opens the editor) open those tabs. macros/KEY BINDS, macros:delay
     /// and macros:record open a MACRO page, an ADD item or the RECORD options. Applied once, when the
     /// devices first arrive.</summary>
     void OpenRequested()
@@ -211,11 +211,16 @@ public sealed partial class MainViewModel : ObservableObject
             "settings" => Settings,
             "games" => LinkedGames,
             "home" => Home,
+            "shortcuts" or "shortcuts:add" => Home,
             _ => null,
         };
         if (fixedTab != null)
         {
             SelectedTab = fixedTab;
+            if (open.StartsWith("shortcuts", StringComparison.Ordinal))
+                Home.SelectedPage = "GLOBAL SHORTCUTS";
+            if (open == "shortcuts:add")
+                Dispatcher.UIThread.Post(() => Home.Shortcuts.AddCommand.Execute(null), DispatcherPriority.Background);
             return;
         }
         if (open.StartsWith("macros", StringComparison.Ordinal))
@@ -259,12 +264,15 @@ public sealed partial class HomeViewModel(MainViewModel main) : TabViewModel
 
     public ObservableCollection<DeviceViewModel> Devices { get; } = [];
 
-    public static IReadOnlyList<string> Pages { get; } = ["DASHBOARD", "DEVICES & MODULES"];
+    public static IReadOnlyList<string> Pages { get; } = ["DASHBOARD", "DEVICES & MODULES", "GLOBAL SHORTCUTS"];
+
+    public ShortcutsViewModel Shortcuts { get; } = new(main);
 
     [ObservableProperty] public partial string SelectedPage { get; set; } = "DASHBOARD";
 
     public bool ShowDashboard => SelectedPage == "DASHBOARD";
     public bool ShowModules => SelectedPage == "DEVICES & MODULES";
+    public bool ShowShortcuts => SelectedPage == "GLOBAL SHORTCUTS";
 
     public string Version => typeof(HomeViewModel).Assembly.GetName().Version?.ToString(3) ?? "";
 
@@ -272,6 +280,9 @@ public sealed partial class HomeViewModel(MainViewModel main) : TabViewModel
     {
         OnPropertyChanged(nameof(ShowDashboard));
         OnPropertyChanged(nameof(ShowModules));
+        OnPropertyChanged(nameof(ShowShortcuts));
+        if (value == "GLOBAL SHORTCUTS")
+            _ = Shortcuts.LoadAsync();
     }
 
     public void Open(DeviceViewModel device) => main.Show(device);

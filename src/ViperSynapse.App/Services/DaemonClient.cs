@@ -129,6 +129,11 @@ public sealed class DaemonClient : IAsyncDisposable
 
     public Task SetMacrosAsync(MacroLibrary macros) => CallAsync("SetMacros", "s", SettingsJson.Write(macros));
 
+    public async Task<ShortcutList> GetShortcutsAsync() =>
+        SettingsJson.ReadShortcuts(await CallStringAsync("GetShortcuts").ConfigureAwait(false));
+
+    public Task SetShortcutsAsync(ShortcutList shortcuts) => CallAsync("SetShortcuts", "s", SettingsJson.Write(shortcuts));
+
     /// <summary>Follow the device's thumbstick for the next 15 seconds (ask again to keep following).</summary>
     public Task WatchStickAsync(string device) => CallAsync("WatchStick", "s", device);
 

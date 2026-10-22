@@ -4,7 +4,7 @@ namespace ViperSynapse.Service;
 
 /// <summary>
 /// Settings on disk under $XDG_CONFIG_HOME/viper-synapse: one file per device model
-/// (devices/02eb.json) and the macro library (macros.json). Writes go to a temporary file that is renamed
+/// (devices/02eb.json), the macro library (macros.json) and the global shortcuts (shortcuts.json). Writes go to a temporary file that is renamed
 /// over the old one, so a crash never leaves half a file. A file that cannot be read is set aside as
 /// *.broken and replaced with defaults rather than stopping the service.
 /// </summary>
@@ -38,6 +38,12 @@ public sealed class SettingsStore(string root)
     public MacroLibrary LoadMacros() => Load(MacrosPath, SettingsJson.ReadMacros, () => MacroLibrary.Empty);
 
     public void SaveMacros(MacroLibrary macros) => Save(MacrosPath, SettingsJson.Write(macros));
+
+    string ShortcutsPath => Path.Combine(Root, "shortcuts.json");
+
+    public ShortcutList LoadShortcuts() => Load(ShortcutsPath, SettingsJson.ReadShortcuts, () => ShortcutList.Empty);
+
+    public void SaveShortcuts(ShortcutList shortcuts) => Save(ShortcutsPath, SettingsJson.Write(shortcuts));
 
     T Load<T>(string path, Func<string, T> parse, Func<T> fallback)
     {

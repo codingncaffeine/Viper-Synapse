@@ -33,6 +33,12 @@ public class SettingsTests
 
         var macros = SettingsJson.ReadMacros(SettingsJson.Write(new MacroLibrary([macro])));
         Assert.Equal(macro.Steps, macros.Macros[0].Steps);
+
+        var shortcut = GlobalShortcut.Create([29, 2], new MacroBinding(macro.Id, MacroPlayback.Toggle));
+        var shortcuts = SettingsJson.ReadShortcuts(SettingsJson.Write(new ShortcutList([shortcut])));
+        Assert.Equal(shortcut.Id, shortcuts.Shortcuts[0].Id);
+        Assert.Equal(shortcut.Keys, shortcuts.Shortcuts[0].Keys);
+        Assert.Equal(shortcut.Binding, shortcuts.Shortcuts[0].Binding);
     }
 
     [Fact]

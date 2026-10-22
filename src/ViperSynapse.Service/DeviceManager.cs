@@ -46,6 +46,7 @@ public sealed class DeviceManager : IDisposable
     readonly Lock _gate = new();
     readonly Dictionary<string, Connected> _devices = [];
     MacroLibrary _macros;
+    ShortcutList _shortcuts;
 
     public event Action? DevicesChanged;
     public event Action<string>? SettingsChanged;
@@ -65,6 +66,7 @@ public sealed class DeviceManager : IDisposable
         _store = store;
         _output = output;
         _macros = store.LoadMacros();
+        _shortcuts = store.LoadShortcuts();
     }
 
     sealed class Connected(string port, ushort productId, string name)
@@ -241,6 +243,26 @@ public sealed class DeviceManager : IDisposable
             _macros = macros;
     }
 
+    public ShortcutList Shortcuts
+    {
+        get { lock (_gate) return _shortcuts; }
+    }
+
+    /// <summary>New shortcuts can mean a device must now be grabbed (or need not be any more): every model is
+    /// applied again.</summary>
+    public void SetShortcuts(ShortcutList shortcuts)
+    {
+        _store.SaveShortcuts(shortcuts);
+        List<string> keys;
+        lock (_gate)
+        {
+            _shortcuts = shortcuts;
+            keys = _devices.Values.Select(d => d.Key).Distinct().ToList();
+        }
+        foreach (var key in keys)
+            Apply(key);
+    }
+
     /// <summary>Brings every connected device of a model in line with its stored settings.</summary>
     public void Apply(string key)
     {
@@ -255,7 +277,9 @@ public sealed class DeviceManager : IDisposable
             {
                 // A thumbstick in 4-way or 8-way mode types its directions even with nothing bound.
                 var stick = device.Model?.Has("thumbstick") == true ? profile.Thumbstick : ThumbstickMode.Analog;
-                if (!bindsAnything && stick == ThumbstickMode.Analog)
+                // A global shortcut made of this device's keys needs its input too.
+                bool shortcut = _shortcuts.Shortcuts.Any(s => device.Model is not { } m || s.Keys.All(k => m.Keys.Any(dk => dk.Source == k)));
+                if (!bindsAnything && !shortcut && stick == ThumbstickMode.Analog)
                 {
                     if (device.Session != null)
                     {
@@ -511,6 +535,8 @@ public sealed class DeviceManager : IDisposable
             ThreadPool.QueueUserWorkItem(_ => manager.SetSettings(key, manager.GetSettings(key).SwitchKeymap(direction, keymap)));
 
         public Macro? FindMacro(Guid id) => manager.Macros.Find(id);
+
+        public ShortcutList Shortcuts => manager.Shortcuts;
 
         public void Report(Exception error) => Console.Error.WriteLine($"{key}: {error.Message}");
     }

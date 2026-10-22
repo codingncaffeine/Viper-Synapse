@@ -14,6 +14,7 @@ public class EngineTests
         readonly List<string> _events = [];
         public readonly Dictionary<Guid, Macro> Macros = [];
         public readonly List<string> Launched = [];
+        public ShortcutList Shortcuts { get; set; } = ShortcutList.Empty;
 
         public void Key(ushort code, int value) { lock (_events) _events.Add($"{KeyCodes.Name(code)}:{value}"); }
         public void Relative(ushort axis, int value) { lock (_events) _events.Add($"REL{axis}:{value}"); }
@@ -260,6 +261,42 @@ public class EngineTests
         Assert.Equal(["KEY_LEFTSHIFT:1", "KEY_H:1", "KEY_H:0", "KEY_LEFTSHIFT:0", "KEY_I:1", "KEY_I:0",
             "KEY_LEFTSHIFT:1", "KEY_1:1", "KEY_1:0", "KEY_LEFTSHIFT:0"], steps);
     }
+
+    [Fact]
+    public void A_global_shortcut_beats_the_keymap_and_the_held_key_keeps_its_own_binding()
+    {
+        var (engine, rec, _) = Make(Keymap.Empty("k").With(B, new KeyboardBinding(C)));
+        rec.Shortcuts = new ShortcutList([GlobalShortcut.Create([Tab, B], new LaunchBinding("tool"))]);
+        engine.Key(Tab, 1);
+        engine.Key(B, 1);
+        engine.Key(B, 0);
+        engine.Key(Tab, 0);
+        // Tab is unbound, so it passed through; B ran the shortcut instead of typing C.
+        Assert.Equal(["KEY_TAB:1", "KEY_TAB:0"], rec.Events);
+        Assert.Equal(["tool"], rec.Launched);
+
+        // B alone is its keymap binding again.
+        rec.Clear();
+        engine.Key(B, 1);
+        engine.Key(B, 0);
+        Assert.Equal(["KEY_C:1", "KEY_C:0"], rec.Events);
+        Assert.Single(rec.Launched);
+    }
+
+    [Fact]
+    public void The_shortcut_with_the_most_keys_wins()
+    {
+        var (engine, rec, _) = Make(Keymap.Empty("k"));
+        rec.Shortcuts = new ShortcutList([
+            GlobalShortcut.Create([Tab, A], new LaunchBinding("two")),
+            GlobalShortcut.Create([Caps, Tab, A], new LaunchBinding("three")),
+        ]);
+        engine.Key(Caps, 1);
+        engine.Key(Tab, 1);
+        engine.Key(A, 1);
+        engine.Key(A, 0);
+        Assert.Equal(["three"], rec.Launched);
+    }
 }
 
 public class MacroFeatureTests
@@ -276,6 +313,7 @@ public class MacroFeatureTests
         public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => Macros.GetValueOrDefault(id);
+        public ShortcutList Shortcuts => ShortcutList.Empty;
         public void Report(Exception error) => throw error;
     }
 

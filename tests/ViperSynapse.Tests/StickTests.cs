@@ -73,6 +73,7 @@ public class StickTests
         public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => null;
+        public ShortcutList Shortcuts => ShortcutList.Empty;
         public void Report(Exception error) => throw error;
     }
 }

@@ -64,6 +64,10 @@ public static class SettingsJson
     public static MacroLibrary ReadMacros(string json) =>
         JsonSerializer.Deserialize(json, SettingsJsonContext.Default.MacroLibrary) ?? throw new InvalidDataException("Empty macro library.");
 
+    public static string Write(ShortcutList shortcuts) => JsonSerializer.Serialize(shortcuts, SettingsJsonContext.Default.ShortcutList);
+    public static ShortcutList ReadShortcuts(string json) =>
+        JsonSerializer.Deserialize(json, SettingsJsonContext.Default.ShortcutList) ?? throw new InvalidDataException("Empty shortcut list.");
+
     public static string Write(IReadOnlyList<MacroStep> steps) => JsonSerializer.Serialize(steps, SettingsJsonContext.Default.IReadOnlyListMacroStep);
     public static IReadOnlyList<MacroStep> ReadSteps(string json) =>
         JsonSerializer.Deserialize(json, SettingsJsonContext.Default.IReadOnlyListMacroStep) ?? [];
@@ -73,5 +77,6 @@ public static class SettingsJson
     UseStringEnumConverter = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
 [JsonSerializable(typeof(DeviceSettings))]
 [JsonSerializable(typeof(MacroLibrary))]
+[JsonSerializable(typeof(ShortcutList))]
 [JsonSerializable(typeof(IReadOnlyList<MacroStep>))]
 internal sealed partial class SettingsJsonContext : JsonSerializerContext;

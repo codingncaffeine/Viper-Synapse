@@ -76,12 +76,12 @@ public sealed partial class BindingEditorViewModel : ObservableObject
     public string Title { get; }
 
     public BindingEditorViewModel(KeyRowViewModel row, Binding binding, MacroLibrary macros, IReadOnlyList<Profile> profiles, int keymaps,
-        Action<KeyRowViewModel, Binding> save, Action close)
+        Action<KeyRowViewModel, Binding> save, Action close, string? title = null)
     {
         Row = row;
         _save = save;
         _close = close;
-        Title = $"{row.Number}  {row.Key.Label}".Trim();
+        Title = title ?? $"{row.Number}  {row.Key.Label}".Trim();
         ProfileChoices = [new(null, "Cycle Up Profile"), new(Guid.Empty, "Cycle Down Profile"), .. profiles.Select(p => new Choice<Guid?>(p.Id, p.Name))];
         KeymapChoices = [new(-1, "Cycle Up Keymap"), new(-2, "Cycle Down Keymap"), .. Enumerable.Range(0, Math.Max(1, keymaps)).Select(i => new Choice<int>(i, $"Keymap {i + 1}"))];
         MacroChoices = macros.Macros.Select(m => new Choice<Guid>(m.Id, m.Name)).ToList();

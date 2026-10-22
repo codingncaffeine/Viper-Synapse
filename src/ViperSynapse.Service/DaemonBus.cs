@@ -26,6 +26,8 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <method name="GetDeviceState"><arg direction="in" type="s" name="device"/><arg direction="out" type="s" name="json"/></method>
           <method name="GetMacros"><arg direction="out" type="s" name="json"/></method>
           <method name="SetMacros"><arg direction="in" type="s" name="json"/></method>
+          <method name="GetShortcuts"><arg direction="out" type="s" name="json"/></method>
+          <method name="SetShortcuts"><arg direction="in" type="s" name="json"/></method>
           <method name="ActiveWindow"><arg direction="in" type="s" name="windowClass"/><arg direction="in" type="v" name="pid"/></method>
           <method name="BuildId"><arg direction="out" type="s" name="id"/></method>
           <method name="WatchStick"><arg direction="in" type="s" name="device"/></method>
@@ -141,6 +143,13 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
                 break;
             case "SetMacros":
                 _devices.SetMacros(SettingsJson.ReadMacros(reader.ReadString()));
+                ReplyEmpty(context);
+                break;
+            case "GetShortcuts":
+                ReplyString(context, SettingsJson.Write(_devices.Shortcuts));
+                break;
+            case "SetShortcuts":
+                _devices.SetShortcuts(SettingsJson.ReadShortcuts(reader.ReadString()));
                 ReplyEmpty(context);
                 break;
             case "ActiveWindow":

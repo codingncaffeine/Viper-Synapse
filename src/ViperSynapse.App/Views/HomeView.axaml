@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ViperSynapse.App.ViewModels"
+             xmlns:views="using:ViperSynapse.App.Views"
+             xmlns:devices="using:ViperSynapse.Core.Devices"
              x:Class="ViperSynapse.App.Views.HomeView"
              x:DataType="vm:HomeViewModel">
     <Grid RowDefinitions="44,*">
@@ -99,6 +101,91 @@
                         </Grid>
                     </StackPanel>
                 </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- GLOBAL SHORTCUTS: one card with the list and the dashed ADD A SHORTCUT row; the editor beside it. -->
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding ShowShortcuts}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Spacing="12" Margin="16,14"
+                        DataContext="{Binding Shortcuts}" x:DataType="vm:ShortcutsViewModel">
+                <Border Background="#151515" Width="432" Padding="14,16" VerticalAlignment="Top" CornerRadius="2">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="SHORTCUTS" Foreground="{StaticResource GreenBrush}" FontSize="13" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Classes="flat" Content="+" FontSize="20" FontWeight="Light" ToolTip.Tip="Add a shortcut" Command="{Binding AddCommand}" />
+                        </Grid>
+                        <TextBlock Foreground="#DDDDDD" FontSize="12" TextWrapping="Wrap"
+                                   Text="Global shortcuts are custom key combinations that work across all device profiles. This feature only works for Viper Synapse-enabled device inputs." />
+                        <ItemsControl ItemsSource="{Binding Rows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ShortcutRow">
+                                    <Border Background="#1E1E1E" Margin="0,0,0,6" Padding="12,8">
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <StackPanel Spacing="2">
+                                                <TextBlock Text="{Binding Keys}" Foreground="#FFFFFF" FontSize="13" />
+                                                <TextBlock Foreground="#999999" FontSize="11">
+                                                    <Run Text="{Binding Category}" /><Run Text=":  " /><Run Text="{Binding Function}" />
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Classes="flat" Content="✎" ToolTip.Tip="Edit"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ShortcutsViewModel)DataContext).ChangeCommand}" CommandParameter="{Binding}" />
+                                            <Button Grid.Column="2" Classes="flat" Content="🗑" ToolTip.Tip="Delete"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ShortcutsViewModel)DataContext).DeleteCommand}" CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Command="{Binding AddCommand}" Background="Transparent" Padding="0" HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch" Cursor="Hand" Margin="0,4,0,8">
+                            <Panel Height="50">
+                                <Rectangle Stroke="#7A7A7A" StrokeThickness="1" StrokeDashArray="4,3" />
+                                <TextBlock Text="ADD A SHORTCUT" Foreground="#DDDDDD" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Panel>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- The keys, then the function from the key-binding editor (its SAVE stores the shortcut). -->
+                <StackPanel Spacing="8" IsVisible="{Binding Editing}" Width="330">
+                    <Border Background="{StaticResource PanelBrush}" Padding="12">
+                        <StackPanel Spacing="8">
+                            <TextBlock Classes="caption" Text="DEVICE" />
+                            <ComboBox ItemsSource="{Binding Devices}" SelectedItem="{Binding EditDevice}" HorizontalAlignment="Stretch">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:DeviceViewModel">
+                                        <TextBlock Text="{Binding ShortName}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Classes="caption" Text="KEYS, HELD TOGETHER (TWO OR THREE)" />
+                            <ComboBox ItemsSource="{Binding KeyChoices}" SelectedItem="{Binding Key1}" HorizontalAlignment="Stretch" PlaceholderText="First key">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="devices:DeviceKey">
+                                        <TextBlock><Run Text="{Binding Number}" /><Run Text="  " /><Run Text="{Binding Label}" /></TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <ComboBox ItemsSource="{Binding KeyChoices}" SelectedItem="{Binding Key2}" HorizontalAlignment="Stretch" PlaceholderText="Second key">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="devices:DeviceKey">
+                                        <TextBlock><Run Text="{Binding Number}" /><Run Text="  " /><Run Text="{Binding Label}" /></TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <ComboBox ItemsSource="{Binding KeyChoices}" SelectedItem="{Binding Key3}" HorizontalAlignment="Stretch" PlaceholderText="Third key (optional)">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="devices:DeviceKey">
+                                        <TextBlock><Run Text="{Binding Number}" /><Run Text="  " /><Run Text="{Binding Label}" /></TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <TextBlock Text="{Binding Problem}" Foreground="#E5484D" FontSize="12" TextWrapping="Wrap"
+                                       IsVisible="{Binding Problem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                        </StackPanel>
+                    </Border>
+                    <views:BindingFlyout DataContext="{Binding Editor}" IsVisible="{Binding $parent[StackPanel].((vm:ShortcutsViewModel)DataContext).Editing}" />
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </Grid>

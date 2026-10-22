@@ -24,6 +24,8 @@ public interface IEngineHost
     void SwitchProfile(Bindings.CycleDirection direction, Guid? profileId);
     void SwitchKeymap(Bindings.CycleDirection direction, int keymap);
     Bindings.Macro? FindMacro(Guid id);
+    /// <summary>The global shortcuts, checked before the keymap on every press.</summary>
+    Bindings.ShortcutList Shortcuts { get; }
     /// <summary>A macro or turbo task failed; the engine keeps running.</summary>
     void Report(Exception error);
 }
