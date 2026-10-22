@@ -650,4 +650,12 @@ public static class KeyCodes
     public static IEnumerable<ushort> All => Names.Keys;
 
     public static bool IsMouseButton(ushort code) => code is >= BtnLeft and <= 0x117;
+
+    /// <summary>BTN_JOYSTICK, BTN_GAMEPAD and BTN_DIGI (0x120-0x14F) and BTN_TRIGGER_HAPPY (0x2C0 on): what marks a
+    /// node as a game controller or tablet.</summary>
+    public static bool IsJoystickButton(ushort code) => code is >= 0x120 and <= 0x14F or >= 0x2C0;
+
+    /// <summary>What the virtual keyboard and mouse may send: keyboard and media keys and mouse buttons, never a
+    /// controller's buttons, so games do not take the virtual device for a phantom gamepad.</summary>
+    public static bool IsKeyboardOrMouse(ushort code) => code is > 0 and < 0x100 or >= 0x110 and <= 0x117 or >= 0x160 and < 0x2C0;
 }

@@ -61,7 +61,10 @@ public sealed class DeviceSession : IDisposable
             foreach (var path in nodePaths)
             {
                 var node = EvdevDevice.Open(path);
-                if (node.Capabilities(EventTypes.Key).Count == 0 && node.Capabilities(EventTypes.Rel).Count == 0)
+                var keys = node.Capabilities(EventTypes.Key);
+                // Gamepad and joystick nodes (the Tartarus V2 Pro's analog mode) carry axes the engine does not pass
+                // on: grabbing one would freeze its sticks. They are left to the system.
+                if (keys.Count == 0 && node.Capabilities(EventTypes.Rel).Count == 0 || keys.Any(Core.Input.KeyCodes.IsJoystickButton))
                 {
                     node.Dispose();
                     continue;

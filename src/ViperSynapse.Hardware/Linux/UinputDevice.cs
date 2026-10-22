@@ -49,9 +49,8 @@ public sealed class UinputDevice : IInputSink, IDisposable
             device.Set(UiSetEvBit, EventTypes.Key);
             device.Set(UiSetEvBit, EventTypes.Rel);
             device.Set(UiSetEvBit, EventTypes.Syn);
-            foreach (var code in KeyCodes.All)
-                if (code < 0x2FF)
-                    device.Set(UiSetKeyBit, code);
+            foreach (var code in KeyCodes.All.Where(KeyCodes.IsKeyboardOrMouse))
+                device.Set(UiSetKeyBit, code);
             foreach (var axis in new[] { RelativeAxes.X, RelativeAxes.Y, RelativeAxes.Wheel, RelativeAxes.HWheel, RelativeAxes.WheelHiRes, RelativeAxes.HWheelHiRes })
                 device.Set(UiSetRelBit, axis);
 

@@ -88,6 +88,29 @@ public class LoopbackTests
     }
 
     [Fact]
+    public void The_virtual_device_is_a_keyboard_and_mouse_and_never_a_game_controller()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        using var node = EvdevDevice.Open(WaitForNode(output));
+        var keys = node.Capabilities(EventTypes.Key);
+        Assert.Contains((ushort)30, keys);                       // KEY_A
+        Assert.Contains(KeyCodes.BtnLeft, keys);
+        Assert.Contains((ushort)0x73, keys);                     // KEY_VOLUMEUP
+        Assert.DoesNotContain(keys, KeyCodes.IsJoystickButton);  // no BTN_SOUTH, BTN_TRIGGER, ...
+        Assert.Empty(node.Capabilities(EventTypes.Abs));
+    }
+
+    [Theory]
+    [InlineData(0x130, true)]   // BTN_SOUTH
+    [InlineData(0x120, true)]   // BTN_TRIGGER
+    [InlineData(0x2C0, true)]   // BTN_TRIGGER_HAPPY1
+    [InlineData(0x110, false)]  // BTN_LEFT
+    [InlineData(30, false)]     // KEY_A
+    public void Controller_buttons_are_told_apart(int code, bool joystick) =>
+        Assert.Equal(joystick, KeyCodes.IsJoystickButton((ushort)code));
+
+    [Fact]
     public void Closing_the_session_lets_go_of_a_held_key_and_of_the_grab()
     {
         Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");

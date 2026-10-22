@@ -48,7 +48,7 @@ Other models in the catalogue are marked as untested in the app until someone co
 
 ## Install
 
-**Arch Linux (AUR):** `viper-synapse-bin`
+**Arch Linux (AUR):** `viper-synapse-bin` (from the first release on)
 
 **Debian / Ubuntu:** download the `.deb` from the releases page and install it with
 `sudo apt install ./viper-synapse_*.deb`. Tested on Debian 12 and 13 and Ubuntu 22.04 and 24.04.
