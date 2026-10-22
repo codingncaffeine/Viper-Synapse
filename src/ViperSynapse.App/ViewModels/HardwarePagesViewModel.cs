@@ -402,6 +402,8 @@ public sealed partial class PerformanceViewModel : ObservableObject
             SeparateXY = settings.Stages.Any(s => s.X != s.Y);
             // 0 = not known: nothing is shown chosen rather than a guess.
             PollingRate = settings.PollingRate;
+            // The count often stays the same across a load, which raises nothing; the switch must still re-read it.
+            OnPropertyChanged(nameof(StagesEnabled));
         }
         finally
         {
@@ -440,8 +442,44 @@ public sealed partial class PerformanceViewModel : ObservableObject
     partial void OnActiveStageChanged(int value) { if (!_loading) _debounce.Poke(); }
     partial void OnPollingRateChanged(int value) { if (!_loading) _debounce.Poke(); }
 
+    /// <summary>Synapse's "Sensitivity Stages" switch: off keeps one sensitivity (the active stage), on brings the
+    /// stages back as they were.</summary>
+    public bool StagesEnabled
+    {
+        get => Stages.Count > 1;
+        set
+        {
+            if (value == StagesEnabled)
+                return;
+            if (value)
+            {
+                StageCount = Math.Max(2, _stagesBefore);
+            }
+            else
+            {
+                _stagesBefore = Stages.Count;
+                var keep = Stages[Math.Clamp(ActiveStage, 0, Stages.Count - 1)];
+                Stages.Clear();
+                Stages.Add(new StageRow(1, this) { X = keep.X, Y = keep.Y, Active = true });
+                ActiveStage = 0;
+                StageCount = 1;
+                _debounce.Poke();
+            }
+            OnPropertyChanged();
+        }
+    }
+
+    int _stagesBefore = PerformanceSettings.MaxStages;
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    void AddStage() => StageCount = Math.Min(PerformanceSettings.MaxStages, Stages.Count + 1);
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    void RemoveStage() => StageCount = Math.Max(1, Stages.Count - 1);
+
     partial void OnStageCountChanged(double value)
     {
+        OnPropertyChanged(nameof(StagesEnabled));
         if (_loading)
             return;
         int count = Math.Clamp((int)value, 1, PerformanceSettings.MaxStages);
@@ -496,30 +534,31 @@ public sealed partial class PowerViewModel(Action<PowerSettings> save) : Observa
 }
 
 /// <summary>The CALIBRATION page: Smart Tracking's lift-off distance.</summary>
+/// <summary>The CALIBRATION page: Smart Tracking on or off (off leaves the sensor at its own default) and the tracking
+/// distance LOW / MEDIUM / HIGH (1, 2, 3 mm).</summary>
 public sealed partial class CalibrationViewModel(Action<CalibrationSettings> save) : ObservableObject
 {
     bool _loading;
 
-    public static IReadOnlyList<Choice<int>> Levels { get; } =
-    [
-        new(-1, "Sensor default"),
-        new(0, "1 mm"),
-        new(1, "2 mm"),
-        new(2, "3 mm"),
-    ];
+    [ObservableProperty] public partial bool SmartTracking { get; set; }
 
-    [ObservableProperty] public partial Choice<int> Level { get; set; } = Levels[0];
+    /// <summary>0 LOW, 1 MEDIUM, 2 HIGH.</summary>
+    [ObservableProperty] public partial double Distance { get; set; } = 1;
 
     public void Load(CalibrationSettings settings)
     {
         _loading = true;
-        Level = Levels.FirstOrDefault(l => l.Value == settings.LiftOffLevel) ?? Levels[0];
+        SmartTracking = settings.LiftOffLevel >= 0;
+        Distance = settings.LiftOffLevel >= 0 ? settings.LiftOffLevel : 1;
         _loading = false;
     }
 
-    partial void OnLevelChanged(Choice<int> value)
+    partial void OnSmartTrackingChanged(bool value) => Save();
+    partial void OnDistanceChanged(double value) => Save();
+
+    void Save()
     {
         if (!_loading)
-            save(new CalibrationSettings(value.Value));
+            save(new CalibrationSettings(SmartTracking ? (int)Math.Round(Distance) : -1));
     }
 }

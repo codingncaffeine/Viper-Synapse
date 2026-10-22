@@ -24,6 +24,7 @@ public sealed class ValueSlider : Grid
     public static readonly StyledProperty<string?> MaxLabelProperty = AvaloniaProperty.Register<ValueSlider, string?>(nameof(MaxLabel));
     public static readonly StyledProperty<string?> MidLabelProperty = AvaloniaProperty.Register<ValueSlider, string?>(nameof(MidLabel));
     public static readonly StyledProperty<bool> ShowBubbleProperty = AvaloniaProperty.Register<ValueSlider, bool>(nameof(ShowBubble), true);
+    public static readonly StyledProperty<bool> ShowLabelsProperty = AvaloniaProperty.Register<ValueSlider, bool>(nameof(ShowLabels), true);
 
     public double Value { get => GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
     public double Minimum { get => GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
@@ -33,6 +34,7 @@ public sealed class ValueSlider : Grid
     public string? MaxLabel { get => GetValue(MaxLabelProperty); set => SetValue(MaxLabelProperty, value); }
     public string? MidLabel { get => GetValue(MidLabelProperty); set => SetValue(MidLabelProperty, value); }
     public bool ShowBubble { get => GetValue(ShowBubbleProperty); set => SetValue(ShowBubbleProperty, value); }
+    public bool ShowLabels { get => GetValue(ShowLabelsProperty); set => SetValue(ShowLabelsProperty, value); }
 
     readonly Slider _slider = new() { IsSnapToTickEnabled = true, Margin = new Thickness(0) };
     readonly Border _bubble = new()
@@ -78,7 +80,7 @@ public sealed class ValueSlider : Grid
         base.OnPropertyChanged(change);
         if (change.Property == ValueProperty || change.Property == MinimumProperty || change.Property == MaximumProperty
             || change.Property == StepProperty || change.Property == MinLabelProperty || change.Property == MaxLabelProperty
-            || change.Property == MidLabelProperty || change.Property == ShowBubbleProperty)
+            || change.Property == MidLabelProperty || change.Property == ShowBubbleProperty || change.Property == ShowLabelsProperty)
             Sync();
     }
 
@@ -95,6 +97,7 @@ public sealed class ValueSlider : Grid
         _max.Text = MaxLabel ?? Maximum.ToString("0", CultureInfo.InvariantCulture);
         _mid.Text = MidLabel ?? "";
         _bubble.IsVisible = ShowBubble;
+        _min.IsVisible = _mid.IsVisible = _max.IsVisible = ShowLabels;
         _bubbleText.Text = Value.ToString(Step < 1 ? "0.0" : "0", CultureInfo.InvariantCulture);
         PlaceBubble();
     }
