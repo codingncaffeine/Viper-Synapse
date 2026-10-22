@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ViperSynapse.Core/ViperSynapse.Core.csproj" />
+    <Project Path="src/ViperSynapse.Hardware/ViperSynapse.Hardware.csproj" />
+    <Project Path="src/ViperSynapse.Cli/ViperSynapse.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ViperSynapse.Tests/ViperSynapse.Tests.csproj" />
+  </Folder>
+</Solution>

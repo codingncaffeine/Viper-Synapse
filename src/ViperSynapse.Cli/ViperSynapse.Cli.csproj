@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- viper-cli: the headless tool for talking to devices from a terminal, scripts and tests. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>viper-cli</AssemblyName>
+    <RootNamespace>ViperSynapse.Cli</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ViperSynapse.Core\ViperSynapse.Core.csproj" />
+    <ProjectReference Include="..\ViperSynapse.Hardware\ViperSynapse.Hardware.csproj" />
+  </ItemGroup>
+
+</Project>

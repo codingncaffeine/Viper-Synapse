@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Everything that is not hardware or windows: the Razer report format, the device catalogue,
+       profiles, key bindings and macros. No I/O here, so all of it runs in the tests. -->
+  <PropertyGroup>
+    <RootNamespace>ViperSynapse.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViperSynapse.Tests" />
+  </ItemGroup>
+
+</Project>

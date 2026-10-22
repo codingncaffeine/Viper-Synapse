@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Linux device access: hidraw feature reports for the Razer control protocol, evdev for the
+       keys a device sends, uinput for the keys we send instead. -->
+  <PropertyGroup>
+    <RootNamespace>ViperSynapse.Hardware</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViperSynapse.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ViperSynapse.Core\ViperSynapse.Core.csproj" />
+  </ItemGroup>
+
+</Project>
