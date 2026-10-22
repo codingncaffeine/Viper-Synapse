@@ -1,0 +1,65 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ViperSynapse.App.ViewModels"
+        xmlns:views="using:ViperSynapse.App.Views"
+        x:Class="ViperSynapse.App.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Viper Synapse"
+        Icon="/Assets/icon.png"
+        Width="1440" Height="860" MinWidth="1080" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        WindowDecorations="None">
+
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:HomeViewModel"><views:HomeView /></DataTemplate>
+        <DataTemplate DataType="vm:DeviceViewModel"><views:DeviceView /></DataTemplate>
+        <DataTemplate DataType="vm:MacrosViewModel"><views:MacrosView /></DataTemplate>
+    </Window.DataTemplates>
+
+    <Panel>
+        <Grid RowDefinitions="32,*,Auto">
+            <!-- Top bar: logo, tabs, window buttons. Dragging it moves the window. -->
+            <Border Grid.Row="0" Background="{StaticResource TopBarBrush}" Name="TopBar">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Classes="chrome" Name="MinimizeButton" ToolTip.Tip="Minimize">
+                            <Path Data="M0,0 L10,0" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1" />
+                        </Button>
+                        <Button Classes="chrome" Name="MaximizeButton" ToolTip.Tip="Maximize">
+                            <Rectangle Width="10" Height="10" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1" />
+                        </Button>
+                        <Button Classes="chrome close" Name="CloseButton" ToolTip.Tip="Close">
+                            <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1" />
+                        </Button>
+                    </StackPanel>
+                    <Image DockPanel.Dock="Left" Source="/Assets/icon.png" Width="20" Height="20" Margin="10,0,6,0" />
+                    <ListBox Classes="topTabs" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
+                             HorizontalAlignment="Left">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:TabViewModel">
+                                <TextBlock Text="{Binding Header}" LetterSpacing="0.8" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <ContentControl Grid.Row="1" Content="{Binding SelectedTab}" />
+
+            <Border Grid.Row="2" Background="#3A1214" IsVisible="{Binding Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Padding="12,6">
+                <TextBlock Text="{Binding Problem}" Foreground="#FFB4B4" TextWrapping="Wrap" />
+            </Border>
+        </Grid>
+
+        <!-- Resize edges: the window draws its own frame, so it offers its own handles. -->
+        <Border Name="EdgeLeft" Width="5" HorizontalAlignment="Left" Background="Transparent" Cursor="SizeWestEast" />
+        <Border Name="EdgeRight" Width="5" HorizontalAlignment="Right" Background="Transparent" Cursor="SizeWestEast" />
+        <Border Name="EdgeBottom" Height="5" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNorthSouth" />
+        <Border Name="EdgeBottomRight" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomRightCorner" />
+        <Border Name="EdgeBottomLeft" Width="10" Height="10" HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Cursor="BottomLeftCorner" />
+    </Panel>
+</Window>

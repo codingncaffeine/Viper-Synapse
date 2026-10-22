@@ -12,8 +12,10 @@ public sealed record DeviceSettings(IReadOnlyList<Profile> Profiles, Guid Active
         return new DeviceSettings([profile], profile.Id, 0);
     }
 
+    [JsonIgnore]
     public Profile Active => Profiles.FirstOrDefault(p => p.Id == ActiveProfile) ?? Profiles[0];
 
+    [JsonIgnore]
     public Keymap ActiveKeymapOrFirst =>
         Active.Keymaps.Count == 0 ? Keymap.Empty("Keymap 1") : Active.Keymaps[Math.Clamp(ActiveKeymap, 0, Active.Keymaps.Count - 1)];
 

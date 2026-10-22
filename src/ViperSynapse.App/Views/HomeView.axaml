@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ViperSynapse.App.ViewModels"
+             x:Class="ViperSynapse.App.Views.HomeView"
+             x:DataType="vm:HomeViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <Border Background="{StaticResource PageBrush}" Padding="24,18,24,8">
+            <StackPanel Spacing="4">
+                <TextBlock Classes="title" Text="DASHBOARD" />
+                <TextBlock Classes="caption" Text="CONNECTED DEVICES" />
+            </StackPanel>
+        </Border>
+        <ScrollViewer Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding Devices}" Margin="20,8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DeviceViewModel">
+                        <Button Margin="6" Padding="0" Background="{StaticResource PanelBrush}" CornerRadius="0"
+                                Width="300" Height="200" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                Click="OpenDevice">
+                            <Grid RowDefinitions="*,Auto" Margin="16">
+                                <Image Source="/Assets/icon.png" Width="72" Height="72" Opacity="0.85" />
+                                <StackPanel Grid.Row="1" Spacing="3">
+                                    <TextBlock Text="{Binding ShortName}" FontSize="15" Foreground="White" />
+                                    <TextBlock Text="{Binding Status}" Classes="green" FontSize="11" />
+                                    <TextBlock Text="{Binding Details}" Classes="caption" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

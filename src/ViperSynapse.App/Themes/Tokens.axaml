@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Measured from Synapse screenshots: black top bar, #222 pages, #2D2D2D side list, #111 panels. -->
+    <Color x:Key="ViperGreen">#44D62C</Color>
+    <SolidColorBrush x:Key="GreenBrush" Color="#44D62C" />
+    <SolidColorBrush x:Key="GreenDimBrush" Color="#2E8F1E" />
+    <SolidColorBrush x:Key="GreenDarkBrush" Color="#1E4D16" />
+    <SolidColorBrush x:Key="TopBarBrush" Color="#000000" />
+    <SolidColorBrush x:Key="PageBrush" Color="#222222" />
+    <SolidColorBrush x:Key="SideBrush" Color="#2D2D2D" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#111111" />
+    <SolidColorBrush x:Key="RowSelectedBrush" Color="#111111" />
+    <SolidColorBrush x:Key="RowHoverBrush" Color="#262626" />
+    <SolidColorBrush x:Key="LineBrush" Color="#3A3A3A" />
+    <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="TextDimBrush" Color="#999999" />
+    <SolidColorBrush x:Key="CaptionBrush" Color="#777777" />
+    <SolidColorBrush x:Key="ButtonGreyBrush" Color="#6B6C67" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#E5484D" />
+    <SolidColorBrush x:Key="DotGridBrush" Color="#333333" />
+</ResourceDictionary>

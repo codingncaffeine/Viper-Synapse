@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- viper-synapse: the window. It holds no device state of its own: everything it shows comes from
+       viper-synapsed over the session bus, and every change goes back the same way. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>viper-synapse</AssemblyName>
+    <RootNamespace>ViperSynapse.App</RootNamespace>
+    <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViperSynapse.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="$(MvvmToolkitVersion)" />
+    <PackageReference Include="Tmds.DBus.Protocol" Version="$(TmdsDBusVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ViperSynapse.Core\ViperSynapse.Core.csproj" />
+    <!-- The service is published next to the window so a session without the systemd unit can start it. -->
+    <ProjectReference Include="..\ViperSynapse.Service\ViperSynapse.Service.csproj" />
+  </ItemGroup>
+
+</Project>

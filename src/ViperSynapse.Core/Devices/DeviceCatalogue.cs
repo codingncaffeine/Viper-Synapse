@@ -9,8 +9,9 @@ namespace ViperSynapse.Core.Devices;
 public sealed record LightingZone(IReadOnlyList<string> Effects, bool Brightness);
 
 /// <summary>One programmable control: its printed number, label, the key it sends by default (0 when it sends
-/// none, like Hypershift), its id in the device's own key map, and the group it is listed under.</summary>
-public sealed record DeviceKey(int Number, string Label, ushort Code, byte HardwareId, string Group);
+/// none, like Hypershift), its id in the device's own key map, the group it is listed under, and the source
+/// code the remap engine knows it by: its key code, or a wheel direction for controls that send no key.</summary>
+public sealed record DeviceKey(int Number, string Label, ushort Code, byte HardwareId, string Group, ushort Source);
 
 /// <summary>What is known about one Razer device model before talking to it.</summary>
 public sealed record DeviceModel(
@@ -82,7 +83,16 @@ public sealed class DeviceCatalogue
                     k.Label,
                     string.IsNullOrEmpty(k.Code) ? (ushort)0 : Input.KeyCodes.TryParse(k.Code, out var code) ? code : throw new InvalidDataException($"{d.Name}: unknown key code {k.Code}"),
                     byte.Parse(k.Hw ?? "0", NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-                    k.Group ?? "main")).ToList());
+                    k.Group ?? "main",
+                    k.Source switch
+                    {
+                        null or "" => string.IsNullOrEmpty(k.Code) ? (ushort)0 : Input.KeyCodes.TryParse(k.Code, out var c) ? c : (ushort)0,
+                        "wheel-up" => Bindings.SourceKeys.WheelUp,
+                        "wheel-down" => Bindings.SourceKeys.WheelDown,
+                        "wheel-left" => Bindings.SourceKeys.WheelLeft,
+                        "wheel-right" => Bindings.SourceKeys.WheelRight,
+                        _ => throw new InvalidDataException($"{d.Name}: unknown key source {k.Source}"),
+                    })).ToList());
         }
     }
 
@@ -102,7 +112,7 @@ public sealed class DeviceCatalogue
         string? Source,
         List<KeyJson>? Keys);
 
-    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group);
+    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group, string? Source);
 }
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]

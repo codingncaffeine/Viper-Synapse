@@ -1,0 +1,280 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{StaticResource PageBrush}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="{StaticResource CaptionBrush}" />
+        <Setter Property="LetterSpacing" Value="0.4" />
+    </Style>
+    <Style Selector="TextBlock.green">
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="TextBlock.heading">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+        <Setter Property="LetterSpacing" Value="0.6" />
+    </Style>
+    <Style Selector="TextBlock.title">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextDimBrush}" />
+        <Setter Property="LetterSpacing" Value="1.2" />
+    </Style>
+
+    <!-- Top bar tabs: SYNAPSE, one per device, MACROS. The open one takes the page colour. -->
+    <Style Selector="RadioButton.topTab">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Back" Background="Transparent" Padding="14,0" Height="32">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Ellipse Name="Dot" Width="6" Height="6" Fill="{StaticResource GreenBrush}" IsVisible="False" />
+                        <ContentPresenter Name="Text" Content="{TemplateBinding Content}" Foreground="#9A9A9A"
+                                          FontSize="11" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.topTab:pointerover /template/ ContentPresenter#Text">
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="RadioButton.topTab:checked /template/ Border#Back">
+        <Setter Property="Background" Value="{StaticResource PageBrush}" />
+    </Style>
+    <Style Selector="RadioButton.topTab:checked /template/ ContentPresenter#Text">
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="RadioButton.topTab:checked /template/ Ellipse#Dot">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+
+    <!-- Page tabs under the device name: CUSTOMIZE, LIGHTING, ... The open one is a green pill. -->
+    <Style Selector="RadioButton.pill">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Back" Background="Transparent" CornerRadius="3" Padding="12,4">
+                    <ContentPresenter Name="Text" Content="{TemplateBinding Content}" Foreground="#CCCCCC"
+                                      FontSize="11" HorizontalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.pill:pointerover /template/ ContentPresenter#Text">
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="RadioButton.pill:checked /template/ Border#Back">
+        <Setter Property="Background" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="RadioButton.pill:checked /template/ ContentPresenter#Text">
+        <Setter Property="Foreground" Value="#000000" />
+    </Style>
+
+    <!-- Standard / Hypershift: one rounded track, the chosen half filled green. -->
+    <Style Selector="RadioButton.segment">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Back" Background="Transparent" CornerRadius="12" Padding="14,4">
+                    <ContentPresenter Name="Text" Content="{TemplateBinding Content}" Foreground="#FFFFFF" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.segment:checked /template/ Border#Back">
+        <Setter Property="Background" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="RadioButton.segment:checked /template/ ContentPresenter#Text">
+        <Setter Property="Foreground" Value="#000000" />
+    </Style>
+
+    <!-- Window buttons drawn in the top bar. -->
+    <Style Selector="Button.chrome">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#9A9A9A" />
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.chrome:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#262626" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="Button.chrome.close:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#C42B1C" />
+    </Style>
+
+    <!-- SAVE and CANCEL. -->
+    <Style Selector="Button.save">
+        <Setter Property="Background" Value="{StaticResource GreenBrush}" />
+        <Setter Property="Foreground" Value="#000000" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="MinWidth" Value="96" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.save:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#5BE443" />
+        <Setter Property="Foreground" Value="#000000" />
+    </Style>
+    <Style Selector="Button.save:disabled /template/ ContentPresenter">
+        <Setter Property="Background" Value="#214D1A" />
+        <Setter Property="Foreground" Value="#3E7A33" />
+    </Style>
+    <Style Selector="Button.cancel">
+        <Setter Property="Background" Value="{StaticResource ButtonGreyBrush}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="MinWidth" Value="96" />
+        <Setter Property="Height" Value="26" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.cancel:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#80817B" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+
+    <!-- A plain text-like button (the "..." menus, links). -->
+    <Style Selector="Button.flat">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#CCCCCC" />
+        <Setter Property="Padding" Value="6,2" />
+    </Style>
+    <Style Selector="Button.flat:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+
+    <!-- The function rail of the binding flyout. -->
+    <Style Selector="RadioButton.rail">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Back" Background="Transparent" Width="40" Height="36">
+                    <ContentPresenter Name="Icon" Content="{TemplateBinding Content}" Foreground="#9A9A9A"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.rail:pointerover /template/ ContentPresenter#Icon">
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="RadioButton.rail:checked /template/ Border#Back">
+        <Setter Property="Background" Value="#111111" />
+    </Style>
+    <Style Selector="RadioButton.rail:checked /template/ ContentPresenter#Icon">
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+
+    <!-- Key list rows on the left of Customize. -->
+    <Style Selector="ListBox.keys">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ListBox.keys ListBoxItem">
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
+    </Style>
+    <Style Selector="ListBox.keys ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource RowHoverBrush}" />
+    </Style>
+    <Style Selector="ListBox.keys ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource RowSelectedBrush}" />
+    </Style>
+
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="#111111" />
+        <Setter Property="BorderBrush" Value="#3A3A3A" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="MinHeight" Value="28" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="#111111" />
+        <Setter Property="BorderBrush" Value="#3A3A3A" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="Slider">
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <!-- Top bar tabs as a ListBox: the open tab takes the page colour and a green dot. -->
+    <Style Selector="ListBox.topTabs">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ListBox.topTabs ListBoxItem">
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Foreground" Value="#9A9A9A" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ListBox.topTabs ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#141414" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="ListBox.topTabs ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource PageBrush}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+
+    <!-- Page tabs (CUSTOMIZE, LIGHTING, ...): the open one is a green pill with black text. -->
+    <Style Selector="ListBox.pills">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ListBox.pills ListBoxItem">
+        <Setter Property="Padding" Value="14,4" />
+        <Setter Property="Margin" Value="4,0" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="#CCCCCC" />
+    </Style>
+    <Style Selector="ListBox.pills ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="ListBox.pills ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource GreenBrush}" />
+        <Setter Property="Foreground" Value="#000000" />
+    </Style>
+
+    <!-- The flyout's function rail. -->
+    <Style Selector="ListBox.rail">
+        <Setter Property="Background" Value="#222222" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ListBox.rail ListBoxItem">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="#9A9A9A" />
+        <Setter Property="FontSize" Value="15" />
+    </Style>
+    <Style Selector="ListBox.rail ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#2A2A2A" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="ListBox.rail ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="#111111" />
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+    </Style>
+</Styles>
