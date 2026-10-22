@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Viper Synapse
+GenericName=Razer Device Settings
+Comment=Key bindings, macros, lighting and sensitivity for Razer keyboards, keypads and mice
+Exec=viper-synapse
+Icon=viper-synapse
+Terminal=false
+Type=Application
+Categories=Settings;HardwareSettings;Utility;
+Keywords=razer;synapse;macro;keypad;tartarus;naga;basilisk;mouse;keyboard;rgb;chroma;dpi;
+StartupWMClass=viper-synapse
