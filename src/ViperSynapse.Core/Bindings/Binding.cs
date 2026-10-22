@@ -49,7 +49,7 @@ public enum CycleDirection
 }
 
 /// <summary>What one key does. Each subtype is one entry of Synapse's function rail.</summary>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "function")]
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(DefaultBinding), "default")]
 [JsonDerivedType(typeof(DisableBinding), "disable")]
 [JsonDerivedType(typeof(KeyboardBinding), "keyboard")]

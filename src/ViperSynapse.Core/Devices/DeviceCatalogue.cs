@@ -8,6 +8,10 @@ namespace ViperSynapse.Core.Devices;
 /// <summary>One lighting zone: the effects it takes and whether its brightness can be set.</summary>
 public sealed record LightingZone(IReadOnlyList<string> Effects, bool Brightness);
 
+/// <summary>One programmable control: its printed number, label, the key it sends by default (0 when it sends
+/// none, like Hypershift), its id in the device's own key map, and the group it is listed under.</summary>
+public sealed record DeviceKey(int Number, string Label, ushort Code, byte HardwareId, string Group);
+
 /// <summary>What is known about one Razer device model before talking to it.</summary>
 public sealed record DeviceModel(
     ushort ProductId,
@@ -19,7 +23,8 @@ public sealed record DeviceModel(
     int MatrixColumns,
     int DpiMax,
     IReadOnlyList<int> PollRates,
-    string Source)
+    string Source,
+    IReadOnlyList<DeviceKey> Keys)
 {
     public bool Has(string feature) => Features.Contains(feature);
 }
@@ -71,7 +76,13 @@ public sealed class DeviceCatalogue
                 d.Matrix is [_, var cols] ? cols : 0,
                 d.DpiMax,
                 d.PollRates ?? [],
-                d.Source ?? "");
+                d.Source ?? "",
+                (d.Keys ?? []).Select(k => new DeviceKey(
+                    k.Number,
+                    k.Label,
+                    string.IsNullOrEmpty(k.Code) ? (ushort)0 : Input.KeyCodes.TryParse(k.Code, out var code) ? code : throw new InvalidDataException($"{d.Name}: unknown key code {k.Code}"),
+                    byte.Parse(k.Hw ?? "0", NumberStyles.HexNumber, CultureInfo.InvariantCulture),
+                    k.Group ?? "main")).ToList());
         }
     }
 
@@ -88,7 +99,10 @@ public sealed class DeviceCatalogue
         List<int>? Matrix,
         [property: JsonPropertyName("dpi_max")] int DpiMax,
         [property: JsonPropertyName("poll_rates")] List<int>? PollRates,
-        string? Source);
+        string? Source,
+        List<KeyJson>? Keys);
+
+    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group);
 }
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]

@@ -33,6 +33,12 @@ public class CatalogueTests
         Assert.NotNull(tartarus);
         Assert.Equal("keypad", tartarus.Type);
         Assert.Equal("Razer Tartarus V2 Pro", tartarus.Name);
+        // The manual numbers 27 keys; the key map read from the device gives their ids.
+        Assert.Equal(27, tartarus.Keys.Count(k => k.Group == "main"));
+        var w = tartarus.Keys.Single(k => k.Number == 9);
+        Assert.Equal(("W", (byte)0x12), (w.Label, w.HardwareId));
+        Assert.Equal("KEY_W", Core.Input.KeyCodes.Name(w.Code));
+        Assert.Equal(0x3b, tartarus.Keys.Single(k => k.Label == "Hypershift").HardwareId);
     }
 
     [Fact]
