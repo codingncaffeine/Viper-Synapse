@@ -18,6 +18,8 @@ static class Program
             {
                 "list" => List(),
                 "probe" when args.Length >= 2 => Probe(args[1]),
+                "scan" when args.Length >= 2 => Scan(args[1]),
+                "get" when args.Length >= 4 => Get(args[1], args[2..]),
                 "inputs" => Inputs(),
                 "watch" when args.Length >= 2 => Watch(args[1..]),
                 _ => Usage(),
@@ -40,6 +42,8 @@ static class Program
         Console.Error.WriteLine("""
             viper-cli list            Razer hidraw nodes, grouped by device
             viper-cli probe NODE      read-only commands against a control node (e.g. /dev/hidraw17)
+            viper-cli scan NODE       every "get" command (id 0x80-0xFF) in classes 0x00-0x0F; prints the supported ones
+            viper-cli get NODE CLASS ID [ARG...]   one "get" command (hex bytes; the id must have bit 7 set)
             viper-cli inputs          Razer input nodes and what each can send
             viper-cli watch NODE...   print events from input nodes (no grab)
             """);
@@ -106,6 +110,36 @@ static class Program
             var answer = transport.Send(Commands.Request(tid, command));
             Console.WriteLine($"{command.Name,-16} {Describe(answer)}");
         }
+        return 0;
+    }
+
+    /// <summary>Sends every "get" (bit 7 set) with zero arguments and prints the ones the device does not
+    /// refuse. Gets only: a set is never sent.</summary>
+    static int Get(string path, string[] hex)
+    {
+        var bytes = hex.Select(h => byte.Parse(h, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToArray();
+        if ((bytes[1] & 0x80) == 0)
+        {
+            Console.Error.WriteLine("Refusing: the command id has bit 7 clear, which makes it a set.");
+            return 64;
+        }
+        var arguments = new byte[RazerReport.MaxArguments];
+        bytes.AsSpan(2).CopyTo(arguments);
+        using var transport = new RazerTransport(HidrawDevice.Open(path)) { AnswerDelay = TimeSpan.FromMilliseconds(2) };
+        Console.WriteLine(Describe(transport.Send(RazerReport.Create(0x1F, bytes[0], bytes[1], arguments, RazerReport.MaxArguments))));
+        return 0;
+    }
+
+    static int Scan(string path)
+    {
+        using var transport = new RazerTransport(HidrawDevice.Open(path)) { AnswerDelay = TimeSpan.FromMilliseconds(2) };
+        for (int cls = 0x00; cls <= 0x0F; cls++)
+            for (int id = 0x80; id <= 0xFF; id++)
+            {
+                var answer = transport.Send(RazerReport.Create(0x1F, (byte)cls, (byte)id, new byte[RazerReport.MaxArguments], RazerReport.MaxArguments));
+                if (answer.Status is not (ReportStatus.NotSupported or ReportStatus.Failure))
+                    Console.WriteLine(Describe(answer));
+            }
         return 0;
     }
 
