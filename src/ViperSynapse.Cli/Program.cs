@@ -23,6 +23,7 @@ static class Program
                 "set" when args.Length >= 4 => Set(args[1], args[2..]),
                 "inputs" => Inputs(),
                 "watch" when args.Length >= 2 => Watch(args[1..]),
+                "raw" when args.Length >= 2 => Raw(args[1..]),
                 _ => Usage(),
             };
         }
@@ -48,6 +49,7 @@ static class Program
             viper-cli set NODE CLASS ID [ARG...]   one "set": lighting (0F), DPI (04 05/06) and polling rate (00 05/40) only
             viper-cli inputs          Razer input nodes and what each can send
             viper-cli watch NODE...   print events from input nodes (no grab)
+            viper-cli raw HIDRAW...    print input reports from hidraw nodes (changes only), e.g. a vendor interface
             """);
         return 64;
     }
@@ -122,7 +124,9 @@ static class Program
             || bytes[0] == 0x04 && bytes[1] is 0x05 or 0x06
             || bytes[0] == 0x00 && bytes[1] is 0x05 or 0x40
             // Sensor settings: calibration mode, tracking mode, lift-off table. Never 0x09 (starts surface sampling).
-            || bytes[0] == 0x0B && bytes[1] is 0x03 or 0x05 or 0x0B;
+            || bytes[0] == 0x0B && bytes[1] is 0x03 or 0x05 or 0x0B
+            // Selecting a keymap (as the keypad's own keymap button does), for reading each preset.
+            || bytes[0] == 0x02 && bytes[1] == 0x37;
         if (!allowed)
         {
             Console.Error.WriteLine("Refusing: only lighting (0F 02/03/04), DPI (04 05/06), polling rate (00 05/40) and sensor settings (0B 03/05/0B) may be set from here.");
@@ -164,6 +168,33 @@ static class Program
                     Console.WriteLine($"    {EventTypes.Name(type)} ({codes.Count}): {string.Join(' ', codes.Take(40).Select(c => EventTypes.CodeName(type, c)))}{(codes.Count > 40 ? " …" : "")}");
             }
         }
+        return 0;
+    }
+
+    /// <summary>Input reports straight from hidraw nodes, printed only when a node's report changes.</summary>
+    static unsafe int Raw(string[] paths)
+    {
+        var threads = paths.Select(path => new Thread(() =>
+        {
+            int fd = Libc.Open(path, Libc.O_RDONLY | Libc.O_CLOEXEC);
+            if (fd < 0) { Console.Error.WriteLine($"{path}: cannot open"); return; }
+            var buffer = new byte[256];
+            string last = "";
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            while (true)
+            {
+                nint n;
+                fixed (byte* p = buffer)
+                    n = Libc.Read(fd, p, (nuint)buffer.Length);
+                if (n <= 0) break;
+                string hex = string.Join(' ', buffer.Take((int)n).Select(b => b.ToString("x2", CultureInfo.InvariantCulture)));
+                if (hex == last) continue;
+                last = hex;
+                Console.WriteLine($"{clock.Elapsed.TotalSeconds,8:F3} {Path.GetFileName(path)} {hex}");
+            }
+        }) { IsBackground = true }).ToList();
+        threads.ForEach(t => t.Start());
+        threads.ForEach(t => t.Join());
         return 0;
     }
 

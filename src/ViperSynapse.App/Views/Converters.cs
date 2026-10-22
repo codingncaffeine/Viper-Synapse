@@ -25,6 +25,13 @@ public static class Converters
 
     public static readonly IValueConverter ZoneLabel = new FuncValueConverter<string?, string>(z => ViewModels.LightingViewModel.ZoneLabel(z ?? ""));
 
+    public static readonly IValueConverter StickDirections = new FuncValueConverter<ViperSynapse.Core.Bindings.ThumbstickMode, int>(m => m switch
+    {
+        ViperSynapse.Core.Bindings.ThumbstickMode.FourWay => 4,
+        ViperSynapse.Core.Bindings.ThumbstickMode.EightWay => 8,
+        _ => 0,
+    });
+
     public static readonly IValueConverter Equal = new FuncValueConverter<object?, object?, bool>((value, parameter) =>
         Equals(value?.ToString(), parameter?.ToString()));
 }

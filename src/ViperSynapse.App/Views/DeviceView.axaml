@@ -93,28 +93,75 @@
             </Border>
 
             <Panel Grid.Column="1">
-                <controls:DeviceDrawing Device="{Binding}" Selected="{Binding SelectedKey}" Margin="40,10,40,70" IsVisible="{Binding ShowDrawing}" />
-                <Image Source="{Binding Photo}" Stretch="Uniform" Margin="60,20,60,90" IsVisible="{Binding !ShowDrawing}" />
+                <ScrollViewer>
+                    <StackPanel Spacing="14" Margin="0,0,0,20">
+                        <!-- The device, and beside it what Synapse 4 puts there: the thumbstick card. -->
+                        <Grid ColumnDefinitions="*,Auto" Height="560">
+                            <Panel>
+                                <controls:DeviceDrawing Device="{Binding}" Selected="{Binding SelectedKey}" Margin="40,10,40,10" IsVisible="{Binding ShowDrawing}" />
+                                <Image Source="{Binding Photo}" Stretch="Uniform" Margin="60,20,60,20" IsVisible="{Binding !ShowDrawing}" />
+                                <!-- View thumbnails, as under Synapse's device picture: the drawn layout and Razer's photo. -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,8" Spacing="8"
+                                            IsVisible="{Binding Photo, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                    <RadioButton Classes="thumb" GroupName="view" IsChecked="{Binding !ShowPhoto, Mode=OneWay}" Click="ShowLayout" ToolTip.Tip="Key layout">
+                                        <TextBlock Text="▦" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </RadioButton>
+                                    <RadioButton Classes="thumb" GroupName="view" IsChecked="{Binding ShowPhoto}" ToolTip.Tip="Photo">
+                                        <Image Source="{Binding Photo}" Stretch="Uniform" />
+                                    </RadioButton>
+                                </StackPanel>
+                            </Panel>
+                            <Border Grid.Column="1" Classes="card" Width="400" Margin="0,40,40,0" IsVisible="{Binding HasThumbstick}">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Classes="heading" Text="THUMBSTICK INPUT MODE" />
+                                    <TextBlock Foreground="#CCCCCC" FontSize="12" Text="Set the thumbstick to true analog, 4-way or 8-way input." />
+                                    <Border CornerRadius="14" BorderBrush="#4A4A4A" BorderThickness="1" Padding="2" HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Classes="segment" GroupName="stick" IsChecked="{Binding StickAnalog}" Content="◉ Analog" ToolTip.Tip="True analog" />
+                                            <RadioButton Classes="segment" GroupName="stick" IsChecked="{Binding StickFourWay}" Content="✛ 4-Way" ToolTip.Tip="4-way" />
+                                            <RadioButton Classes="segment" GroupName="stick" IsChecked="{Binding StickEightWay}" Content="✳ 8-Way" ToolTip.Tip="8-way" />
+                                        </StackPanel>
+                                    </Border>
+                                    <controls:StickView Width="150" Height="150" HorizontalAlignment="Center" X="{Binding StickX}" Y="{Binding StickY}"
+                                                        Directions="{Binding StickMode, Converter={x:Static views:Converters.StickDirections}}" />
+                                    <TextBlock Text="{Binding StickText}" HorizontalAlignment="Center" Foreground="#CCCCCC" FontSize="12" />
+                                    <TextBlock Text="{Binding StickHint}" Classes="caption" TextWrapping="Wrap" TextAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
 
-                <!-- View thumbnails, as under Synapse's device picture: the drawn layout and Razer's photo. -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,18" Spacing="8"
-                            IsVisible="{Binding Photo, Converter={x:Static ObjectConverters.IsNotNull}}">
-                    <RadioButton Classes="thumb" GroupName="view" IsChecked="{Binding !ShowPhoto, Mode=OneWay}" Click="ShowLayout" ToolTip.Tip="Key layout">
-                        <TextBlock Text="▦" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </RadioButton>
-                    <RadioButton Classes="thumb" GroupName="view" IsChecked="{Binding ShowPhoto}" ToolTip.Tip="Photo">
-                        <Image Source="{Binding Photo}" Stretch="Uniform" />
-                    </RadioButton>
-                </StackPanel>
+                        <Border CornerRadius="14" BorderBrush="#4A4A4A" BorderThickness="1" Padding="2" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Classes="segment" GroupName="layer" Content="Standard" IsChecked="{Binding Standard}" />
+                                <RadioButton Classes="segment" GroupName="layer" Content="Hypershift" IsChecked="{Binding Hypershift}" />
+                            </StackPanel>
+                        </Border>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,22" Spacing="10">
-                    <Border CornerRadius="14" BorderBrush="#4A4A4A" BorderThickness="1" Padding="2">
-                        <StackPanel Orientation="Horizontal">
-                            <RadioButton Classes="segment" GroupName="layer" Content="Standard" IsChecked="{Binding Standard}" />
-                            <RadioButton Classes="segment" GroupName="layer" Content="Hypershift" IsChecked="{Binding Hypershift}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                        <!-- Setting cards under the device, as in Synapse 4. -->
+                        <WrapPanel HorizontalAlignment="Center">
+                            <Border Classes="card" Width="540" IsVisible="{Binding HasPollingCard}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="heading" Text="WIRED POLLING RATE" />
+                                    <TextBlock Foreground="#CCCCCC" FontSize="12" Text="The frequency (Hz) of data updates in a second." />
+                                    <ListBox Classes="rates" ItemsSource="{Binding Performance.PollRates}" SelectedItem="{Binding Performance.PollingRate}">
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
+                                    </ListBox>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card" Width="440">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="heading" Text="MACRO &amp; KEYSTROKE INTERRUPTION" />
+                                    <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"
+                                               Text="Choose what stops a running macro or keystroke sequence." />
+                                    <RadioButton GroupName="interrupt" Content="Only its own key" IsChecked="{Binding InterruptDedicated}" />
+                                    <RadioButton GroupName="interrupt" Content="Any key" IsChecked="{Binding InterruptAnyKey}" />
+                                </StackPanel>
+                            </Border>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <!-- The binding flyout, against the key list as in Synapse. -->
                 <views:BindingFlyout DataContext="{Binding Editor}" HorizontalAlignment="Left" VerticalAlignment="Top"

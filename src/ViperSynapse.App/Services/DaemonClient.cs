@@ -34,6 +34,9 @@ public sealed class DaemonClient : IAsyncDisposable
     public event Action? DevicesChanged;
     public event Action<string>? SettingsChanged;
 
+    /// <summary>A watched thumbstick moved: device, x, y (-1 to 1, y negative upwards). Raised on a pool thread.</summary>
+    public event Action<string, double, double>? StickMoved;
+
     public async Task ConnectAsync(CancellationToken cancel = default)
     {
         var connection = new DBusConnection(DBusAddress.Session ?? throw new InvalidOperationException("No session bus."));
@@ -41,13 +44,23 @@ public sealed class DaemonClient : IAsyncDisposable
         _connection = connection;
         await connection.AddMatchAsync(
             new MatchRule { Type = MessageType.Signal, Interface = Interface, Path = ObjectPath },
-            static (Message m, object? _) => (m.MemberAsString ?? "", m.SignatureAsString == "s" ? m.GetBodyReader().ReadString() : null),
-            (Notification<(string Member, string? Arg)> n) =>
+            static (Message m, object? _) =>
+            {
+                var r = m.GetBodyReader();
+                return m.SignatureAsString switch
+                {
+                    "s" => (m.MemberAsString ?? "", r.ReadString(), 0.0, 0.0),
+                    "sdd" => (m.MemberAsString ?? "", r.ReadString(), r.ReadDouble(), r.ReadDouble()),
+                    _ => (m.MemberAsString ?? "", (string?)null, 0.0, 0.0),
+                };
+            },
+            (Notification<(string Member, string? Arg, double X, double Y)> n) =>
             {
                 if (!n.HasValue) return;
                 var signal = n.Value;
                 if (signal.Member == "DevicesChanged") DevicesChanged?.Invoke();
                 else if (signal.Member == "SettingsChanged" && signal.Arg != null) SettingsChanged?.Invoke(signal.Arg);
+                else if (signal.Member == "StickMoved" && signal.Arg != null) StickMoved?.Invoke(signal.Arg, signal.X, signal.Y);
             },
             emitOnCapturedContext: false, ObserverFlags.None, null).ConfigureAwait(false);
 
@@ -115,6 +128,9 @@ public sealed class DaemonClient : IAsyncDisposable
         SettingsJson.ReadMacros(await CallStringAsync("GetMacros").ConfigureAwait(false));
 
     public Task SetMacrosAsync(MacroLibrary macros) => CallAsync("SetMacros", "s", SettingsJson.Write(macros));
+
+    /// <summary>Follow the device's thumbstick for the next 15 seconds (ask again to keep following).</summary>
+    public Task WatchStickAsync(string device) => CallAsync("WatchStick", "s", device);
 
     public Task StartRecordingAsync() => CallAsync("StartRecording", null);
 

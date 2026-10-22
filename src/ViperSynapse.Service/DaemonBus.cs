@@ -28,6 +28,8 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <method name="SetMacros"><arg direction="in" type="s" name="json"/></method>
           <method name="ActiveWindow"><arg direction="in" type="s" name="windowClass"/><arg direction="in" type="v" name="pid"/></method>
           <method name="BuildId"><arg direction="out" type="s" name="id"/></method>
+          <method name="WatchStick"><arg direction="in" type="s" name="device"/></method>
+          <signal name="StickMoved"><arg type="s" name="device"/><arg type="d" name="x"/><arg type="d" name="y"/></signal>
           <method name="Quit"/>
           <method name="StartRecording"/>
           <method name="StopRecording"><arg direction="in" type="s" name="delayMode"/><arg direction="in" type="i" name="defaultDelayMs"/><arg direction="out" type="s" name="steps"/></method>
@@ -62,6 +64,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
         _recordFrom = recordFrom;
         devices.DevicesChanged += () => Signal("DevicesChanged", null);
         devices.SettingsChanged += key => Signal("SettingsChanged", key);
+        devices.StickMoved += SignalStick;
     }
 
     /// <summary>Connects and takes the bus name. Fails when another service already holds it.</summary>
@@ -160,6 +163,10 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
                 ReplyEmpty(context);
                 break;
             }
+            case "WatchStick":
+                _devices.WatchStick(DeviceKey(reader.ReadString()));
+                ReplyEmpty(context);
+                break;
             case "Quit":
                 ReplyEmpty(context);
                 _quit();
@@ -215,6 +222,19 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
     {
         using var writer = context.CreateReplyWriter(null);
         context.Reply(writer.CreateMessage());
+    }
+
+    void SignalStick(string device, double x, double y)
+    {
+        var connection = _connection;
+        if (connection == null)
+            return;
+        using var writer = connection.GetMessageWriter();
+        writer.WriteSignalHeader(path: ObjectPath, @interface: Interface, member: "StickMoved", signature: "sdd");
+        writer.WriteString(device);
+        writer.WriteDouble(x);
+        writer.WriteDouble(y);
+        connection.TrySendMessage(writer.CreateMessage());
     }
 
     void Signal(string member, string? argument)

@@ -50,10 +50,16 @@ static class Program
 
     /// <summary>Used by <see cref="Main"/>, the designer and the headless tests.</summary>
     public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<App>()
+        Logging()(AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            .WithInterFont()
-            .LogToTrace();
+            .WithInterFont());
+
+    /// <summary>VIPER_SYNAPSE_DEBUG=1 prints Avalonia's warnings (binding and view errors) to stderr; otherwise they go
+    /// to the trace as usual.</summary>
+    static Func<AppBuilder, AppBuilder> Logging() => builder =>
+        Environment.GetEnvironmentVariable("VIPER_SYNAPSE_DEBUG") == "1"
+            ? builder.LogToTextWriter(Console.Error, Avalonia.Logging.LogEventLevel.Warning)
+            : builder.LogToTrace();
 }
 
 /// <summary>What Main learned before the UI thread started.</summary>

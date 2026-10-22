@@ -31,6 +31,8 @@ public sealed class UinputDevice : IInputSink, IDisposable
     static readonly nuint UiSetKeyBit = Libc.IoW('U', 101, sizeof(int));
     static readonly nuint UiSetRelBit = Libc.IoW('U', 102, sizeof(int));
     static readonly nuint UiSetPhys = Libc.IoW('U', 108, (uint)IntPtr.Size);
+    static readonly nuint UiSetAbsBit = Libc.IoW('U', 103, sizeof(int));
+    static readonly nuint UiAbsSetup = Libc.IoW('U', 4, 28);
     static nuint UiGetSysname(int length) => Libc.IoR('U', 44, (uint)length);
 
     // phys: the physical path the device claims (tests use it to stand in for a USB device); none by default.
@@ -78,6 +80,54 @@ public sealed class UinputDevice : IInputSink, IDisposable
             throw;
         }
     }
+
+    /// <summary>A stand-in for a keypad's gamepad node, for tests: the right stick (RX, RY, -32768 to 32767) and its
+    /// click. Never used outside tests.</summary>
+    public static unsafe UinputDevice CreateTestGamepad(string name, ushort vendor, ushort product, string phys, string path = "/dev/uinput")
+    {
+        int fd = Libc.Open(path, Libc.O_WRONLY | Libc.O_NONBLOCK | Libc.O_CLOEXEC);
+        if (fd < 0)
+            throw new IOException($"{path}: {Libc.ErrorText(Marshal.GetLastPInvokeError())}");
+        var device = new UinputDevice(fd, name);
+        try
+        {
+            device.Set(UiSetEvBit, EventTypes.Key);
+            device.Set(UiSetEvBit, EventTypes.Abs);
+            device.Set(UiSetEvBit, EventTypes.Syn);
+            foreach (var button in new ushort[] { 0x130, 0x131, 0x13E })   // BTN_SOUTH, BTN_EAST, BTN_THUMBR
+                device.Set(UiSetKeyBit, button);
+            foreach (ushort axis in new ushort[] { 3, 4 })                   // ABS_RX, ABS_RY
+            {
+                device.Set(UiSetAbsBit, axis);
+                // struct uinput_abs_setup { u16 code; (2 padding); struct input_absinfo { s32 value, min, max, fuzz, flat, resolution } }
+                var setup = new byte[28];
+                BitConverter.TryWriteBytes(setup.AsSpan(0), axis);
+                BitConverter.TryWriteBytes(setup.AsSpan(8), -32768);
+                BitConverter.TryWriteBytes(setup.AsSpan(12), 32767);
+                fixed (byte* p = setup)
+                    device.Check(Libc.Ioctl(fd, UiAbsSetup, p), "set up an axis");
+            }
+            var info = new byte[92];
+            BitConverter.TryWriteBytes(info.AsSpan(0), (ushort)0x03);
+            BitConverter.TryWriteBytes(info.AsSpan(2), vendor);
+            BitConverter.TryWriteBytes(info.AsSpan(4), product);
+            Encoding.UTF8.GetBytes(name).CopyTo(info.AsSpan(8));
+            fixed (byte* p = info)
+                device.Check(Libc.Ioctl(fd, UiDevSetup, p), "set up the virtual device");
+            var physBytes = Encoding.UTF8.GetBytes(phys + "\0");
+            fixed (byte* p = physBytes)
+                device.Check(Libc.Ioctl(fd, UiSetPhys, p), "set the physical path");
+            device.Check(Libc.Ioctl(fd, UiDevCreate, 0), "create the virtual device");
+            return device;
+        }
+        catch
+        {
+            device.Dispose();
+            throw;
+        }
+    }
+
+    public void Absolute(ushort axis, int value) => Write(EventTypes.Abs, axis, value);
 
     /// <summary>The /dev/input/eventN node the kernel made for this device, or null if it cannot be found.</summary>
     public unsafe string? EventNode

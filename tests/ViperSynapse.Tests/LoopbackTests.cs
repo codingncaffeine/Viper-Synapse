@@ -111,6 +111,57 @@ public class LoopbackTests
         Assert.Equal(joystick, KeyCodes.IsJoystickButton((ushort)code));
 
     [Fact]
+    public void In_four_way_mode_the_keypad_stick_types_its_directions_and_analog_mode_leaves_it_alone()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+        using var pad = UinputDevice.CreateTestGamepad("Tartarus stick (test stand-in)", 0x1532, 0x0244, "usb-viper-test-4/input0");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        using var outputNode = EvdevDevice.Open(WaitForNode(output));
+        outputNode.Grab();
+        var padNode = WaitForNode(pad);
+
+        // Analog: the gamepad node is not taken.
+        using (var analog = DeviceSession.Start([padNode], new RemapEngine(output, new NoHost()), ThumbstickMode.Analog))
+            Assert.Empty(analog.NodePaths);
+
+        var engine = new RemapEngine(output, new NoHost())
+        {
+            Defaults = s => s switch
+            {
+                SourceKeys.StickUp => new KeyboardBinding(17),     // W
+                SourceKeys.StickRight => new KeyboardBinding(32),  // D
+                _ => null,
+            },
+            Keymap = Keymap.Empty("k").With(SourceKeys.StickClick, new KeyboardBinding(57)),  // Space
+        };
+        using var session = DeviceSession.Start([padNode], engine, ThumbstickMode.FourWay);
+        Assert.Equal([padNode], session.NodePaths);
+        void Stick(int x, int y) { pad.Absolute(3, x); pad.Absolute(4, y); pad.Sync(); }
+        Stick(0, -30000);      // up
+        Stick(0, 0);
+        Stick(30000, 2000);    // right
+        Stick(0, 0);
+        pad.Key(0x13E, 1); pad.Sync(); pad.Key(0x13E, 0); pad.Sync();
+        Assert.Equal(["KEY_W:1", "KEY_W:0", "KEY_D:1", "KEY_D:0", "KEY_SPACE:1", "KEY_SPACE:0"], ReadKeys(outputNode, 6));
+    }
+
+    [Fact]
+    public void The_keypad_button_reports_are_read_as_recorded_from_the_device()
+    {
+        var seen = new List<string>();
+        var buttons = (KeypadButtons)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(KeypadButtons));
+        buttons.Hypershift += held => seen.Add($"hypershift {held}");
+        buttons.KeymapSelected += k => seen.Add($"keymap {k}");
+        buttons.ProfileSelected += p => seen.Add($"profile {p}");
+        buttons.Handle([0x04, 0x01, 0x00]);
+        buttons.Handle([0x04, 0x00, 0x00]);
+        buttons.Handle([0x05, 0x5E, 0x03]);
+        buttons.Handle([0x05, 0x01, 0x04]);
+        buttons.Handle([0x0B, 0x00]);
+        Assert.Equal(["hypershift True", "hypershift False", "keymap 3", "profile 4"], seen);
+    }
+
+    [Fact]
     public void Closing_the_session_lets_go_of_a_held_key_and_of_the_grab()
     {
         Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");

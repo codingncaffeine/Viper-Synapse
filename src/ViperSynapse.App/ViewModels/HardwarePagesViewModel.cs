@@ -336,7 +336,8 @@ public sealed partial class PerformanceViewModel : ObservableObject
             StageCount = settings.Stages.Count;
             ActiveStage = settings.ActiveStage;
             SeparateXY = settings.Stages.Any(s => s.X != s.Y);
-            PollingRate = settings.PollingRate > 0 ? settings.PollingRate : PollRates.Max();
+            // 0 = not known: nothing is shown chosen rather than a guess.
+            PollingRate = settings.PollingRate;
         }
         finally
         {

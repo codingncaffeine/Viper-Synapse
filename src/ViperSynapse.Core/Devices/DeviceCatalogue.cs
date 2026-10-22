@@ -96,6 +96,11 @@ public sealed class DeviceCatalogue
                         "wheel-down" => Bindings.SourceKeys.WheelDown,
                         "wheel-left" => Bindings.SourceKeys.WheelLeft,
                         "wheel-right" => Bindings.SourceKeys.WheelRight,
+                        "stick-up" => Bindings.SourceKeys.StickUp,
+                        "stick-down" => Bindings.SourceKeys.StickDown,
+                        "stick-left" => Bindings.SourceKeys.StickLeft,
+                        "stick-right" => Bindings.SourceKeys.StickRight,
+                        "stick-click" => Bindings.SourceKeys.StickClick,
                         _ => throw new InvalidDataException($"{d.Name}: unknown key source {k.Source}"),
                     }) { Leds = (k.Led ?? []).Where(c => c.Count == 2).Select(c => (c[0], c[1])).ToList() }).ToList(),
                 d.Image);

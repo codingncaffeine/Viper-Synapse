@@ -41,6 +41,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSelectedTabChanged(TabViewModel? value)
     {
+        (value as DeviceViewModel)?.Shown();
         ShowingSettings = false;
         OnPropertyChanged(nameof(Page));
     }
@@ -69,6 +70,11 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             _client.DevicesChanged += () => _ = RefreshDevicesAsync();
+            _client.StickMoved += (key, x, y) => Dispatcher.UIThread.Post(() =>
+            {
+                foreach (var device in Tabs.OfType<DeviceViewModel>().Where(d => d.Key == key))
+                    device.StickAt(x, y);
+            });
             _client.SettingsChanged += key => Dispatcher.UIThread.Post(() =>
             {
                 foreach (var device in Tabs.OfType<DeviceViewModel>().Where(d => d.Key == key))

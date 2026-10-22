@@ -50,6 +50,9 @@ public sealed class DeviceManager : IDisposable
     public event Action? DevicesChanged;
     public event Action<string>? SettingsChanged;
 
+    /// <summary>A watched thumbstick moved: device key, x and y from -1 to 1. At most 30 a second per device.</summary>
+    public event Action<string, double, double>? StickMoved;
+
     /// <summary>The physical-path prefix the tests' stand-in devices claim. A running service ignores them, so a test
     /// never adds a device to the user's real settings.</summary>
     public const string TestPortPrefix = "usb-viper-test";
@@ -77,6 +80,11 @@ public sealed class DeviceManager : IDisposable
         public RemapEngine? Engine { get; set; }
         public DeviceSession? Session { get; set; }
         public DeviceControl? Control { get; set; }
+        public KeypadButtons? Buttons { get; set; }
+        public ThumbstickMode SessionStick { get; set; }
+        public StickMonitor? Monitor { get; set; }
+        public DateTime StickWatchedUntil { get; set; }
+        public long StickLastSent { get; set; }
         public string? Problem { get; set; }
     }
 
@@ -125,6 +133,8 @@ public sealed class DeviceManager : IDisposable
             {
                 _devices[gone].Session?.Dispose();
                 _devices[gone].Control?.Dispose();
+                _devices[gone].Buttons?.Dispose();
+                _devices[gone].Monitor?.Dispose();
                 _devices.Remove(gone);
                 changed = true;
             }
@@ -149,6 +159,7 @@ public sealed class DeviceManager : IDisposable
             }
         }
 
+        var adopt = new List<(string Key, int Keymap)>();
         // Probing talks to the hardware; keep it out of the lock.
         foreach (var device in added)
         {
@@ -170,6 +181,9 @@ public sealed class DeviceManager : IDisposable
                         // Kept open while the device is plugged in: lighting and sensitivity go through it.
                         device.Control = new DeviceControl(transport, device.Identity.TransactionId, device.Model);
                     }
+                    // A keypad with keymaps of its own: the profile starts on the keymap the keypad is on.
+                    if (device.Control?.ReadKeymap() is int keymap and >= 0)
+                        adopt.Add((device.Key, keymap));
                 }
                 catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                 {
@@ -179,6 +193,11 @@ public sealed class DeviceManager : IDisposable
                 }
             }
         }
+
+        foreach (var device in added.Where(d => d.Model?.Has("keypad_buttons") == true))
+            StartButtons(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
+        foreach (var (key, keymap) in adopt)
+            FollowDeviceKeymap(key, keymap);
 
         List<string> keys;
         lock (_gate)
@@ -227,13 +246,16 @@ public sealed class DeviceManager : IDisposable
     {
         var settings = _store.LoadDevice(key);
         var keymap = settings.ActiveKeymapOrFirst;
+        var profile = settings.Active;
         bool bindsAnything = keymap.Standard.Values.Concat(keymap.Hypershift.Values).Any(b => b is not DefaultBinding);
         bool changed = false;
         lock (_gate)
         {
             foreach (var device in _devices.Values.Where(d => d.Key == key))
             {
-                if (!bindsAnything)
+                // A thumbstick in 4-way or 8-way mode types its directions even with nothing bound.
+                var stick = device.Model?.Has("thumbstick") == true ? profile.Thumbstick : ThumbstickMode.Analog;
+                if (!bindsAnything && stick == ThumbstickMode.Analog)
                 {
                     if (device.Session != null)
                     {
@@ -243,15 +265,34 @@ public sealed class DeviceManager : IDisposable
                     }
                     continue;
                 }
-                if (device.Session != null)
+                if (device.Session != null && device.SessionStick == stick)
                 {
                     device.Session.Apply(keymap);
+                    device.Session.WithEngine(e => e.Interruption = profile.Interruption);
                     continue;
                 }
-                device.Engine = new RemapEngine(_output, new Host(this, key)) { Keymap = keymap };
+                // A new stick mode takes over (or gives back) a different set of nodes: start again.
+                device.Session?.Dispose();
+                device.Session = null;
+                var model = device.Model;
+                device.Engine = new RemapEngine(_output, new Host(this, key))
+                {
+                    Keymap = keymap,
+                    Defaults = source => DefaultFor(model, source),
+                    Interruption = profile.Interruption,
+                };
                 try
                 {
-                    device.Session = DeviceSession.Start(device.InputNodes, device.Engine);
+                    device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick);
+                    var watched = device;
+                    device.Session.StickMoved += (x, y) => SendStick(watched, x, y);
+                    // The session now holds the stick; an analog-mode monitor would read nothing.
+                    if (stick != ThumbstickMode.Analog)
+                    {
+                        device.Monitor?.Dispose();
+                        device.Monitor = null;
+                    }
+                    device.SessionStick = stick;
                     device.Session.NodeLost += (_, _) => ThreadPool.QueueUserWorkItem(_ => Refresh());
                     device.Problem = null;
                 }
@@ -268,12 +309,127 @@ public sealed class DeviceManager : IDisposable
             controls = _devices.Values.Where(d => d.Key == key && d.Control != null).Select(d => d.Control!).ToList();
         foreach (var control in controls)
         {
-            control.Apply(settings.Active);
+            control.Apply(settings.Active, settings.ActiveKeymap);
             if (control.LastProblem != null)
                 Console.Error.WriteLine($"{key}: {control.LastProblem}");
         }
         if (changed)
             DevicesChanged?.Invoke();
+    }
+
+    /// <summary>Listens to a keypad's own buttons: Hypershift held switches the engine's layer, the keymap button moves
+    /// the profile to that keymap.</summary>
+    void StartButtons(Connected device, HidrawNode? node)
+    {
+        if (node == null)
+            return;
+        try
+        {
+            var buttons = KeypadButtons.Start(node.DevicePath);
+            buttons.Hypershift += held =>
+            {
+                DeviceSession? session;
+                lock (_gate)
+                    session = device.Session;
+                session?.WithEngine(e => e.HypershiftButton(held));
+            };
+            buttons.KeymapSelected += keymap => ThreadPool.QueueUserWorkItem(_ =>
+            {
+                device.Control?.KeymapChangedOnDevice(keymap - 1);
+                FollowDeviceKeymap(device.Key, keymap - 1);
+            });
+            device.Buttons = buttons;
+        }
+        catch (IOException e)
+        {
+            Console.Error.WriteLine($"{device.Key}: cannot listen to the keypad's buttons: {e.Message}");
+        }
+    }
+
+    /// <summary>The window follows the thumbstick for the next 15 seconds (it asks again while the page is open). In
+    /// analog mode the gamepad node is read without taking it; in 4-way and 8-way mode the session reports it.</summary>
+    public void WatchStick(string key)
+    {
+        List<Connected> devices;
+        lock (_gate)
+            devices = _devices.Values.Where(d => d.Key == key && d.Model?.Has("thumbstick") == true).ToList();
+        foreach (var device in devices)
+        {
+            device.StickWatchedUntil = DateTime.UtcNow.AddSeconds(15);
+            if (device.Monitor != null || device.Session != null && device.SessionStick != ThumbstickMode.Analog)
+                continue;
+            var node = device.InputNodes.FirstOrDefault(IsGamepad);
+            if (node == null)
+                continue;
+            try
+            {
+                var monitor = StickMonitor.Start(node);
+                monitor.Moved += (x, y) => SendStick(device, x, y);
+                device.Monitor = monitor;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"{key}: cannot follow the thumbstick: {e.Message}");
+            }
+        }
+    }
+
+    static bool IsGamepad(string path)
+    {
+        try
+        {
+            using var node = EvdevDevice.Open(path);
+            return node.Capabilities(EventTypes.Key).Any(Core.Input.KeyCodes.IsJoystickButton) && node.Capabilities(EventTypes.Abs).Count > 0;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    void SendStick(Connected device, double x, double y)
+    {
+        if (DateTime.UtcNow > device.StickWatchedUntil)
+        {
+            // Nobody is looking any more: an analog-mode monitor goes away (off its own thread).
+            if (device.Monitor is { } idle)
+            {
+                device.Monitor = null;
+                ThreadPool.QueueUserWorkItem(_ => idle.Dispose());
+            }
+            return;
+        }
+        long now = Environment.TickCount64;
+        if (now - device.StickLastSent < 33)
+            return;
+        device.StickLastSent = now;
+        StickMoved?.Invoke(device.Key, x, y);
+    }
+
+    /// <summary>What a control with no key of its own does by default: the key the catalogue names for it (W for the
+    /// thumbstick's up).</summary>
+    static Binding? DefaultFor(DeviceModel? model, ushort source) =>
+        model?.Keys.FirstOrDefault(k => k.Source == source && k.Code != 0 && k.Code != source) is { } key
+            ? new KeyboardBinding(key.Code)
+            : null;
+
+    /// <summary>The keypad moved to another keymap (its keymap button, or what it was on when it was plugged in): the
+    /// profile follows, gaining empty keymaps up to that one if it has fewer.</summary>
+    void FollowDeviceKeymap(string key, int keymap)
+    {
+        var settings = _store.LoadDevice(key);
+        if (settings.ActiveKeymap == keymap && settings.Active.Keymaps.Count > keymap)
+            return;
+        var profile = settings.Active;
+        var keymaps = profile.Keymaps.ToList();
+        while (keymaps.Count <= keymap)
+            keymaps.Add(Keymap.Empty($"Keymap {keymaps.Count + 1}"));
+        profile = profile with { Keymaps = keymaps };
+        SetSettings(key, settings with
+        {
+            Profiles = settings.Profiles.Select(p => p.Id == profile.Id ? profile : p).ToList(),
+            ActiveKeymap = keymap,
+        });
     }
 
     // Per device model: the profile the user chose, while a linked program's profile stands in for it.
@@ -341,6 +497,8 @@ public sealed class DeviceManager : IDisposable
             {
                 device.Session?.Dispose();
                 device.Control?.Dispose();
+                device.Buttons?.Dispose();
+                device.Monitor?.Dispose();
             }
             _devices.Clear();
         }

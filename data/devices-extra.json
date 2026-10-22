@@ -34,12 +34,18 @@
         { "number" : 25, "label" : "B", "code" : "KEY_B", "hw" : "32", "led" : [[4,1]] },
         { "number" : 26, "label" : "I", "code" : "KEY_I", "hw" : "18", "led" : [[4,2]] },
         { "number" : 27, "label" : "Space", "code" : "KEY_SPACE", "hw" : "3d", "led" : [[4,3],[4,4]] },
-        { "number" : 28, "label" : "Hypershift", "code" : "", "hw" : "3b", "group" : "other" }
+        { "number" : 28, "label" : "Hypershift", "code" : "", "hw" : "3b", "group" : "other" },
+        { "number" : 1, "label" : "Thumbstick Up", "code" : "KEY_W", "source" : "stick-up", "group" : "thumbstick" },
+        { "number" : 2, "label" : "Thumbstick Down", "code" : "KEY_S", "source" : "stick-down", "group" : "thumbstick" },
+        { "number" : 3, "label" : "Thumbstick Left", "code" : "KEY_A", "source" : "stick-left", "group" : "thumbstick" },
+        { "number" : 4, "label" : "Thumbstick Right", "code" : "KEY_D", "source" : "stick-right", "group" : "thumbstick" },
+        { "number" : 5, "label" : "Thumbstick Click", "code" : "", "source" : "stick-click", "group" : "thumbstick" }
       ],
       "zones" : {
         "main" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "starlight_dual", "starlight_random", "starlight_single", "static", "wave" ] }
       },
-      "features" : [ "custom_frame" ],
+      "features" : [ "custom_frame", "keymaps", "poll_rate", "thumbstick", "keypad_buttons" ],
+      "poll_rates" : [ 125, 250, 500, 1000, 2000, 4000, 8000 ],
       "matrix" : [ 5, 6 ],
       "verified" : [],
       "source" : "Viper Synapse probe"

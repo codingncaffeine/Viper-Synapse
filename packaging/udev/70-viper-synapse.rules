@@ -1,6 +1,9 @@
 # Viper Synapse: give the logged-in user access to Razer devices and to uinput.
-# hidraw carries the control protocol (lighting, DPI, polling, battery); uinput is how remapped
-# keys and macros are typed. uaccess grants the seat's active user and nobody else, so this has to
-# sort before 73-seat-late.rules.
+# hidraw carries the control protocol (lighting, DPI, polling, battery) and the keypad's button reports;
+# the Razer input nodes are what bindings and the thumbstick are read from; uinput is how remapped keys,
+# macros and the virtual gamepad are sent. uaccess grants the seat's active user and nobody else, so this
+# has to sort before 73-seat-late.rules. Other keyboards stay closed: recording a macro from a non-Razer
+# keyboard needs the user in the input group.
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1532", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{idVendor}=="1532", TAG+="uaccess"
 KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"

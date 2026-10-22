@@ -55,6 +55,12 @@ public sealed partial class DeviceViewModel : TabViewModel
         Calibration = new CalibrationViewModel(c => PushProfile(x => x with { Calibration = c }));
         Pages = BuildPages();
         SelectedPage = Pages[0];
+        if (HasThumbstick)
+        {
+            var watch = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(5) };
+            watch.Tick += (_, _) => KeepWatchingStick();
+            watch.Start();
+        }
         _ = Services.DeviceImages.LoadAsync(Model).ContinueWith(t =>
         {
             if (t.Result is { } photo)
@@ -134,7 +140,87 @@ public sealed partial class DeviceViewModel : TabViewModel
 
     public bool IsCustomize => SelectedPage == "CUSTOMIZE";
 
-    partial void OnSelectedPageChanged(string value) => OnPropertyChanged(nameof(IsCustomize));
+    // ---- Customize cards (Synapse 4: thumbstick, polling rate, macro interruption) -----------------------
+
+    public bool HasThumbstick => Model?.Has("thumbstick") == true;
+
+    /// <summary>Keypads show their polling rate on Customize; mice have it on Performance.</summary>
+    public bool HasPollingCard => Model?.Has("poll_rate") == true && Model?.Has("dpi") != true;
+
+    [ObservableProperty] public partial ThumbstickMode StickMode { get; set; }
+    [ObservableProperty] public partial double StickX { get; set; }
+    [ObservableProperty] public partial double StickY { get; set; }
+    [ObservableProperty] public partial MacroInterruption Interruption { get; set; }
+
+    public bool StickAnalog { get => StickMode == ThumbstickMode.Analog; set { if (value) SetStick(ThumbstickMode.Analog); } }
+    public bool StickFourWay { get => StickMode == ThumbstickMode.FourWay; set { if (value) SetStick(ThumbstickMode.FourWay); } }
+    public bool StickEightWay { get => StickMode == ThumbstickMode.EightWay; set { if (value) SetStick(ThumbstickMode.EightWay); } }
+    public string StickText => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"X: {Percent(StickX)}%    Y: {Percent(-StickY)}%");
+
+    // An int has no negative zero, which a formatted double would show as "-0".
+    static int Percent(double v) => (int)Math.Round(v * 100);
+    public string StickHint => StickMode switch
+    {
+        ThumbstickMode.FourWay => "Four directions, bound like keys (THUMBSTICK in the key list). Diagonals pick the stronger direction.",
+        ThumbstickMode.EightWay => "Eight directions, bound like keys (THUMBSTICK in the key list). Diagonals press two directions.",
+        _ => "The stick is the analog stick of the keypad's gamepad, for games that take a controller.",
+    };
+
+    public bool InterruptDedicated { get => Interruption == MacroInterruption.DedicatedKey; set { if (value) SetInterruption(MacroInterruption.DedicatedKey); } }
+    public bool InterruptAnyKey { get => Interruption == MacroInterruption.AnyKey; set { if (value) SetInterruption(MacroInterruption.AnyKey); } }
+
+    partial void OnStickModeChanged(ThumbstickMode value)
+    {
+        OnPropertyChanged(nameof(StickAnalog));
+        OnPropertyChanged(nameof(StickFourWay));
+        OnPropertyChanged(nameof(StickEightWay));
+        OnPropertyChanged(nameof(StickHint));
+    }
+
+    partial void OnStickXChanged(double value) => OnPropertyChanged(nameof(StickText));
+    partial void OnStickYChanged(double value) => OnPropertyChanged(nameof(StickText));
+
+    partial void OnInterruptionChanged(MacroInterruption value)
+    {
+        OnPropertyChanged(nameof(InterruptDedicated));
+        OnPropertyChanged(nameof(InterruptAnyKey));
+    }
+
+    void SetStick(ThumbstickMode mode)
+    {
+        if (mode != StickMode)
+            PushProfile(p => p with { Thumbstick = mode });
+    }
+
+    void SetInterruption(MacroInterruption value)
+    {
+        if (value != Interruption)
+            PushProfile(p => p with { Interruption = value });
+    }
+
+    /// <summary>Called on the UI thread when the service reports the stick.</summary>
+    public void StickAt(double x, double y) => (StickX, StickY) = (x, y);
+
+    /// <summary>While Customize is on screen, keep asking the service to report the stick.</summary>
+    void KeepWatchingStick()
+    {
+        if (!HasThumbstick || _main.SelectedTab != this || !IsCustomize)
+            return;
+        _ = Task.Run(async () =>
+        {
+            try { await _main.Client.WatchStickAsync(Key).ConfigureAwait(false); }
+            catch (Exception e) when (e is Tmds.DBus.Protocol.DBusErrorReplyException or InvalidOperationException) { }
+        });
+    }
+
+    partial void OnSelectedPageChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCustomize));
+        KeepWatchingStick();
+    }
+
+    /// <summary>The tab came to the front.</summary>
+    public void Shown() => KeepWatchingStick();
 
     [ObservableProperty]
     public partial KeyRowViewModel? SelectedKey { get; set; }
@@ -155,7 +241,8 @@ public sealed partial class DeviceViewModel : TabViewModel
     {
         var pages = new List<string> { "CUSTOMIZE" };
         if (Model?.Zones.Count > 0 || IsKeypad) pages.Add("LIGHTING");
-        if (Model?.Has("dpi") == true || Model?.Has("poll_rate") == true) pages.Add("PERFORMANCE");
+        // Keypads show their polling rate on Customize; Performance is the mouse page.
+        if (Model?.Has("dpi") == true) pages.Add("PERFORMANCE");
         if (Model?.Has("battery") == true) pages.Add("POWER");
         if (Model?.Has("lift_off") == true) pages.Add("CALIBRATION");
         return pages;
@@ -167,6 +254,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         "other" => "OTHER",
         "mouse" => "MOUSE",
         "side" => "SIDE BUTTONS",
+        "thumbstick" => "THUMBSTICK",
         _ => group.ToUpperInvariant(),
     };
 
@@ -200,6 +288,8 @@ public sealed partial class DeviceViewModel : TabViewModel
             OnPropertyChanged(nameof(SelectedKeymapName));
             RefreshRows();
             LinkedProgramsText = string.Join('\n', settings.Active.LinkedPrograms);
+            StickMode = settings.Active.Thumbstick;
+            Interruption = settings.Active.Interruption;
             Lighting.Load(settings.Active.Lighting);
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
             Power.Load(settings.Active.Power ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
@@ -226,8 +316,9 @@ public sealed partial class DeviceViewModel : TabViewModel
                 return;
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                if (state.Stages is { Count: > 0 } stages)
-                    _deviceDefaults = new Core.Lighting.PerformanceSettings(stages, state.ActiveStage, state.PollingRate);
+                // A keypad reports a polling rate and no stages; its rate is still the device's own value.
+                if (state.Stages is { Count: > 0 } || state.PollingRate > 0)
+                    _deviceDefaults = new Core.Lighting.PerformanceSettings(state.Stages ?? [], state.ActiveStage, state.PollingRate);
                 (_battery, _charging) = (state.BatteryPercent, state.Charging);
                 _liftOff = state.LiftOffLevel;
                 Load(_settings);

@@ -31,17 +31,25 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
 {
     readonly Lock _gate = new();
     string? _sentLighting, _sentPerformance, _sentPower, _sentCalibration;
+    int _sentKeymap = -1;
 
     public string? LastProblem { get; private set; }
 
-    public void Apply(Profile profile)
+    /// <param name="profile">The profile to bring the device in line with.</param>
+    /// <param name="keymap">The keymap in use (0-based): a keypad with keymaps of its own is switched to it.</param>
+    public void Apply(Profile profile, int keymap = 0)
     {
         lock (_gate)
         {
             LastProblem = null;
+            if (model?.Has("keymaps") == true && keymap != _sentKeymap)
+            {
+                _sentKeymap = keymap;
+                Send(DeviceCommands.SelectKeymap(transactionId, keymap + 1), "keymap");
+            }
             if (profile.Lighting is { IsEmpty: false } lighting && Changed(ref _sentLighting, lighting))
                 SendLighting(lighting);
-            if (profile.Performance is { } performance && model?.Has("dpi") == true && Changed(ref _sentPerformance, performance))
+            if (profile.Performance is { } performance && (model?.Has("dpi") == true || model?.Has("poll_rate") == true) && Changed(ref _sentPerformance, performance))
                 SendPerformance(performance);
             if (profile.Power is { } power && model?.Has("idle_time") == true && Changed(ref _sentPower, power))
                 SendPower(power);
@@ -85,9 +93,31 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         }
     }
 
+    /// <summary>The keymap the keypad is on now (0-based), read from it; -1 when it does not say.</summary>
+    public int ReadKeymap()
+    {
+        lock (_gate)
+        {
+            try
+            {
+                if (ReadRaw(0x02, 0xB7) is { } answer && answer.Arguments[0] is >= 1 and <= 8)
+                    return _sentKeymap = answer.Arguments[0] - 1;
+            }
+            catch (IOException) { }
+            return -1;
+        }
+    }
+
+    /// <summary>The keymap the device is on, as the keypad reports it moving (its keymap button).</summary>
+    public void KeymapChangedOnDevice(int keymap)
+    {
+        lock (_gate)
+            _sentKeymap = keymap;
+    }
+
     void SendPerformance(PerformanceSettings p)
     {
-        if (p.Stages.Count > 0)
+        if (p.Stages.Count > 0 && model?.Has("dpi") == true)
         {
             if (model?.Has("dpi_stages") == true)
                 Send(DeviceCommands.DpiStages(transactionId, p), "sensitivity stages");
@@ -156,8 +186,19 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             int liftOff = -1;
             try
             {
-                if (model?.Has("poll_rate") == true && Read(Commands.GetPollingRate) is { } poll)
-                    rate = DeviceCommands.ReadPollingRate(poll);
+                if (model?.Has("poll_rate") == true)
+                {
+                    if (model.PollRates.Any(r => r > 1000))
+                    {
+                        var hyper = transport.Send(DeviceCommands.GetHyperPollingRate(transactionId));
+                        if (hyper.Status == ReportStatus.Successful)
+                            rate = DeviceCommands.ReadHyperPollingRate(hyper);
+                    }
+                    else if (Read(Commands.GetPollingRate) is { } poll)
+                    {
+                        rate = DeviceCommands.ReadPollingRate(poll);
+                    }
+                }
                 if (model?.Has("dpi_stages") == true && Read(Commands.GetDpiStages) is { } table)
                 {
                     var read = DeviceCommands.ReadStages(table, rate);

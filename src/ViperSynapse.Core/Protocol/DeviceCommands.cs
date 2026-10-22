@@ -183,6 +183,24 @@ public static class DeviceCommands
     public static RazerReport PollingRate(byte tid, int hz) =>
         RazerReport.Create(tid, 0x00, 0x05, hz switch { >= 1000 => (byte)0x01, >= 500 => (byte)0x02, _ => (byte)0x08 });
 
+    /// <summary>The newer polling read (0x00/0xC0) and its answer, as the Tartarus V2 Pro gives it: 00 then the rate code.</summary>
+    public static RazerReport GetHyperPollingRate(byte tid) => RazerReport.Create(tid, 0x00, 0xC0, 0x00, 0x00);
+
+    public static int ReadHyperPollingRate(RazerReport answer) => answer.Arguments[1] switch
+    {
+        0x01 => 8000,
+        0x02 => 4000,
+        0x04 => 2000,
+        0x08 => 1000,
+        0x10 => 500,
+        0x20 => 250,
+        0x40 => 125,
+        _ => 0,
+    };
+
+    /// <summary>Selects the keypad's keymap 1-8, as its keymap button does (0x02/0x37; read back with 0x02/0xB7).</summary>
+    public static RazerReport SelectKeymap(byte tid, int keymap) => RazerReport.Create(tid, 0x02, 0x37, (byte)Math.Clamp(keymap, 1, 8));
+
     /// <summary>HyperPolling devices (up to 8000 Hz) take the newer command.</summary>
     public static RazerReport HyperPollingRate(byte tid, int hz) =>
         RazerReport.Create(tid, 0x00, 0x40, 0x00, hz switch

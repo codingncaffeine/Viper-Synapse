@@ -126,7 +126,8 @@ public sealed class DeviceDrawing : Control
         const double u = 50, gap = 6, first = 64;
         double X(int col) => col == 0 ? 0 : first + gap + (col - 1) * (u + gap);
         double Y(int row) => row * (u + gap);
-        var byNumber = device.Rows.ToDictionary(r => r.Key.Number);
+        // Numbers repeat across groups (the thumbstick rows are 1-5 too): only the keypad and its other keys are drawn here.
+        var byNumber = device.Rows.Where(r => r.Key.Group is "main" or "other").ToDictionary(r => r.Key.Number);
         void Key(int number, int col, int row, double width = 0, double slant = 0)
         {
             if (byNumber.TryGetValue(number, out var r))

@@ -1,3 +1,4 @@
+using ViperSynapse.Core.Bindings;
 using ViperSynapse.Core.Engine;
 using ViperSynapse.Hardware.Linux;
 
@@ -48,23 +49,46 @@ public sealed class DeviceSession : IDisposable
     public RemapEngine Engine { get; }
     public IReadOnlyList<string> NodePaths => _nodes.Select(n => n.Path).ToList();
 
+    readonly StickDirections _stick;
+    readonly HashSet<string> _stickNodes = [];
+    double _stickX, _stickY;
+
+    /// <summary>The stick moved (4-way and 8-way mode): x and y from -1 to 1. Raised on the reader thread.</summary>
+    public event Action<double, double>? StickMoved;
+
     /// <summary>Raised on a reader thread when a node goes away (unplugged) or fails.</summary>
     public event Action<string, Exception>? NodeLost;
 
-    DeviceSession(RemapEngine engine) => Engine = engine;
-
-    public static DeviceSession Start(IEnumerable<string> nodePaths, RemapEngine engine)
+    DeviceSession(RemapEngine engine, ThumbstickMode stick)
     {
-        var session = new DeviceSession(engine);
+        Engine = engine;
+        _stick = new StickDirections(stick);
+    }
+
+    /// <param name="nodePaths">The device's input nodes.</param>
+    /// <param name="engine">Where its keys go.</param>
+    /// <param name="stick">Analog leaves the keypad's gamepad node to the system; 4-way and 8-way take it over and
+    /// turn the stick into direction presses.</param>
+    public static DeviceSession Start(IEnumerable<string> nodePaths, RemapEngine engine, ThumbstickMode stick = ThumbstickMode.Analog)
+    {
+        var session = new DeviceSession(engine, stick);
         try
         {
             foreach (var path in nodePaths)
             {
                 var node = EvdevDevice.Open(path);
                 var keys = node.Capabilities(EventTypes.Key);
-                // Gamepad and joystick nodes (the Tartarus V2 Pro's analog mode) carry axes the engine does not pass
-                // on: grabbing one would freeze its sticks. They are left to the system.
-                if (keys.Count == 0 && node.Capabilities(EventTypes.Rel).Count == 0 || keys.Any(Core.Input.KeyCodes.IsJoystickButton))
+                bool gamepad = keys.Any(Core.Input.KeyCodes.IsJoystickButton);
+                if (gamepad && stick != ThumbstickMode.Analog && node.Capabilities(EventTypes.Abs).Count > 0)
+                {
+                    node.Grab();
+                    session._nodes.Add(node);
+                    session._stickNodes.Add(node.Path);
+                    continue;
+                }
+                // Otherwise gamepad and joystick nodes (the Tartarus V2 Pro's analog mode) carry axes the engine does
+                // not pass on: grabbing one would freeze its sticks. They are left to the system.
+                if (keys.Count == 0 && node.Capabilities(EventTypes.Rel).Count == 0 || gamepad)
                 {
                     node.Dispose();
                     continue;
@@ -88,13 +112,22 @@ public sealed class DeviceSession : IDisposable
     }
 
     /// <summary>Changes the keymap. Keys held across the change are let go first, so none stays down.</summary>
-    public void Apply(Core.Bindings.Keymap keymap)
+    public void Apply(Keymap keymap)
     {
         lock (_engineGate)
         {
+            foreach (var (source, _) in _stick.Release())
+                Engine.Key(source, 0);
             Engine.Reset();
             Engine.Keymap = keymap;
         }
+    }
+
+    /// <summary>Runs something against the engine between input events.</summary>
+    public void WithEngine(Action<RemapEngine> action)
+    {
+        lock (_engineGate)
+            action(Engine);
     }
 
     void Pump(EvdevDevice node)
@@ -105,10 +138,16 @@ public sealed class DeviceSession : IDisposable
             while (!_stopping)
             {
                 int n = node.Read(events, TimeSpan.FromMilliseconds(100));
+                bool stick = _stickNodes.Contains(node.Path);
                 lock (_engineGate)
                 {
                     for (int i = 0; i < n; i++)
-                        Dispatch(events[i]);
+                    {
+                        if (stick)
+                            DispatchStick(events[i]);
+                        else
+                            Dispatch(events[i]);
+                    }
                 }
             }
         }
@@ -116,6 +155,32 @@ public sealed class DeviceSession : IDisposable
         {
             if (!_stopping)
                 NodeLost?.Invoke(node.Path, e);
+        }
+    }
+
+    /// <summary>The keypad's gamepad node in 4-way or 8-way mode: the stick (reported as the right stick, -32768 to
+    /// 32767) becomes direction presses and its click a control of its own; everything else on the node is dropped.</summary>
+    void DispatchStick(in InputEvent e)
+    {
+        const ushort AbsX = 0, AbsY = 1, AbsRx = 3, AbsRy = 4, BtnThumbL = 0x13D, BtnThumbR = 0x13E;
+        switch (e.Type)
+        {
+            case EventTypes.Abs when e.Code is AbsRx or AbsX:
+                _stickX = Math.Clamp(e.Value / 32767.0, -1, 1);
+                break;
+            case EventTypes.Abs when e.Code is AbsRy or AbsY:
+                _stickY = Math.Clamp(e.Value / 32767.0, -1, 1);
+                break;
+            case EventTypes.Key when e.Code is BtnThumbL or BtnThumbR && e.Value != 2:
+                Engine.Key(SourceKeys.StickClick, e.Value);
+                Engine.Sync();
+                break;
+            case EventTypes.Syn when e.Code == EventTypes.SynReport:
+                StickMoved?.Invoke(_stickX, _stickY);
+                foreach (var (source, pressed) in _stick.Move(_stickX, _stickY))
+                    Engine.Key(source, pressed ? 1 : 0);
+                Engine.Sync();
+                break;
         }
     }
 

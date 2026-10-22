@@ -5,6 +5,7 @@
     <OutputType>Exe</OutputType>
     <AssemblyName>viper-cli</AssemblyName>
     <RootNamespace>ViperSynapse.Cli</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

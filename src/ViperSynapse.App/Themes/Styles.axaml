@@ -322,4 +322,22 @@
         <Setter Property="Background" Value="{StaticResource GreenBrush}" />
         <Setter Property="Foreground" Value="#000000" />
     </Style>
+    <!-- Polling rate buttons: a row of boxes, the chosen one outlined green. -->
+    <Style Selector="ListBox.rates">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ListBox.rates ListBoxItem">
+        <Setter Property="Margin" Value="0,0,8,8" />
+        <Setter Property="Padding" Value="14,5" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="BorderBrush" Value="#4A4A4A" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="ListBox.rates ListBoxItem:selected">
+        <Setter Property="BorderBrush" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="ListBox.rates ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="#14290F" />
+    </Style>
 </Styles>

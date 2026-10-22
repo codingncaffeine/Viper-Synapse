@@ -30,6 +30,24 @@ public sealed class RemapEngine
 
     public Keymap Keymap { get; set; } = Keymap.Empty("Keymap 1");
 
+    /// <summary>What a control that sends no key of its own (a thumbstick direction) does when unbound: the device's
+    /// default for it, W for the stick's up, say. Null leaves it doing nothing.</summary>
+    public Func<ushort, Binding?>? Defaults { get; set; }
+
+    /// <summary>Any key press stops running macros (Synapse's "Macro and Keystroke Interruption: any key").</summary>
+    public MacroInterruption Interruption { get; set; } = MacroInterruption.DedicatedKey;
+
+    bool _hypershiftButton;
+
+    /// <summary>The keypad's own Hypershift button, reported by its firmware rather than as a key.</summary>
+    public void HypershiftButton(bool held)
+    {
+        if (held == _hypershiftButton)
+            return;
+        _hypershiftButton = held;
+        _hypershiftHeld = Math.Max(0, _hypershiftHeld + (held ? 1 : -1));
+    }
+
     public bool HypershiftActive => _hypershiftHeld > 0;
 
     /// <summary>A key or button from the device: 1 down, 0 up, 2 auto-repeat.</summary>
@@ -46,7 +64,11 @@ public sealed class RemapEngine
         {
             if (_held.ContainsKey(code))
                 return;
+            if (Interruption == MacroInterruption.AnyKey)
+                StopMacros();
             var binding = Keymap.Resolve(code, HypershiftActive);
+            if (binding is DefaultBinding && SourceKeys.IsStick(code))
+                binding = Defaults?.Invoke(code) ?? new DisableBinding();
             _held[code] = binding;
             Press(code, binding);
         }
@@ -100,6 +122,24 @@ public sealed class RemapEngine
         }
         _toggled.Clear();
         _hypershiftHeld = 0;
+        _hypershiftButton = false;
+    }
+
+    /// <summary>Stops every running and toggled macro (any-key interruption). Held turbo keys keep going.</summary>
+    void StopMacros()
+    {
+        lock (_running)
+        {
+            foreach (var (key, cts) in _running.ToList())
+                if (_held.TryGetValue(key, out var b) && b is MacroBinding or TextBinding || !_held.ContainsKey(key))
+                {
+                    cts.Cancel();
+                    _running.Remove(key);
+                }
+            foreach (var cts in _toggled.Values)
+                cts.Cancel();
+            _toggled.Clear();
+        }
     }
 
     void Press(ushort code, Binding binding)
