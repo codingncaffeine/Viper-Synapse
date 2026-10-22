@@ -1,0 +1,14 @@
+{
+  "note" : "Hand-written entries for devices OpenRazer does not know. An entry here wins over data/devices.json for the same pid. 'verified' lists what has been read back from the real device.",
+  "devices" : [
+    {
+      "pid" : "02eb",
+      "name" : "Razer Tartarus V2 Pro",
+      "type" : "keypad",
+      "zones" : {},
+      "features" : [],
+      "verified" : [],
+      "source" : "Viper Synapse probe"
+    }
+  ]
+}

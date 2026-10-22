@@ -1,4 +1,5 @@
 using System.Globalization;
+using ViperSynapse.Core.Devices;
 using ViperSynapse.Core.Protocol;
 using ViperSynapse.Hardware;
 using ViperSynapse.Hardware.Linux;
@@ -17,6 +18,8 @@ static class Program
             {
                 "list" => List(),
                 "probe" when args.Length >= 2 => Probe(args[1]),
+                "inputs" => Inputs(),
+                "watch" when args.Length >= 2 => Watch(args[1..]),
                 _ => Usage(),
             };
         }
@@ -37,6 +40,8 @@ static class Program
         Console.Error.WriteLine("""
             viper-cli list            Razer hidraw nodes, grouped by device
             viper-cli probe NODE      read-only commands against a control node (e.g. /dev/hidraw17)
+            viper-cli inputs          Razer input nodes and what each can send
+            viper-cli watch NODE...   print events from input nodes (no grab)
             """);
         return 64;
     }
@@ -46,7 +51,8 @@ static class Program
         foreach (var device in HidrawNode.Enumerate().Where(n => n.VendorId == RazerVendor).GroupBy(n => n.PortPath))
         {
             var first = device.First();
-            Console.WriteLine($"{first.VendorId:x4}:{first.ProductId:x4} {first.Name}  [{device.Key}]");
+            var model = DeviceCatalogue.Default.Find(first.ProductId);
+            Console.WriteLine($"{first.VendorId:x4}:{first.ProductId:x4} {model?.Name ?? first.Name} ({model?.Type ?? "unknown model"})  [{device.Key}]");
             foreach (var node in device)
             {
                 bool control = HasControlReport(node);
@@ -100,6 +106,45 @@ static class Program
             var answer = transport.Send(Commands.Request(tid, command));
             Console.WriteLine($"{command.Name,-16} {Describe(answer)}");
         }
+        return 0;
+    }
+
+    static int Inputs()
+    {
+        foreach (var dir in Directory.EnumerateDirectories("/sys/class/input", "event*").OrderBy(d => int.Parse(Path.GetFileName(d)[5..], CultureInfo.InvariantCulture)))
+        {
+            string Read(string name) { try { return File.ReadAllText(Path.Combine(dir, "device", name)).Trim(); } catch (IOException) { return ""; } }
+            if (Read("id/vendor") != "1532")
+                continue;
+            string path = "/dev/input/" + Path.GetFileName(dir);
+            Console.WriteLine($"{path}  {Read("id/product")}  {Read("name")}  [{Read("phys")}]");
+            using var device = EvdevDevice.Open(path);
+            foreach (var type in new[] { EventTypes.Key, EventTypes.Rel, EventTypes.Abs })
+            {
+                var codes = device.Capabilities(type);
+                if (codes.Count > 0)
+                    Console.WriteLine($"    {EventTypes.Name(type)} ({codes.Count}): {string.Join(' ', codes.Take(40).Select(c => EventTypes.CodeName(type, c)))}{(codes.Count > 40 ? " …" : "")}");
+            }
+        }
+        return 0;
+    }
+
+    static int Watch(string[] paths)
+    {
+        var threads = paths.Select(path => new Thread(() =>
+        {
+            using var device = EvdevDevice.Open(path);
+            var events = new InputEvent[64];
+            while (true)
+            {
+                int n = device.Read(events);
+                for (int i = 0; i < n; i++)
+                    if (events[i].Type != EventTypes.Syn)
+                        Console.WriteLine($"{Path.GetFileName(path)} {events[i]}");
+            }
+        }) { IsBackground = true }).ToList();
+        threads.ForEach(t => t.Start());
+        threads.ForEach(t => t.Join());
         return 0;
     }
 
