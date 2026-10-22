@@ -33,6 +33,7 @@
     <TestSdkVersion>18.10.1</TestSdkVersion>
     <XunitVersion>3.2.2</XunitVersion>
     <XunitRunnerVersion>3.1.5</XunitRunnerVersion>
+    <TimeProviderTestingVersion>10.11.0</TimeProviderTestingVersion>
   </PropertyGroup>
 
 </Project>
