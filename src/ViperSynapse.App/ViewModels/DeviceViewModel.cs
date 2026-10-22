@@ -196,6 +196,7 @@ public sealed partial class DeviceViewModel : TabViewModel
             // The index often stays 0 across a load, which raises nothing; the box must still re-read its selection.
             OnPropertyChanged(nameof(SelectedKeymapName));
             RefreshRows();
+            LinkedProgramsText = string.Join('\n', settings.Active.LinkedPrograms);
             Lighting.Load(settings.Active.Lighting);
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
             Power.Load(settings.Active.Power ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
@@ -318,6 +319,17 @@ public sealed partial class DeviceViewModel : TabViewModel
         else keymaps[Math.Clamp(_settings.ActiveKeymap, 0, keymaps.Count - 1)] = keymap;
         profile = profile with { Keymaps = keymaps };
         return _settings with { Profiles = _settings.Profiles.Select(p => p.Id == profile.Id ? profile : p).ToList() };
+    }
+
+    /// <summary>The profile's linked programs, one per line, as the editor shows them.</summary>
+    [ObservableProperty]
+    public partial string LinkedProgramsText { get; set; } = "";
+
+    [RelayCommand]
+    void SaveLinkedPrograms()
+    {
+        var programs = LinkedProgramsText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct().ToList();
+        PushProfile(p => p with { LinkedPrograms = programs });
     }
 
     [RelayCommand]

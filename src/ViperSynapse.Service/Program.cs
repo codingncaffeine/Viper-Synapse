@@ -42,6 +42,11 @@ static class Program
         }
 
         devices.Refresh();
+
+        using var focus = new FocusWatcher(devices.Focused);
+        bus.ActiveWindow += focus.ReportFromKWin;
+        await focus.StartAsync(Tmds.DBus.Protocol.DBusAddress.Session).ConfigureAwait(false);
+        Console.WriteLine($"Linked programs: following the focused window through {focus.Method}.");
         foreach (var d in devices.Devices)
             Console.WriteLine($"{d.Name} ({d.ProductId}) {d.Firmware} {(d.Remapping ? "remapping" : "idle")} {d.Problem}");
 

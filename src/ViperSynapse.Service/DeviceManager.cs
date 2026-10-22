@@ -267,6 +267,38 @@ public sealed class DeviceManager : IDisposable
             DevicesChanged?.Invoke();
     }
 
+    // Per device model: the profile the user chose, while a linked program's profile stands in for it.
+    readonly Dictionary<string, Guid> _chosenProfile = [];
+
+    /// <summary>A program came to the front: switch each device to the profile linked to it, or back to the one the
+    /// user had chosen when the front program is linked to none.</summary>
+    public void Focused(FocusedProgram program)
+    {
+        List<string> keys;
+        lock (_gate)
+            keys = _devices.Values.Select(d => d.Key).Distinct().ToList();
+        foreach (var key in keys)
+        {
+            var settings = _store.LoadDevice(key);
+            var linked = settings.Profiles.FirstOrDefault(p => p.LinkedPrograms.Any(program.Matches));
+            Guid? target;
+            lock (_gate)
+            {
+                if (linked != null)
+                {
+                    _chosenProfile.TryAdd(key, settings.ActiveProfile);
+                    target = linked.Id;
+                }
+                else
+                {
+                    target = _chosenProfile.Remove(key, out var chosen) ? chosen : null;
+                }
+            }
+            if (target is Guid id && id != settings.ActiveProfile && settings.Profiles.Any(p => p.Id == id))
+                SetSettings(key, settings with { ActiveProfile = id, ActiveKeymap = 0 });
+        }
+    }
+
     /// <summary>What a device's engine asks of the service.</summary>
     sealed class Host(DeviceManager manager, string key) : IEngineHost
     {

@@ -30,6 +30,20 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
+                <Button Classes="flat" Content="LINKED PROGRAMS" FontSize="11" ToolTip.Tip="Programs that switch this profile on">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft">
+                            <StackPanel Width="340" Spacing="8" Margin="4">
+                                <TextBlock Classes="heading" Text="LINKED PROGRAMS" />
+                                <TextBlock TextWrapping="Wrap" Foreground="#AAAAAA" FontSize="12"
+                                           Text="This profile switches on while one of these programs is in front, and the profile you chose comes back when it is not. One per line: the program's name (firefox, Game.exe) or its window class." />
+                                <TextBox Text="{Binding LinkedProgramsText}" AcceptsReturn="True" Height="110" TextWrapping="NoWrap" PlaceholderText="Game.exe" />
+                                <TextBlock TextWrapping="Wrap" Classes="caption" Text="WORKS ON KDE PLASMA, HYPRLAND AND X11 DESKTOPS. GNOME ON WAYLAND DOES NOT TELL OTHER PROGRAMS WHICH WINDOW IS IN FRONT." />
+                                <Button Classes="save" Content="SAVE" Command="{Binding SaveLinkedProgramsCommand}" HorizontalAlignment="Right" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
             </StackPanel>
             <TextBlock Grid.Row="1" Grid.Column="2" Classes="caption" Text="{Binding Status}" HorizontalAlignment="Right"
                        VerticalAlignment="Center" Margin="0,6,16,0" />

@@ -26,6 +26,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <method name="GetDeviceState"><arg direction="in" type="s" name="device"/><arg direction="out" type="s" name="json"/></method>
           <method name="GetMacros"><arg direction="out" type="s" name="json"/></method>
           <method name="SetMacros"><arg direction="in" type="s" name="json"/></method>
+          <method name="ActiveWindow"><arg direction="in" type="s" name="windowClass"/><arg direction="in" type="v" name="pid"/></method>
           <method name="Quit"/>
           <method name="StartRecording"/>
           <method name="StopRecording"><arg direction="in" type="s" name="delayMode"/><arg direction="in" type="i" name="defaultDelayMs"/><arg direction="out" type="s" name="steps"/></method>
@@ -40,6 +41,9 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
     readonly Lock _recordGate = new();
     DBusConnection? _connection;
     MacroRecorder? _recorder;
+
+    /// <summary>KWin's focus script reports here.</summary>
+    public event Action<string, uint>? ActiveWindow;
 
     public string Path => ObjectPath;
     public bool HandlesChildPaths => false;
@@ -129,6 +133,26 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
                 _devices.SetMacros(SettingsJson.ReadMacros(reader.ReadString()));
                 ReplyEmpty(context);
                 break;
+            case "ActiveWindow":
+            {
+                // KWin's script sends the process id as whatever number type JavaScript hands it.
+                string windowClass = reader.ReadString();
+                uint pid = 0;
+                var signature = request.SignatureAsString ?? "";
+                if (signature.Length > 1)
+                    pid = signature[1] switch
+                    {
+                        'i' => (uint)Math.Max(0, reader.ReadInt32()),
+                        'u' => reader.ReadUInt32(),
+                        'x' => (uint)Math.Max(0, reader.ReadInt64()),
+                        't' => (uint)reader.ReadUInt64(),
+                        'd' => (uint)Math.Max(0, reader.ReadDouble()),
+                        _ => 0,
+                    };
+                ActiveWindow?.Invoke(windowClass, pid);
+                ReplyEmpty(context);
+                break;
+            }
             case "Quit":
                 ReplyEmpty(context);
                 _quit();

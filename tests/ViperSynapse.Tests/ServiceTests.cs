@@ -58,6 +58,38 @@ public class ServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_linked_program_brings_its_profile_forward_and_leaving_it_brings_the_chosen_one_back()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+        using var standIn = UinputDevice.Create("Razer Tartarus Pro (test stand-in)", 0x1532, StandIn, phys: "usb-viper-test-2/input1");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        WaitForNode(standIn);
+        using var manager = new DeviceManager(new SettingsStore(_config), output);
+        manager.Refresh();
+
+        var everyday = Profile.Create("Everyday");
+        var game = Profile.Create("Game") with { LinkedPrograms = ["SomeGame.exe"] };
+        manager.SetSettings("0244", new DeviceSettings([everyday, game], everyday.Id, 0));
+
+        manager.Focused(new FocusedProgram("somegame.exe", null));
+        Assert.Equal(game.Id, manager.GetSettings("0244").ActiveProfile);
+        manager.Focused(new FocusedProgram("firefox", "firefox"));
+        Assert.Equal(everyday.Id, manager.GetSettings("0244").ActiveProfile);
+        // A window class match works too (Hyprland reports only the class).
+        manager.Focused(new FocusedProgram(null, "SomeGame"));
+        Assert.Equal(game.Id, manager.GetSettings("0244").ActiveProfile);
+    }
+
+    [Theory]
+    [InlineData("game.exe", null, "Game.exe", true)]
+    [InlineData("game", null, "/home/me/Games/game.exe", true)]
+    [InlineData("wine64-preloader", "steam_app_123", "steam_app_123", true)]
+    [InlineData("firefox", "firefox", "game.exe", false)]
+    [InlineData(null, null, "game", false)]
+    public void Linked_entries_match_the_executable_or_the_window_class(string? exe, string? windowClass, string linked, bool matches) =>
+        Assert.Equal(matches, new FocusedProgram(exe, windowClass).Matches(linked));
+
+    [Fact]
     public void A_binding_saved_in_settings_takes_over_the_device_and_letting_it_go_releases_the_device()
     {
         Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
