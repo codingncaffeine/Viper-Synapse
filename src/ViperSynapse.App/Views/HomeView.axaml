@@ -21,7 +21,10 @@
                                 Width="300" Height="200" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                                 Click="OpenDevice">
                             <Grid RowDefinitions="*,Auto" Margin="16">
-                                <Image Source="/Assets/icon.png" Width="72" Height="72" Opacity="0.85" />
+                                <Image Source="{Binding Photo}" Stretch="Uniform" MaxHeight="120"
+                                       IsVisible="{Binding Photo, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                <Image Source="/Assets/icon.png" Width="72" Height="72" Opacity="0.85"
+                                       IsVisible="{Binding Photo, Converter={x:Static ObjectConverters.IsNull}}" />
                                 <StackPanel Grid.Row="1" Spacing="3">
                                     <TextBlock Text="{Binding ShortName}" FontSize="15" Foreground="White" />
                                     <TextBlock Text="{Binding Status}" Classes="green" FontSize="11" />

@@ -277,4 +277,21 @@
         <Setter Property="Background" Value="#111111" />
         <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
     </Style>
+    <!-- View thumbnails under the device picture; the shown one has a green frame and a tick. -->
+    <Style Selector="RadioButton.thumb">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Frame" Width="50" Height="50" Background="#111111" BorderBrush="#3A3A3A" BorderThickness="1" Padding="4">
+                    <ContentPresenter Content="{TemplateBinding Content}" Foreground="#9A9A9A" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.thumb:pointerover /template/ Border#Frame">
+        <Setter Property="BorderBrush" Value="#6A6A6A" />
+    </Style>
+    <Style Selector="RadioButton.thumb:checked /template/ Border#Frame">
+        <Setter Property="BorderBrush" Value="{StaticResource GreenBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
 </Styles>

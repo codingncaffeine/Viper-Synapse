@@ -4,6 +4,7 @@
     {
       "pid" : "02eb",
       "name" : "Razer Tartarus V2 Pro",
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h76/h49/10386753650718/tartarus-v2-pro-black-500x500.png",
       "type" : "keypad",
       "keys" : [
         { "number" : 1, "label" : "~", "code" : "KEY_GRAVE", "hw" : "01" },
@@ -43,6 +44,7 @@
     {
       "pid" : "008d",
       "name" : "Razer Naga Left-Handed Edition 2020",
+      "image" : "https://rzrwarranty.s3.amazonaws.com/cee694cd7526df413008167b7566af310985321b20c57f3dc42e5cbd773f2417.png",
       "type" : "mouse",
       "keys" : [
         { "number" : 1, "label" : "Left Click", "code" : "BTN_LEFT", "group" : "mouse" },

@@ -27,6 +27,7 @@ for my $file (sort glob "$dir/*.py") {
         $c{matrix} = [$1, $2] if $body =~ /^\s+MATRIX_DIMS = \[(\d+),\s*(\d+)\]/m;
         $c{dpi_max} = $1 + 0 if $body =~ /^\s+DPI_MAX = (\d+)/m;
         $c{poll} = [map { $_ + 0 } $1 =~ /(\d+)/g] if $body =~ /^\s+POLL_RATES = \[([^\]]*)\]/m;
+        $c{image} = $1 if $body =~ /^\s+DEVICE_IMAGE = "([^"]+)"/m;
         if ($body =~ /^\s+METHODS = (.*?\])\s*$/ms) {
             my $expr = $1;
             $c{methods_base} = $1 if $expr =~ /^(\w+)\.METHODS/;
@@ -117,6 +118,8 @@ for my $name (@order) {
     $d{matrix} = [map { $_ + 0 } @$matrix] if $matrix && $features{custom_frame};
     my $dpi = inherited($c, 'dpi_max');
     $d{dpi_max} = $dpi if $dpi && $features{dpi};
+    my $image = inherited($c, 'image');
+    $d{image} = $image if $image;
     my $poll = inherited($c, 'poll');
     $d{poll_rates} = $poll if $poll && $features{poll_rate};
     push @devices, \%d;

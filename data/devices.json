@@ -6,6 +6,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/612/612_orochi_2015.png",
       "name" : "Razer Orochi 2011",
       "pid" : "0013",
       "source" : "openrazer RazerOrochi2011",
@@ -33,6 +34,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/40/razer-naga-molten-gallery-4.png",
       "name" : "Razer Naga",
       "pid" : "0015",
       "source" : "openrazer RazerNaga",
@@ -67,6 +69,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets2.razerzone.com/images/da10m/carousel/razer-death-adder-gallery-04.png",
       "name" : "Razer DeathAdder 3.5G",
       "pid" : "0016",
       "source" : "openrazer RazerDeathAdder3_5G",
@@ -98,6 +101,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://hwimg.nl/Razer_naga-epic.png",
       "name" : "Razer Naga Epic",
       "pid" : "001f",
       "source" : "openrazer RazerNagaEpic",
@@ -119,6 +123,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1277/1277_abyssus_2000.png",
       "name" : "Razer Abyssus 1800",
       "pid" : "0020",
       "source" : "openrazer RazerAbyssus1800",
@@ -143,6 +148,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/192/192_mamba_2012.png",
       "name" : "Razer Mamba 2012 (Wired)",
       "pid" : "0024",
       "source" : "openrazer RazerMamba2012Wired",
@@ -168,6 +174,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/192/192_mamba_2012.png",
       "name" : "Razer Mamba 2012 (Wireless)",
       "pid" : "0025",
       "source" : "openrazer RazerMamba2012Wireless",
@@ -189,6 +196,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/33/razer-deathadder-be-gallery-3.png",
       "name" : "Razer DeathAdder 3.5G Black",
       "pid" : "0029",
       "source" : "openrazer RazerDeathAdder3_5GBlack",
@@ -201,6 +209,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/39/razer-naga-gallery-4.png",
       "name" : "Razer Naga 2012",
       "pid" : "002e",
       "source" : "openrazer RazerNaga2012",
@@ -235,6 +244,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/215/215_imperator.png",
       "name" : "Razer Imperator 2012",
       "pid" : "002f",
       "source" : "openrazer RazerImperator",
@@ -266,6 +276,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/26/26_ouroboros.png",
       "name" : "Razer Ouroboros",
       "pid" : "0032",
       "source" : "openrazer RazerOuroboros",
@@ -286,6 +297,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/19/19_taipan.png",
       "name" : "Razer Taipan",
       "pid" : "0034",
       "source" : "openrazer RazerTaipan",
@@ -313,6 +325,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/12/razer-naga-hex-gallery-12.png",
       "name" : "Razer Naga Hex (Red)",
       "pid" : "0036",
       "source" : "openrazer RazerNagaHexRed",
@@ -340,6 +353,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/561/561_deathadder_classic.png",
       "name" : "Razer DeathAdder 2013",
       "pid" : "0037",
       "source" : "openrazer RazerDeathAdder2013",
@@ -371,6 +385,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://rzrwarranty.s3.amazonaws.com/a7daf40ad78c9584a693e310effa956019cdcd081391f93f71a7cd36d3dc577e.png",
       "name" : "Razer DeathAdder 1800",
       "pid" : "0038",
       "source" : "openrazer RazerDeathAdder1800",
@@ -391,6 +406,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/612/612_orochi_2015.png",
       "name" : "Razer Orochi 2013",
       "pid" : "0039",
       "source" : "openrazer RazerOrochi2013",
@@ -415,6 +431,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/20776/rzrnagaepicchroma_04.png",
       "name" : "Razer Naga Epic Chroma (Wired)",
       "pid" : "003e",
       "source" : "openrazer RazerNagaEpicChromaWired",
@@ -450,6 +467,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/20776/rzrnagaepicchroma_04.png",
       "name" : "Razer Naga Epic Chroma (Wireless)",
       "pid" : "003f",
       "source" : "openrazer RazerNagaEpicChromaWireless",
@@ -481,6 +499,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/227/227_razer_naga_2014.png",
       "name" : "Razer Naga 2014",
       "pid" : "0040",
       "source" : "openrazer RazerNaga2014",
@@ -515,6 +534,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/23/23_naga_hex.png",
       "name" : "Razer Naga Hex",
       "pid" : "0041",
       "source" : "openrazer RazerNagaHex",
@@ -540,6 +560,7 @@
       "features" : [
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/274/abyssus2014_500x500.png",
       "name" : "Razer Abyssus",
       "pid" : "0042",
       "source" : "openrazer RazerAbyssus",
@@ -560,6 +581,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/278/278_deathadder_chroma.png",
       "name" : "Razer DeathAdder Chroma",
       "pid" : "0043",
       "source" : "openrazer RazerDeathAdderChroma",
@@ -598,6 +620,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/609/609_mamba_500x500.png",
       "matrix" : [
         1,
         15
@@ -633,6 +656,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/609/609_mamba_500x500.png",
       "matrix" : [
         1,
         15
@@ -663,6 +687,7 @@
         "custom_frame",
         "dpi"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/606/606_mambate_500x500.png",
       "matrix" : [
         1,
         16
@@ -695,6 +720,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/612/612_orochi_2015.png",
       "name" : "Razer Orochi (Wired)",
       "pid" : "0048",
       "source" : "openrazer RazerOrochiWired",
@@ -727,6 +753,7 @@
         "custom_frame",
         "dpi"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/613/613_diamondback.png",
       "matrix" : [
         1,
         21
@@ -757,6 +784,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets2.razerzone.com/images/da10m/carousel/razer-death-adder-gallery-09.png",
       "name" : "Razer DeathAdder 2000",
       "pid" : "004f",
       "source" : "openrazer RazerDeathAdder2000",
@@ -787,6 +815,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/715/715_nagahexv2_500x500.png",
       "matrix" : [
         1,
         3
@@ -841,6 +870,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/636/636_naga_chroma.png",
       "matrix" : [
         1,
         3
@@ -894,6 +924,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/561/561_deathadder_classic.png",
       "name" : "Razer DeathAdder 3500",
       "pid" : "0054",
       "source" : "openrazer RazerDeathAdder3500",
@@ -931,6 +962,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1205/1205_lancehead.png",
       "matrix" : [
         1,
         16
@@ -1006,6 +1038,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1205/1205_lancehead.png",
       "matrix" : [
         1,
         16
@@ -1075,6 +1108,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/721/721_abyssusv2.png",
       "name" : "Razer Abyssus V2",
       "pid" : "005b",
       "source" : "openrazer RazerAbyssusV2",
@@ -1109,6 +1143,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/724/724_deathadderelite_500x500.png",
       "matrix" : [
         1,
         2
@@ -1150,6 +1185,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1277/1277_abyssus_2000.png",
       "name" : "Razer Abyssus 2000",
       "pid" : "005e",
       "source" : "openrazer RazerAbyssus2000",
@@ -1172,6 +1208,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1203/1206_lanceheadte.png",
       "matrix" : [
         1,
         16
@@ -1246,6 +1283,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1234/1234_atheris.png",
       "name" : "Razer Atheris (Receiver)",
       "pid" : "0062",
       "source" : "openrazer RazerAtherisReceiver",
@@ -1259,6 +1297,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1241/1241_basilisk.png",
       "matrix" : [
         1,
         2
@@ -1302,6 +1341,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/h19/h61/9080617500702/Basilisk-Essential-500x500.png",
       "matrix" : [
         1,
         1
@@ -1331,6 +1371,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1251/1251_razer_naga_trinity.png",
       "name" : "Razer Naga Trinity",
       "pid" : "0067",
       "source" : "openrazer RazerNagaTrinity",
@@ -1348,6 +1389,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/594/594_firefly_500x500.png",
       "matrix" : [
         1,
         17
@@ -1377,6 +1419,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1288/d.va_abyssus_elite.png",
       "name" : "Razer Abyssus Elite (D.Va Edition)",
       "pid" : "006a",
       "source" : "openrazer RazerAbyssusEliteDVaEdition",
@@ -1402,6 +1445,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1290/1290_abyssusessential.png",
       "name" : "Razer Abyssus Essential",
       "pid" : "006b",
       "source" : "openrazer RazerAbyssusEssential",
@@ -1428,6 +1472,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1390/1390_mamba_elite.png",
       "matrix" : [
         1,
         20
@@ -1497,6 +1542,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1385/1385_deathadderessential.png",
       "name" : "Razer DeathAdder Essential",
       "pid" : "006e",
       "source" : "openrazer RazerDeathAdderEssential",
@@ -1532,6 +1578,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1205/1205_lancehead.png",
       "matrix" : [
         1,
         16
@@ -1607,6 +1654,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1205/1205_lancehead.png",
       "matrix" : [
         1,
         16
@@ -1676,6 +1724,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets2.razerzone.com/images/da10m/carousel/razer-death-adder-gallery-25.png",
       "name" : "Razer DeathAdder Essential (White Edition)",
       "pid" : "0071",
       "source" : "openrazer RazerDeathAdderEssentialWhiteEdition",
@@ -1710,6 +1759,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1404/1404_mamba_wireless.png",
       "matrix" : [
         1,
         16
@@ -1756,6 +1806,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1404/1404_mamba_wireless.png",
       "matrix" : [
         1,
         16
@@ -1802,6 +1853,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/3802-0-en-v1.png",
       "name" : "Razer Pro Click (Receiver)",
       "pid" : "0077",
       "poll_rates" : [
@@ -1821,6 +1873,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1539/1539_viper.png",
       "matrix" : [
         1,
         1
@@ -1856,6 +1909,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1577/ee_photo.png",
       "matrix" : [
         1,
         1
@@ -1891,6 +1945,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1577/ee_photo.png",
       "matrix" : [
         1,
         1
@@ -1926,6 +1981,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1714/comp_1_00000.png",
       "matrix" : [
         1,
         1
@@ -1961,6 +2017,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1714/comp_1_00000.png",
       "matrix" : [
         1,
         1
@@ -1988,6 +2045,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1711/1711_-_mouse_dock_chroma.png",
       "matrix" : [
         1,
         1
@@ -2021,6 +2079,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/3802-0-en-v1.png",
       "name" : "Razer Pro Click (Wired)",
       "pid" : "0080",
       "poll_rates" : [
@@ -2043,6 +2102,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1589/1589_basilisk_x__hyperspeed.png",
       "name" : "Razer Basilisk X HyperSpeed",
       "pid" : "0083",
       "source" : "openrazer RazerBasiliskXHyperSpeed",
@@ -2056,6 +2116,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1612/1612_razerdeathadderv2.png",
       "matrix" : [
         1,
         1
@@ -2098,6 +2159,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1617/1617_basilisk-v2.png",
       "matrix" : [
         1,
         2
@@ -2144,6 +2206,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1590/1590_basilisk_ultimate.png",
       "matrix" : [
         1,
         14
@@ -2216,6 +2279,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1590/1590_basilisk_ultimate.png",
       "matrix" : [
         1,
         14
@@ -2285,6 +2349,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1634/vipermini.png",
       "matrix" : [
         1,
         1
@@ -2316,6 +2381,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1692/deathadder-v2-mini.png",
       "matrix" : [
         1,
         1
@@ -2346,6 +2412,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://rzrwarranty.s3.amazonaws.com/cee694cd7526df413008167b7566af310985321b20c57f3dc42e5cbd773f2417.png",
       "matrix" : [
         1,
         3
@@ -2408,6 +2475,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/hfd/ha6/9080569528350/razer-naga-pro-500x500.png",
       "matrix" : [
         1,
         3
@@ -2469,6 +2537,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/hfd/ha6/9080569528350/razer-naga-pro-500x500.png",
       "matrix" : [
         1,
         3
@@ -2525,6 +2594,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/Images/Viper%208KHz/Viper8khz.png",
       "name" : "Razer Viper 8KHz",
       "pid" : "0091",
       "poll_rates" : [
@@ -2563,6 +2633,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/OrochiV2-1-en-v1.png",
       "name" : "Razer Orochi V2 (Receiver)",
       "pid" : "0094",
       "source" : "openrazer RazerOrochiV2Receiver",
@@ -2580,6 +2651,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/OrochiV2-1-en-v1.png",
       "name" : "Razer Orochi V2 (Bluetooth)",
       "pid" : "0095",
       "source" : "openrazer RazerOrochiV2Bluetooth",
@@ -2594,6 +2666,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/3993-1-EN-V2.png",
       "matrix" : [
         1,
         2
@@ -2637,6 +2710,7 @@
         "dpi",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1385/1385_deathadderessential.png",
       "name" : "Razer DeathAdder Essential (2021)",
       "pid" : "0098",
       "source" : "openrazer RazerDeathAdderEssential2021",
@@ -2663,6 +2737,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://assets2.razerzone.com/pages/basilisk-v3-4D578898E8144Le8da21dde32b7a9f5f/basilisk.png",
       "matrix" : [
         1,
         11
@@ -2709,6 +2784,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/5763/5763-1-en-v1.png",
       "name" : "Razer Pro Click Mini (Receiver)",
       "pid" : "009a",
       "poll_rates" : [
@@ -2731,6 +2807,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/he8/h51/9250345058334/deathadder-v2-x-hyperspeed-500x500.png",
       "name" : "Razer DeathAdder V2 X HyperSpeed",
       "pid" : "009c",
       "source" : "openrazer RazerDeathAdderV2XHyperSpeed",
@@ -2748,6 +2825,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/9682/9682-1-en-v1.png",
       "name" : "Razer Viper Mini SE (Wired)",
       "pid" : "009e",
       "poll_rates" : [
@@ -2771,6 +2849,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/9682/9682-1-en-v1.png",
       "name" : "Razer Viper Mini SE (Wireless)",
       "pid" : "009f",
       "poll_rates" : [
@@ -2793,6 +2872,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1692/deathadder-v2-mini.png",
       "matrix" : [
         1,
         1
@@ -2823,6 +2903,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/h54/h60/9591466950686/cobra-500x500.png",
       "name" : "Razer Cobra",
       "pid" : "00a3",
       "poll_rates" : [
@@ -2851,6 +2932,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/6229/6229-1-en-v2.png",
       "matrix" : [
         1,
         8
@@ -2885,6 +2967,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6048-1-en-v10.png",
       "name" : "Razer Viper V2 Pro (Wired)",
       "pid" : "00a5",
       "source" : "openrazer RazerViperV2ProWired",
@@ -2902,6 +2985,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6048-1-en-v10.png",
       "name" : "Razer Viper V2 Pro (Wireless)",
       "pid" : "00a6",
       "source" : "openrazer RazerViperV2ProWireless",
@@ -2920,6 +3004,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/6292/6292-1-en-v1.png",
       "matrix" : [
         1,
         3
@@ -2968,6 +3053,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/6292/6292-1-en-v1.png",
       "matrix" : [
         1,
         3
@@ -3019,6 +3105,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://dl.razerzone.com/src2/6220/6220-4-en-v1.png",
       "matrix" : [
         1,
         13
@@ -3072,6 +3159,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://dl.razerzone.com/src2/6220/6220-4-en-v1.png",
       "matrix" : [
         1,
         13
@@ -3121,6 +3209,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/13182/13182-1-en-v2.png",
       "name" : "Razer Cobra Pro (Wired)",
       "pid" : "00af",
       "source" : "openrazer RazerCobraProWired",
@@ -3166,6 +3255,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/13182/13182-1-en-v2.png",
       "name" : "Razer Cobra Pro (Wireless)",
       "pid" : "00b0",
       "source" : "openrazer RazerCobraProWireless",
@@ -3207,6 +3297,7 @@
         "dpi_stages",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6124/6124-1-en-v2.png",
       "name" : "Razer DeathAdder V3",
       "pid" : "00b2",
       "poll_rates" : [
@@ -3233,6 +3324,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6141/6141-1-en-v1.png",
       "name" : "Razer HyperPolling Wireless Dongle",
       "pid" : "00b3",
       "poll_rates" : [
@@ -3258,6 +3350,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container%2Fh4c%2Fh44%2F9451887460382%2Fnaga-v2-hyperspeed-500x500.png",
       "name" : "Razer Naga V2 HyperSpeed (Receiver)",
       "pid" : "00b4",
       "source" : "openrazer RazerNagaV2HyperSpeedReceiver",
@@ -3275,6 +3368,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6130/6130-1-en-v2.png",
       "name" : "Razer DeathAdder V3 Pro (Wired)",
       "pid" : "00b6",
       "source" : "openrazer RazerDeathAdderV3ProWired",
@@ -3292,6 +3386,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6130/6130-1-en-v2.png",
       "name" : "Razer DeathAdder V3 Pro (Wireless)",
       "pid" : "00b7",
       "source" : "openrazer RazerDeathAdderV3ProWireless",
@@ -3309,6 +3404,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/13432/13432-1-en-v3.png",
       "name" : "Razer Viper V3 HyperSpeed",
       "pid" : "00b8",
       "source" : "openrazer RazerViperV3HyperSpeed",
@@ -3326,6 +3422,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/9766/9766-1-en-v1.png",
       "name" : "Razer Basilisk V3 X HyperSpeed",
       "pid" : "00b9",
       "source" : "openrazer RazerBasiliskV3XHyperSpeed",
@@ -3357,6 +3454,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h01/hf3/9926511951902/deathadder-v4-pro-black-500x500.png",
       "name" : "Razer DeathAdder V4 Pro (Wired)",
       "pid" : "00be",
       "poll_rates" : [
@@ -3382,6 +3480,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h01/hf3/9926511951902/deathadder-v4-pro-black-500x500.png",
       "name" : "Razer DeathAdder V4 Pro (Wireless)",
       "pid" : "00bf",
       "poll_rates" : [
@@ -3407,6 +3506,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/14044/14044-1-en-v1.png",
       "name" : "Razer Viper V3 Pro (Wired)",
       "pid" : "00c0",
       "poll_rates" : [
@@ -3430,6 +3530,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/14044/14044-1-en-v1.png",
       "name" : "Razer Viper V3 Pro (Wireless)",
       "pid" : "00c1",
       "poll_rates" : [
@@ -3455,6 +3556,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6130/6130-1-en-v2.png",
       "name" : "Razer DeathAdder V3 Pro (Wired)",
       "pid" : "00c2",
       "source" : "openrazer RazerDeathAdderV3ProWired_Alternate",
@@ -3472,6 +3574,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6130/6130-1-en-v2.png",
       "name" : "Razer DeathAdder V3 Pro (Wireless)",
       "pid" : "00c3",
       "source" : "openrazer RazerDeathAdderV3ProWireless_Alternate",
@@ -3489,6 +3592,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6124/6124-1-en-v2.png",
       "name" : "Razer DeathAdder V3 HyperSpeed (Wired)",
       "pid" : "00c4",
       "source" : "openrazer RazerDeathAdderV3HyperSpeedWired",
@@ -3506,6 +3610,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/6124/6124-1-en-v2.png",
       "name" : "Razer DeathAdder V3 HyperSpeed (Wireless)",
       "pid" : "00c5",
       "source" : "openrazer RazerDeathAdderV3HyperSpeedWireless",
@@ -3523,6 +3628,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15010/15010-1-en-v1.png",
       "name" : "Razer Pro Click V2 Vertical Edition (Wired)",
       "pid" : "00c7",
       "poll_rates" : [
@@ -3556,6 +3662,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15010/15010-1-en-v1.png",
       "name" : "Razer Pro Click V2 Vertical Edition (Wireless)",
       "pid" : "00c8",
       "poll_rates" : [
@@ -3589,6 +3696,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/he4/h63/9822107926558/basilisk-v3-35k-2-500x500.png",
       "matrix" : [
         1,
         13
@@ -3642,6 +3750,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://dl.razerzone.com/src2/14676/14676-1-en-v1.png",
       "matrix" : [
         1,
         13
@@ -3695,6 +3804,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://dl.razerzone.com/src2/14676/14676-1-en-v1.png",
       "matrix" : [
         1,
         13
@@ -3744,6 +3854,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/ha3/h76/9899953717278/pro-click-v2-black-500x500.png",
       "name" : "Razer Pro Click V2 (Wired)",
       "pid" : "00d0",
       "poll_rates" : [
@@ -3777,6 +3888,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/ha3/h76/9899953717278/pro-click-v2-black-500x500.png",
       "name" : "Razer Pro Click V2 (Wireless)",
       "pid" : "00d1",
       "poll_rates" : [
@@ -3810,6 +3922,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15485/15485-1-en-v2.png",
       "name" : "Razer Basilisk Mobile (Wired)",
       "pid" : "00d3",
       "source" : "openrazer RazerBasiliskMobileWired",
@@ -3835,6 +3948,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15485/15485-1-en-v2.png",
       "name" : "Razer Basilisk Mobile (Receiver)",
       "pid" : "00d4",
       "source" : "openrazer RazerBasiliskMobileReceiver",
@@ -3864,6 +3978,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/haa/h04/9917236707358/250605-basilisk-v3-pro-35k-phantom-green-1500x1000-4.jpg",
       "matrix" : [
         1,
         12
@@ -3908,6 +4023,7 @@
         "scroll_mode",
         "smart_reel"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/haa/h04/9917236707358/250605-basilisk-v3-pro-35k-phantom-green-1500x1000-4.jpg",
       "matrix" : [
         1,
         12
@@ -3948,6 +4064,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15141/15141-1-en-v1.png",
       "name" : "Razer Cobra HyperSpeed",
       "pid" : "00da",
       "poll_rates" : [
@@ -3989,6 +4106,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15141/15141-1-en-v1.png",
       "name" : "Razer Cobra HyperSpeed Receiver",
       "pid" : "00db",
       "poll_rates" : [
@@ -4030,6 +4148,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/14044/14044-1-en-v1.png",
       "name" : "Razer Viper V3 Pro SE (Wired)",
       "pid" : "00de",
       "source" : "openrazer RazerViperV3ProSEWired",
@@ -4047,6 +4166,7 @@
         "low_battery_threshold",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/14044/14044-1-en-v1.png",
       "name" : "Razer Viper V3 Pro SE (Wireless)",
       "pid" : "00df",
       "source" : "openrazer RazerViperV3ProSEWireless",
@@ -4058,6 +4178,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/563/563_blackwidow_ultimate_classic.png",
       "name" : "Razer BlackWidow Ultimate 2012",
       "pid" : "010d",
       "source" : "openrazer RazerBlackWidowUltimate2012",
@@ -4069,6 +4190,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/17559/razer-blackwidow-gallery-01.png",
       "name" : "Razer BlackWidow Stealth Edition",
       "pid" : "010e",
       "source" : "openrazer RazerBlackWidowStealthEdition",
@@ -4080,6 +4202,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/54/54_anansi.png",
       "name" : "Razer Anansi",
       "pid" : "010f",
       "source" : "openrazer RazerAnansi",
@@ -4100,6 +4223,7 @@
         "mode_modifier",
         "profile_leds"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/564/564_tartarus_classic.png",
       "name" : "Razer Nostromo",
       "pid" : "0111",
       "source" : "openrazer RazerNostromo",
@@ -4111,6 +4235,7 @@
         "mode_modifier",
         "profile_leds"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/56/56_orbweaver.png",
       "name" : "Razer Orbweaver",
       "pid" : "0113",
       "source" : "openrazer RazerOrbweaver",
@@ -4129,6 +4254,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/49/49_razer_deathstalker.png",
       "name" : "Razer DeathStalker/DeathStalker Essential",
       "pid" : "0118",
       "source" : "openrazer RazerDeathStalkerEssential",
@@ -4140,6 +4266,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/245/438_blackwidow_ultimate_2014.png",
       "name" : "Razer BlackWidow Ultimate 2013",
       "pid" : "011a",
       "source" : "openrazer RazerBlackWidowUltimate2013",
@@ -4151,6 +4278,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/17559/razer-blackwidow-gallery-01.png",
       "name" : "Razer BlackWidow (Classic)",
       "pid" : "011b",
       "source" : "openrazer RazerBlackWidowStealth",
@@ -4162,6 +4290,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/17564/razer-blackwidow-te-stealth-hero-01.png",
       "name" : "Razer BlackWidow Tournament Edition 2014",
       "pid" : "011c",
       "source" : "openrazer RazerBlackWidowTournamentEdition2014",
@@ -4173,6 +4302,7 @@
         "mode_modifier",
         "profile_leds"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/228/228_tartarus.png",
       "name" : "Razer Tartarus",
       "pid" : "0201",
       "source" : "openrazer RazerTartarus",
@@ -4191,6 +4321,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/49/49_razer_deathstalker.png",
       "name" : "Razer DeathStalker Expert",
       "pid" : "0202",
       "source" : "openrazer RazerDeathStalkerExpert",
@@ -4203,6 +4334,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/279/279_blackwidow_chroma.png",
       "matrix" : [
         6,
         22
@@ -4234,6 +4366,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/665/665_deathstalker_chroma.png",
       "matrix" : [
         1,
         12
@@ -4261,6 +4394,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/667/667_blade_stealth_2016_6500u.png",
       "matrix" : [
         6,
         22
@@ -4295,6 +4429,7 @@
         "mode_modifier",
         "profile_leds"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/607/607_orbweaver_chroma.png",
       "matrix" : [
         5,
         22
@@ -4324,6 +4459,7 @@
         "mode_modifier",
         "profile_leds"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/598/598_tartarus_chroma.png",
       "name" : "Razer Tartarus Chroma",
       "pid" : "0208",
       "source" : "openrazer RazerTartarusChroma",
@@ -4348,6 +4484,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/571/571_blackwidow_tournament_edition_chroma.png",
       "matrix" : [
         6,
         22
@@ -4377,6 +4514,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/736/736_blade_pro_2016.png",
       "matrix" : [
         6,
         16
@@ -4407,6 +4545,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/736/736_blade_pro_2016.png",
       "matrix" : [
         6,
         22
@@ -4439,6 +4578,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/products/23326/overwatch-razer-gallery-5.png",
       "matrix" : [
         6,
         22
@@ -4470,6 +4610,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/616/616_blackwidow_ultimate_2016.png",
       "matrix" : [
         6,
         22
@@ -4499,6 +4640,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/684/684_razer_core.png",
       "matrix" : [
         1,
         9
@@ -4529,6 +4671,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/716/716_blackwidow_x_chroma.png",
       "matrix" : [
         6,
         22
@@ -4560,6 +4703,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/718/718_blackwidow_x_ultimate.png",
       "matrix" : [
         6,
         22
@@ -4591,6 +4735,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/717/717_blackwidow_x_tournament_edition_chroma.png",
       "matrix" : [
         6,
         22
@@ -4622,6 +4767,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/727/727_ornata_chroma.png",
       "matrix" : [
         6,
         22
@@ -4656,6 +4802,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/726/726_ornata.png",
       "matrix" : [
         6,
         22
@@ -4684,6 +4831,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/667/667_blade_stealth_2016_6500u.png",
       "matrix" : [
         6,
         16
@@ -4718,6 +4866,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1179/1179_blackwidow_chroma_v2_alt.png",
       "matrix" : [
         6,
         22
@@ -4750,6 +4899,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/736/736_blade_pro_2016.png",
       "matrix" : [
         6,
         16
@@ -4780,6 +4930,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1200/1200_blade_pro_2017.png",
       "matrix" : [
         6,
         25
@@ -4812,6 +4963,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1361/1361_huntsman_elite.png",
       "matrix" : [
         9,
         22
@@ -4846,6 +4998,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1360/1360_huntsman-3.png",
       "matrix" : [
         6,
         22
@@ -4880,6 +5033,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1398/1398_blackwidowelite.png",
       "matrix" : [
         6,
         22
@@ -4914,6 +5068,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1256/1256_cynosa_chroma.png",
       "matrix" : [
         6,
         22
@@ -4950,6 +5105,7 @@
         "mode_modifier",
         "profile_leds"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1255/1255_tartarus_v2.png",
       "matrix" : [
         4,
         6
@@ -4984,6 +5140,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1257/1257_cynosa_chroma_pro_alt.png",
       "matrix" : [
         6,
         22
@@ -5015,6 +5172,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1213/1213_blade_stealth_2017_7500u.png",
       "matrix" : [
         6,
         16
@@ -5047,6 +5205,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1200/1200_blade_pro_2017.png",
       "matrix" : [
         6,
         25
@@ -5077,6 +5236,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1213/1213_blade_stealth_2017_7500u.png",
       "matrix" : [
         6,
         16
@@ -5109,6 +5269,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1418/1418_blade_2018__base.png",
       "matrix" : [
         6,
         16
@@ -5139,6 +5300,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/razer-blade-pro-17/razer-blade-pro-17-2019-OGimage-1200x630.jpg",
       "matrix" : [
         6,
         16
@@ -5172,6 +5334,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1456/1456_blackwidowlite_-_2.png",
       "name" : "Razer BlackWidow Lite",
       "pid" : "0235",
       "source" : "openrazer RazerBlackWidowLite",
@@ -5193,6 +5356,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1501/1501-blackwidow2019.png",
       "matrix" : [
         6,
         22
@@ -5220,6 +5384,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1475/1475_bladestealth13(2019).png",
       "name" : "Razer Blade Stealth (2019)",
       "pid" : "0239",
       "source" : "openrazer RazerBladeStealth2019",
@@ -5242,6 +5407,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1482/blade15.png",
       "matrix" : [
         6,
         16
@@ -5272,6 +5438,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1418/1418_blade_2018__base.png",
       "name" : "Razer Blade 15 (2018) Base Model",
       "pid" : "023b",
       "source" : "openrazer RazerBlade2018Base",
@@ -5295,6 +5462,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets2.razerzone.com/images/og-image/cynosa-lite-OGimage.jpg",
       "name" : "Razer Cynosa Lite",
       "pid" : "023f",
       "source" : "openrazer RazerCynosaLite",
@@ -5317,6 +5485,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1552/1552-blade-stealth-mercury-white.png",
       "matrix" : [
         6,
         16
@@ -5349,6 +5518,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1501/1501-blackwidow2019.png",
       "matrix" : [
         6,
         22
@@ -5383,6 +5553,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1537/1537_huntsman_te.png",
       "matrix" : [
         6,
         18
@@ -5415,6 +5586,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1591/1591_tartaruspro.png",
       "matrix" : [
         1,
         21
@@ -5447,6 +5619,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/blade-15/shop/blade15-mercury-1.jpg",
       "matrix" : [
         6,
         16
@@ -5477,6 +5650,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1518/1518_blade15_mid2019-base.png",
       "name" : "Razer Blade 15 (Mid 2019) Base Model",
       "pid" : "0246",
       "source" : "openrazer RazerBlade2019Base",
@@ -5497,6 +5671,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets2.razerzone.com/images/blade-stealth-13/shop/stealth-l2p-1.jpg",
       "name" : "Razer Blade Stealth (Late 2019)",
       "pid" : "024a",
       "source" : "openrazer RazerBladeStealthLate2019",
@@ -5519,6 +5694,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/razer-blade-pro-17/razer-blade-pro-17-2019-OGimage-1200x630.jpg",
       "matrix" : [
         6,
         16
@@ -5551,6 +5727,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/razer-blade-pro-17/razer-blade-pro-17-2019-OGimage-1200x630.jpg",
       "matrix" : [
         6,
         16
@@ -5583,6 +5760,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/blade-15/shop/studio-ch41-1.jpg",
       "matrix" : [
         6,
         16
@@ -5617,6 +5795,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/3827-1-EN-v1.png",
       "matrix" : [
         6,
         22
@@ -5647,6 +5826,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets2.razerzone.com/images/blade-stealth-13/shop/sl25p-fhd-4.jpg",
       "name" : "Razer Blade Stealth (Early 2020)",
       "pid" : "0252",
       "source" : "openrazer RazerBladeStealthEarly2020",
@@ -5669,6 +5849,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1651/razer-blade-15-advanced-2020.png",
       "matrix" : [
         6,
         16
@@ -5699,6 +5880,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets2.razerzone.com/images/blade-15/blade-15-base-model-spec-image-v2.png",
       "name" : "Razer Blade Base (Early 2020)",
       "pid" : "0255",
       "source" : "openrazer RazerBladeEarly2020Base",
@@ -5722,6 +5904,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1654/blade-pro-17-2020-2.png",
       "matrix" : [
         6,
         16
@@ -5750,6 +5933,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1689/1689-huntsmanmini.png",
       "matrix" : [
         5,
         15
@@ -5786,6 +5970,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1777/500x500-blackwidowv3mini.png",
       "matrix" : [
         5,
         16
@@ -5816,6 +6001,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets2.razerzone.com/images/blade-stealth-13/shop/sl25p-fhd-4.jpg",
       "name" : "Razer Blade Stealth (Late 2020)",
       "pid" : "0259",
       "source" : "openrazer RazerBladeStealthLate2020",
@@ -5843,6 +6029,7 @@
         "low_battery_threshold",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/3809-1-EN-v1.png",
       "matrix" : [
         6,
         22
@@ -5880,6 +6067,7 @@
         "low_battery_threshold",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/3809-1-EN-v1.png",
       "matrix" : [
         6,
         22
@@ -5914,6 +6102,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1672/ornata-v2.png",
       "matrix" : [
         6,
         22
@@ -5948,6 +6137,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1694/1694-2.png",
       "matrix" : [
         6,
         22
@@ -5983,6 +6173,7 @@
         "keyboard_layout",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/4023-1-EN-v1.png",
       "matrix" : [
         8,
         22
@@ -6009,6 +6200,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets2.razerzone.com/images/blade-15/shop/blade15-base-model-spec-image-v2.png",
       "name" : "Razer Blade Late 2020 Base",
       "pid" : "0268",
       "source" : "openrazer RazerBladeLate2020Base",
@@ -6034,6 +6226,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://rzrwarranty.s3.amazonaws.com/4403e5e6b96d59dc95a278e257688e64a68f7b24945617653d68e3273877c01e.png",
       "matrix" : [
         5,
         15
@@ -6064,6 +6257,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1743/razerbook132020.png",
       "name" : "Razer Book (2020)",
       "pid" : "026a",
       "source" : "openrazer RazerBook2020",
@@ -6090,6 +6284,7 @@
         "macro_led",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/5638/5638-1-en-v1.png",
       "matrix" : [
         6,
         18
@@ -6135,6 +6330,7 @@
         "macro_led",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src/5642/5642-1-en-v1.png",
       "matrix" : [
         6,
         22
@@ -6176,6 +6372,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1761/blade-15-advanced-2021-rz09-0367x.png",
       "matrix" : [
         6,
         16
@@ -6208,6 +6405,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/4025-16-EN-v1.png",
       "matrix" : [
         6,
         16
@@ -6238,6 +6436,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1756/blade-15-base-2021-rz09-0369x.png",
       "name" : "Razer Blade Base (Early 2021)",
       "pid" : "026f",
       "source" : "openrazer RazerBladeEarly2021Base",
@@ -6261,6 +6460,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/og-image/razer-blade-14-og-image-1200x630.jpg",
       "matrix" : [
         6,
         16
@@ -6297,6 +6497,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1777/500x500-blackwidowv3mini.png",
       "matrix" : [
         5,
         16
@@ -6329,6 +6530,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1778/1778-razerblade15advanced2021rz09-0409x-2.png",
       "matrix" : [
         6,
         16
@@ -6361,6 +6563,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/5524/5524-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -6391,6 +6594,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1756/blade-15-base-2021-rz09-0369x.png",
       "name" : "Razer Blade Base (Early 2022)",
       "pid" : "027a",
       "source" : "openrazer RazerBladeEarly2022Base",
@@ -6417,6 +6621,7 @@
         "keyboard_layout",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1689/1689-huntsmanmini.png",
       "matrix" : [
         5,
         15
@@ -6448,6 +6653,7 @@
         "macro_led",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/13219/13219-1-en-v1.png",
       "matrix" : [
         8,
         23
@@ -6490,6 +6696,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/a1ee4c5a780a401444be898fe93ade69/thumbnail-blade15-new-model.png",
       "matrix" : [
         6,
         16
@@ -6522,6 +6729,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/5896/5896-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -6554,6 +6762,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/5896/5896-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -6589,6 +6798,7 @@
         "macro_led",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/9703/9703-1-en-v1.png",
       "matrix" : [
         8,
         23
@@ -6633,6 +6843,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6075-1-en-v1.png",
       "matrix" : [
         1,
         10
@@ -6664,6 +6875,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6118/6118-1-en-v1.png",
       "matrix" : [
         6,
         22
@@ -6700,6 +6912,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6118/6118-1-en-v1.png",
       "matrix" : [
         6,
         22
@@ -6734,6 +6947,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src2/13223/13223-1-en-v1.png",
       "matrix" : [
         6,
         22
@@ -6769,6 +6983,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6071-1-en-v1.png",
       "matrix" : [
         1,
         1
@@ -6796,6 +7011,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6118/6118-1-en-v1.png",
       "matrix" : [
         6,
         22
@@ -6832,6 +7048,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6117/6117-1-en-v1.png",
       "matrix" : [
         6,
         17
@@ -6868,6 +7085,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6117/6117-1-en-v1.png",
       "matrix" : [
         6,
         17
@@ -6900,6 +7118,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/13031/13031-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -6932,6 +7151,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/9696/9696-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -6964,6 +7184,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/9668/9668-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -6996,6 +7217,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/9676/9676-1-en-v1.png",
       "matrix" : [
         6,
         16
@@ -7030,6 +7252,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6075-1-en-v1.png",
       "matrix" : [
         1,
         10
@@ -7059,6 +7282,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src/6071-1-en-v1.png",
       "matrix" : [
         1,
         1
@@ -7086,6 +7310,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src2/13038/13038-1-en-v1.png",
       "matrix" : [
         1,
         8
@@ -7118,6 +7343,7 @@
         "macro_led",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/13256/13256-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -7163,6 +7389,7 @@
         "keyboard_layout",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src2/13671/13671-1-en-v2.png",
       "matrix" : [
         6,
         22
@@ -7197,6 +7424,7 @@
         "keyboard_layout",
         "macro_led"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/d01af9710e2077e2b88eb9dc6f68f62f/quick-actuation-adjustment-mode.webp",
       "matrix" : [
         6,
         22
@@ -7231,6 +7459,7 @@
         "keyboard_layout",
         "macro_led"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h8d/h31/9662065901598/230921-huntsman-v3-pro-mini-black-1500x1000-5.jpg",
       "matrix" : [
         5,
         15
@@ -7262,6 +7491,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/13031/13031-1-en-v2.png",
       "matrix" : [
         6,
         16
@@ -7294,6 +7524,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/9676/9676-1-en-v1.png",
       "matrix" : [
         6,
         16
@@ -7330,6 +7561,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/d0ebf9b718890099da55f79fb6b4569f/razer-blackwidowv4-mini-hyperspeed-usp5.webp",
       "matrix" : [
         5,
         14
@@ -7366,6 +7598,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/d0ebf9b718890099da55f79fb6b4569f/razer-blackwidowv4-mini-hyperspeed-usp5.webp",
       "matrix" : [
         5,
         14
@@ -7398,6 +7631,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/15088/15088-1-en-v1.png",
       "matrix" : [
         6,
         16
@@ -7430,6 +7664,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/14806/14806-en-v1.png",
       "matrix" : [
         6,
         17
@@ -7462,6 +7697,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/14968/14968-1-en-v1.png",
       "matrix" : [
         6,
         19
@@ -7498,6 +7734,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://dl.razerzone.com/src2/19771/19771-01-en-v1.png",
       "matrix" : [
         6,
         16
@@ -7533,6 +7770,7 @@
         "keyboard_layout",
         "macro_led"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h62/h24/9980311044126/huntsman-v3-pro-8khz-b-500x500.png",
       "matrix" : [
         6,
         22
@@ -7568,6 +7806,7 @@
         "game_mode",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15142/15142-1-en-v1.png",
       "matrix" : [
         6,
         18
@@ -7610,6 +7849,7 @@
         "game_mode",
         "poll_rate"
       ],
+      "image" : "https://dl.razerzone.com/src2/15142/15142-1-en-v1.png",
       "matrix" : [
         6,
         18
@@ -7648,6 +7888,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/h31/h27/10040018731038/blade16-s12-black-500x500.png",
       "matrix" : [
         6,
         17
@@ -7680,6 +7921,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/14968/14968-1-en-v1.png",
       "matrix" : [
         6,
         19
@@ -7710,6 +7952,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/229/229_kraken_71.png",
       "name" : "Razer Kraken 7.1",
       "pid" : "0501",
       "source" : "openrazer RazerKraken71",
@@ -7726,6 +7969,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/280/280_kraken_71_chroma.png",
       "name" : "Razer Kraken 7.1 Chroma",
       "pid" : "0504",
       "source" : "openrazer RazerKraken71Chroma",
@@ -7744,6 +7988,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/229/229_kraken_71.png",
       "name" : "Razer Kraken 7.1 (Alternate)",
       "pid" : "0506",
       "source" : "openrazer RazerKraken71Alternate",
@@ -7760,6 +8005,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/729/729_kraken_71_v2.png",
       "name" : "Razer Kraken 7.1 V2",
       "pid" : "0510",
       "source" : "openrazer RazerKraken71V2",
@@ -7782,6 +8028,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1275/1275_nommo_chroma.png",
       "matrix" : [
         2,
         24
@@ -7809,6 +8056,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1419/1419_nommo_pro.png",
       "matrix" : [
         2,
         8
@@ -7834,6 +8082,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1399/1399_razerkrakente.png",
       "name" : "Razer Kraken Tournament Edition",
       "pid" : "0520",
       "source" : "openrazer RazerKrakenTournamentEdition",
@@ -7854,6 +8103,7 @@
     },
     {
       "features" : [],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1603/rzr_kraken_ultimate_render01_2019_resized.png",
       "name" : "Razer Kraken Ultimate",
       "pid" : "0527",
       "source" : "openrazer RazerKrakenUltimate",
@@ -7874,6 +8124,7 @@
     },
     {
       "features" : [],
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/hcc/h6b/9631977570334/kraken-kitty-v2-quartz-500x500.png",
       "name" : "Razer Kraken Kitty V2",
       "pid" : "0560",
       "source" : "openrazer RazerKrakenKittyV2",
@@ -7898,6 +8149,7 @@
         "game_mode",
         "macro_led"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1709/1709-blackwidow-v3-tkl.png",
       "matrix" : [
         6,
         18
@@ -7930,6 +8182,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/594/594_firefly_500x500.png",
       "matrix" : [
         1,
         15
@@ -7958,6 +8211,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1394/1394_goliathus_chroma.png",
       "matrix" : [
         1,
         1
@@ -7985,6 +8239,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1395/1395_goliathusextended.png",
       "matrix" : [
         1,
         1
@@ -8012,6 +8267,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1594/1594_firefly_v2.png",
       "matrix" : [
         1,
         19
@@ -8040,6 +8296,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/73158705dfbee8e688bab3c7ae99c6d3/razer-strider-chroma-extended-size-1920x700.webp",
       "matrix" : [
         1,
         19
@@ -8068,6 +8325,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets.razerzone.com/eeimages/support/products/1395/1395_goliathusextended.png",
       "matrix" : [
         1,
         1
@@ -8095,6 +8353,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src2/14141/14141-1-en-v1.png",
       "matrix" : [
         1,
         17
@@ -8123,6 +8382,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/mug-holder/e64e507b73e61c44789d996065fd9645-1500x1000mug_01.jpg",
       "matrix" : [
         1,
         15
@@ -8151,6 +8411,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://rzrwarranty.s3.amazonaws.com/145dcc47f9f9d33b0bd07b066364704160f45e87b756d690b203decec7d1e87c.png",
       "matrix" : [
         1,
         15
@@ -8178,6 +8439,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/chromahdk2017/788b689d471fedbc0c5a175592316657-gallery-08.jpg",
       "matrix" : [
         4,
         16
@@ -8205,6 +8467,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/hfe/hbc/9081459376158/Razer-Laptop-Stand-Chroma-04.jpg",
       "matrix" : [
         1,
         16
@@ -8233,6 +8496,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/ha0/h53/9081460162590/raptor-27-gallery-1.jpg",
       "matrix" : [
         1,
         12
@@ -8260,6 +8524,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/6bd258f651d00e7ee1d7a5c4607917f3/lian-li-usp-desktop.jpg",
       "matrix" : [
         4,
         16
@@ -8287,6 +8552,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/ed80ca04f3ff1b5d2c61655581776a6c/tomahawk-a1-m1-atx.png",
       "matrix" : [
         1,
         20
@@ -8314,6 +8580,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/1c503aa176bc82d999299aba0d6c7d2c/kraken-kitty-quartz.png",
       "matrix" : [
         1,
         4
@@ -8344,6 +8611,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://hybrismediaprod.blob.core.windows.net/sys-master-phoenix-images-container/h44/h3d/9084457943070/core-x-chroma-gallery1.jpg",
       "matrix" : [
         1,
         16
@@ -8375,6 +8643,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/03970e1bd220f3d2985c5e0060fb3bbf/razer-mouse-bungee-v3-chroma.png",
       "matrix" : [
         1,
         8
@@ -8402,6 +8671,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/3903-1-EN-v1.png",
       "matrix" : [
         6,
         80
@@ -8429,6 +8699,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/3897-1-EN-v2.png",
       "matrix" : [
         1,
         8
@@ -8456,6 +8727,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/src/4030-1-EN-v1.png",
       "matrix" : [
         1,
         12
@@ -8486,6 +8758,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://dl.razerzone.com/Images/ChargingPadChroma/CPC-ProductImage.png",
       "matrix" : [
         1,
         10
@@ -8549,6 +8822,7 @@
       "features" : [
         "custom_frame"
       ],
+      "image" : "https://assets2.razerzone.com/images/pnx.assets/272c328913c00c6f584fe3dead2ca2a6/razer-laptop-stand-chroma-v2-hero-mobile-v2.jpg",
       "matrix" : [
         1,
         15

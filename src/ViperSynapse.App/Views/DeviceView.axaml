@@ -79,7 +79,19 @@
             </Border>
 
             <Panel Grid.Column="1">
-                <controls:DeviceDrawing Device="{Binding}" Selected="{Binding SelectedKey}" Margin="40,10,40,70" />
+                <controls:DeviceDrawing Device="{Binding}" Selected="{Binding SelectedKey}" Margin="40,10,40,70" IsVisible="{Binding ShowDrawing}" />
+                <Image Source="{Binding Photo}" Stretch="Uniform" Margin="60,20,60,90" IsVisible="{Binding !ShowDrawing}" />
+
+                <!-- View thumbnails, as under Synapse's device picture: the drawn layout and Razer's photo. -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,18" Spacing="8"
+                            IsVisible="{Binding Photo, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <RadioButton Classes="thumb" GroupName="view" IsChecked="{Binding !ShowPhoto, Mode=OneWay}" Click="ShowLayout" ToolTip.Tip="Key layout">
+                        <TextBlock Text="▦" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </RadioButton>
+                    <RadioButton Classes="thumb" GroupName="view" IsChecked="{Binding ShowPhoto}" ToolTip.Tip="Photo">
+                        <Image Source="{Binding Photo}" Stretch="Uniform" />
+                    </RadioButton>
+                </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,22" Spacing="10">
                     <Border CornerRadius="14" BorderBrush="#4A4A4A" BorderThickness="1" Padding="2">

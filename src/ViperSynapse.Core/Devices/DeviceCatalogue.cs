@@ -25,7 +25,8 @@ public sealed record DeviceModel(
     int DpiMax,
     IReadOnlyList<int> PollRates,
     string Source,
-    IReadOnlyList<DeviceKey> Keys)
+    IReadOnlyList<DeviceKey> Keys,
+    string? Image = null)
 {
     public bool Has(string feature) => Features.Contains(feature);
 }
@@ -92,7 +93,8 @@ public sealed class DeviceCatalogue
                         "wheel-left" => Bindings.SourceKeys.WheelLeft,
                         "wheel-right" => Bindings.SourceKeys.WheelRight,
                         _ => throw new InvalidDataException($"{d.Name}: unknown key source {k.Source}"),
-                    })).ToList());
+                    })).ToList(),
+                d.Image);
         }
     }
 
@@ -110,7 +112,8 @@ public sealed class DeviceCatalogue
         [property: JsonPropertyName("dpi_max")] int DpiMax,
         [property: JsonPropertyName("poll_rates")] List<int>? PollRates,
         string? Source,
-        List<KeyJson>? Keys);
+        List<KeyJson>? Keys,
+        string? Image);
 
     internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group, string? Source);
 }

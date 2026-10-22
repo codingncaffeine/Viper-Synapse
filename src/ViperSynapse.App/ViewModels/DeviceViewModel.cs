@@ -51,7 +51,26 @@ public sealed partial class DeviceViewModel : TabViewModel
             group.Keys[0].GroupTitle = group.Title;
         Pages = BuildPages();
         SelectedPage = Pages[0];
+        _ = Services.DeviceImages.LoadAsync(Model).ContinueWith(t =>
+        {
+            if (t.Result is { } photo)
+                Dispatcher.UIThread.Post(() => Photo = photo);
+        }, TaskScheduler.Default);
     }
+
+    /// <summary>The model's photo from Razer's servers, once fetched; null until then or when there is none.</summary>
+    [ObservableProperty]
+    public partial Avalonia.Media.Imaging.Bitmap? Photo { get; set; }
+
+    /// <summary>Customize shows the photo instead of the drawing (the drawing is the one you can click).</summary>
+    [ObservableProperty]
+    public partial bool ShowPhoto { get; set; }
+
+    public bool ShowDrawing => !ShowPhoto || Photo == null;
+
+    partial void OnShowPhotoChanged(bool value) => OnPropertyChanged(nameof(ShowDrawing));
+
+    partial void OnPhotoChanged(Avalonia.Media.Imaging.Bitmap? value) => OnPropertyChanged(nameof(ShowDrawing));
 
     [ObservableProperty]
     public partial DeviceInfo Info { get; set; }
