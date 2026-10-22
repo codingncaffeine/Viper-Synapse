@@ -32,6 +32,7 @@ public sealed class App : Application
             _main = new MainViewModel(_client, start.Preferences, start.StartAtLogin);
             BuildTray();
             start.Bus.ShowRequested += () => Dispatcher.UIThread.Post(ShowWindow);
+            start.Bus.ReplaceRequested += () => Dispatcher.UIThread.Post(Quit);
             if (!start.Background)
                 ShowWindow();
             _ = _main.StartAsync();

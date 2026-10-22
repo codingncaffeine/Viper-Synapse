@@ -52,7 +52,14 @@ public sealed class DaemonClient : IAsyncDisposable
             emitOnCapturedContext: false, ObserverFlags.None, null).ConfigureAwait(false);
 
         if (await TryPingAsync().ConfigureAwait(false))
-            return;
+        {
+            // A service from another build (an update installed while it ran) is replaced by this build's own.
+            if (await CallStringAsync("BuildId").ConfigureAwait(false) == Service.DaemonBus.BuildId)
+                return;
+            await QuitServiceAsync().ConfigureAwait(false);
+            for (int i = 0; i < 50 && await TryPingAsync().ConfigureAwait(false); i++)
+                await Task.Delay(100, cancel).ConfigureAwait(false);
+        }
         StartService();
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
         while (DateTime.UtcNow < deadline)

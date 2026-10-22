@@ -27,6 +27,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <method name="GetMacros"><arg direction="out" type="s" name="json"/></method>
           <method name="SetMacros"><arg direction="in" type="s" name="json"/></method>
           <method name="ActiveWindow"><arg direction="in" type="s" name="windowClass"/><arg direction="in" type="v" name="pid"/></method>
+          <method name="BuildId"><arg direction="out" type="s" name="id"/></method>
           <method name="Quit"/>
           <method name="StartRecording"/>
           <method name="StopRecording"><arg direction="in" type="s" name="delayMode"/><arg direction="in" type="i" name="defaultDelayMs"/><arg direction="out" type="s" name="steps"/></method>
@@ -44,6 +45,9 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
 
     /// <summary>KWin's focus script reports here.</summary>
     public event Action<string, uint>? ActiveWindow;
+
+    /// <summary>Changes with every build: the window replaces a service from a different build.</summary>
+    public static string BuildId { get; } = typeof(DaemonBus).Assembly.ManifestModule.ModuleVersionId.ToString();
 
     public string Path => ObjectPath;
     public bool HandlesChildPaths => false;
@@ -106,6 +110,9 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
         {
             case "Ping":
                 ReplyString(context, typeof(DaemonBus).Assembly.GetName().Version?.ToString(3) ?? "0");
+                break;
+            case "BuildId":
+                ReplyString(context, BuildId);
                 break;
             case "GetDevices":
                 ReplyString(context, _devices.DevicesJson());

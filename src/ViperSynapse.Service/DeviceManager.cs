@@ -50,8 +50,15 @@ public sealed class DeviceManager : IDisposable
     public event Action? DevicesChanged;
     public event Action<string>? SettingsChanged;
 
-    public DeviceManager(SettingsStore store, IInputSink output)
+    /// <summary>The physical-path prefix the tests' stand-in devices claim. A running service ignores them, so a test
+    /// never adds a device to the user's real settings.</summary>
+    public const string TestPortPrefix = "usb-viper-test";
+
+    readonly bool _includeTestDevices;
+
+    public DeviceManager(SettingsStore store, IInputSink output, bool includeTestDevices = false)
     {
+        _includeTestDevices = includeTestDevices;
         _store = store;
         _output = output;
         _macros = store.LoadMacros();
@@ -102,9 +109,9 @@ public sealed class DeviceManager : IDisposable
     /// <summary>Looks at what is plugged in now: starts new devices, drops the ones that went away.</summary>
     public void Refresh()
     {
-        var hidraw = HidrawNode.Enumerate().Where(n => n.VendorId == RazerVendor && n.PortPath.Length > 0).ToList();
+        var hidraw = HidrawNode.Enumerate().Where(n => n.VendorId == RazerVendor && n.PortPath.Length > 0 && Real(n.PortPath)).ToList();
         // Virtual devices (ours included) have no physical port; only real hardware is a device.
-        var inputs = InputNode.Enumerate().Where(n => n.VendorId == RazerVendor && n.PortPath.Length > 0).ToList();
+        var inputs = InputNode.Enumerate().Where(n => n.VendorId == RazerVendor && n.PortPath.Length > 0 && Real(n.PortPath)).ToList();
         var ports = hidraw.Select(n => (n.PortPath, n.ProductId, n.Name))
             .Concat(inputs.Select(n => (n.PortPath, n.ProductId, n.Name)))
             .GroupBy(p => p.PortPath)
@@ -181,6 +188,8 @@ public sealed class DeviceManager : IDisposable
         if (changed)
             DevicesChanged?.Invoke();
     }
+
+    bool Real(string port) => _includeTestDevices || !port.StartsWith(TestPortPrefix, StringComparison.Ordinal);
 
     public DeviceSettings GetSettings(string key) => _store.LoadDevice(key);
 

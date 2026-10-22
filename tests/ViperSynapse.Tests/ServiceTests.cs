@@ -58,13 +58,26 @@ public class ServiceTests : IDisposable
     }
 
     [Fact]
+    public void A_running_service_ignores_the_tests_stand_in_devices()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+        using var standIn = UinputDevice.Create("Razer Tartarus Pro (test stand-in)", 0x1532, StandIn, phys: "usb-viper-test-3/input1");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        WaitForNode(standIn);
+        using var manager = new DeviceManager(new SettingsStore(_config), output);
+        manager.Refresh();
+        Assert.DoesNotContain(manager.Devices, d => d.ProductId == "0244");
+        Assert.False(File.Exists(Path.Combine(_config, "devices", "0244.json")));
+    }
+
+    [Fact]
     public void A_linked_program_brings_its_profile_forward_and_leaving_it_brings_the_chosen_one_back()
     {
         Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
         using var standIn = UinputDevice.Create("Razer Tartarus Pro (test stand-in)", 0x1532, StandIn, phys: "usb-viper-test-2/input1");
         using var output = UinputDevice.Create("viper-synapse-test-output");
         WaitForNode(standIn);
-        using var manager = new DeviceManager(new SettingsStore(_config), output);
+        using var manager = new DeviceManager(new SettingsStore(_config), output, includeTestDevices: true);
         manager.Refresh();
 
         var everyday = Profile.Create("Everyday");
@@ -100,7 +113,7 @@ public class ServiceTests : IDisposable
         outputNode.Grab();
         var standInNode = WaitForNode(standIn);
 
-        using var manager = new DeviceManager(new SettingsStore(_config), output);
+        using var manager = new DeviceManager(new SettingsStore(_config), output, includeTestDevices: true);
         manager.Refresh();
         var device = manager.Devices.Single(d => d.ProductId == "0244");
         Assert.Equal("Razer Tartarus Pro", device.Name);
