@@ -40,7 +40,7 @@ Tested on real hardware so far:
 
 | Device | Status |
 | --- | --- |
-| Tartarus V2 Pro | protocol and lighting tested on the device; key bindings and macros in testing |
+| Tartarus V2 Pro | protocol, lighting and per-key colours tested on the device; key bindings and macros in testing |
 | Naga Left-Handed Edition 2020 | protocol, sensitivity and polling tested on the device; buttons and lighting in testing |
 | Basilisk V4 Pro | planned (wired and HyperSpeed) |
 
