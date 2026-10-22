@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- viper-synapsed: the background service. It owns the devices, keeps remaps and macros running
+       while the window is closed, stores settings, and serves the window over the session bus. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>viper-synapsed</AssemblyName>
+    <RootNamespace>ViperSynapse.Service</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViperSynapse.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tmds.DBus.Protocol" Version="$(TmdsDBusVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ViperSynapse.Core\ViperSynapse.Core.csproj" />
+    <ProjectReference Include="..\ViperSynapse.Hardware\ViperSynapse.Hardware.csproj" />
+  </ItemGroup>
+
+</Project>

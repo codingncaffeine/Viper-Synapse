@@ -30,9 +30,11 @@ public sealed class UinputDevice : IInputSink, IDisposable
     static readonly nuint UiSetEvBit = Libc.IoW('U', 100, sizeof(int));
     static readonly nuint UiSetKeyBit = Libc.IoW('U', 101, sizeof(int));
     static readonly nuint UiSetRelBit = Libc.IoW('U', 102, sizeof(int));
+    static readonly nuint UiSetPhys = Libc.IoW('U', 108, (uint)IntPtr.Size);
     static nuint UiGetSysname(int length) => Libc.IoR('U', 44, (uint)length);
 
-    public static unsafe UinputDevice Create(string name, ushort vendor = 0x1532, ushort product = 0xF5F5, string path = "/dev/uinput")
+    // phys: the physical path the device claims (tests use it to stand in for a USB device); none by default.
+    public static unsafe UinputDevice Create(string name, ushort vendor = 0x1532, ushort product = 0xF5F5, string? phys = null, string path = "/dev/uinput")
     {
         int fd = Libc.Open(path, Libc.O_WRONLY | Libc.O_NONBLOCK | Libc.O_CLOEXEC);
         if (fd < 0)
@@ -62,6 +64,12 @@ public sealed class UinputDevice : IInputSink, IDisposable
             Encoding.UTF8.GetBytes(name.Length > 79 ? name[..79] : name).CopyTo(setup.AsSpan(8));
             fixed (byte* p = setup)
                 device.Check(Libc.Ioctl(fd, UiDevSetup, p), "set up the virtual device");
+            if (phys != null)
+            {
+                var bytes = Encoding.UTF8.GetBytes(phys + "\0");
+                fixed (byte* p = bytes)
+                    device.Check(Libc.Ioctl(fd, UiSetPhys, p), "set the physical path");
+            }
             device.Check(Libc.Ioctl(fd, UiDevCreate, 0), "create the virtual device");
             return device;
         }

@@ -59,30 +59,11 @@ static class Program
             Console.WriteLine($"{first.VendorId:x4}:{first.ProductId:x4} {model?.Name ?? first.Name} ({model?.Type ?? "unknown model"})  [{device.Key}]");
             foreach (var node in device)
             {
-                bool control = HasControlReport(node);
+                bool control = RazerProbe.HasControlReport(node);
                 Console.WriteLine($"    interface {node.Interface}: {node.DevicePath}{(control ? "  (control)" : "")}");
             }
         }
         return 0;
-    }
-
-    /// <summary>The control interface declares one 90-byte feature report (Report Count 0x5A then a Feature item).</summary>
-    static bool HasControlReport(HidrawNode node)
-    {
-        var descriptor = Path.Combine("/sys/class/hidraw", Path.GetFileName(node.DevicePath), "device", "report_descriptor");
-        try
-        {
-            // sysfs reports 4096 bytes and delivers fewer, which File.ReadAllBytes treats as an error.
-            using var stream = File.OpenRead(descriptor);
-            using var copy = new MemoryStream();
-            stream.CopyTo(copy);
-            var bytes = copy.ToArray();
-            for (int i = 0; i + 3 < bytes.Length; i++)
-                if (bytes[i] == 0x95 && bytes[i + 1] == 0x5A && bytes[i + 2] == 0xB1)
-                    return true;
-        }
-        catch (IOException) { }
-        return false;
     }
 
     /// <summary>Finds the transaction id the device answers to, then reads everything it is willing to report.</summary>
