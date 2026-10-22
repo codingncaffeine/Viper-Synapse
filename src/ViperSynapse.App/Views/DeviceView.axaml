@@ -7,22 +7,16 @@
              x:Class="ViperSynapse.App.Views.DeviceView"
              x:DataType="vm:DeviceViewModel">
     <Grid RowDefinitions="Auto,*">
-        <!-- Header: the device's name, its pages, the profile. -->
-        <Grid Grid.Row="0" ColumnDefinitions="300,*,300" RowDefinitions="Auto,Auto" Margin="0,10,0,10">
-            <TextBlock Grid.Column="1" Classes="title" Text="{Binding Title}" HorizontalAlignment="Center" />
-            <ListBox Grid.Row="1" Grid.Column="1" Classes="pills" HorizontalAlignment="Center" Margin="0,8,0,0"
-                     ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-            </ListBox>
-            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="4" Margin="12,6,0,0">
-                <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" Width="200">
+        <!-- Header, as Synapse 4 has it: profile and keymap on the left, the pages in the middle. -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,*" Height="44" Margin="0,2,0,6">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" Margin="12,0,0,0" VerticalAlignment="Center">
+                <TextBlock Classes="headerIcon" Text="◎" ToolTip.Tip="Profile" />
+                <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}" Width="190">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="bindings:Profile"><TextBlock Text="{Binding Name}" /></DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-                <Button Classes="flat" Content="•••" ToolTip.Tip="Profiles">
+                <Button Classes="flat" Content="•••" ToolTip.Tip="Profile options">
                     <Button.Flyout>
                         <MenuFlyout>
                             <MenuItem Header="Add profile" Command="{Binding AddProfileCommand}" />
@@ -30,46 +24,50 @@
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
-                <Button Classes="flat" Content="LINKED PROGRAMS" FontSize="11" ToolTip.Tip="Programs that switch this profile on">
-                    <Button.Flyout>
-                        <Flyout Placement="BottomEdgeAlignedLeft">
-                            <StackPanel Width="340" Spacing="8" Margin="4">
-                                <TextBlock Classes="heading" Text="LINKED PROGRAMS" />
-                                <TextBlock TextWrapping="Wrap" Foreground="#AAAAAA" FontSize="12"
-                                           Text="This profile switches on while one of these programs is in front, and the profile you chose comes back when it is not. One per line: the program's name (firefox, Game.exe) or its window class." />
-                                <TextBox Text="{Binding LinkedProgramsText}" AcceptsReturn="True" Height="110" TextWrapping="NoWrap" PlaceholderText="Game.exe" />
-                                <TextBlock TextWrapping="Wrap" Classes="caption" Text="WORKS ON KDE PLASMA, HYPRLAND AND X11 DESKTOPS. GNOME ON WAYLAND DOES NOT TELL OTHER PROGRAMS WHICH WINDOW IS IN FRONT." />
-                                <Button Classes="save" Content="SAVE" Command="{Binding SaveLinkedProgramsCommand}" HorizontalAlignment="Right" />
-                            </StackPanel>
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="18,0,0,0" IsVisible="{Binding IsKeypad}">
+                    <TextBlock Classes="headerIcon" Text="☰" ToolTip.Tip="Keymap" />
+                    <ComboBox ItemsSource="{Binding Keymaps}" SelectedItem="{Binding SelectedKeymapItem}" Width="190">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:KeymapItem">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                                        <Rectangle Width="14" Height="3" Fill="{Binding Color}" />
+                                        <Rectangle Width="14" Height="3" Fill="{Binding Color}" />
+                                        <Rectangle Width="14" Height="3" Fill="{Binding Color}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Classes="flat" Content="•••" ToolTip.Tip="Keymap options">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Add keymap" Command="{Binding AddKeymapCommand}" />
+                                <MenuItem Header="Reset this keymap to default" Command="{Binding ResetKeymapCommand}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
             </StackPanel>
-            <TextBlock Grid.Row="1" Grid.Column="2" Classes="caption" Text="{Binding Status}" HorizontalAlignment="Right"
-                       VerticalAlignment="Center" Margin="0,6,16,0" />
+            <ListBox Grid.Column="1" Classes="pills" VerticalAlignment="Center" ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+            <TextBlock Grid.Column="2" Classes="caption" Text="{Binding Status}" HorizontalAlignment="Right"
+                       VerticalAlignment="Center" Margin="0,0,16,0" />
         </Grid>
 
         <!-- CUSTOMIZE -->
-        <Grid Grid.Row="1" ColumnDefinitions="300,*"
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*"
               IsVisible="{Binding SelectedPage, Converter={x:Static views:Converters.Equal}, ConverterParameter=CUSTOMIZE}">
-            <Border Grid.Column="0" Background="{StaticResource SideBrush}">
+            <Border Grid.Column="0" Width="300" Background="{StaticResource SideBrush}" IsVisible="{Binding ShowKeyList}">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="8,10,8,8">
-                        <TextBlock Classes="caption" Text="KEYMAP" VerticalAlignment="Center" Margin="2,0,6,0" />
-                        <ComboBox ItemsSource="{Binding Keymaps}" SelectedItem="{Binding SelectedKeymapName}" Width="160">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="x:String"><TextBlock Text="{Binding}" /></DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                        <Button Classes="flat" Content="•••" ToolTip.Tip="Keymaps">
-                            <Button.Flyout>
-                                <MenuFlyout>
-                                    <MenuItem Header="Add keymap" Command="{Binding AddKeymapCommand}" />
-                                    <MenuItem Header="Reset this keymap to default" Command="{Binding ResetKeymapCommand}" />
-                                </MenuFlyout>
-                            </Button.Flyout>
-                        </Button>
-                    </StackPanel>
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="10,10,4,6">
+                        <TextBlock Classes="caption" Text="ALL BUTTONS" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Classes="flat" Content="⇤" ToolTip.Tip="Hide the key list" Command="{Binding ToggleKeyListCommand}" />
+                    </Grid>
                     <ListBox Classes="keys" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedKey}">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:KeyRowViewModel">
@@ -130,12 +128,18 @@
                             </Border>
                         </Grid>
 
-                        <Border CornerRadius="14" BorderBrush="#4A4A4A" BorderThickness="1" Padding="2" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton Classes="segment" GroupName="layer" Content="Standard" IsChecked="{Binding Standard}" />
-                                <RadioButton Classes="segment" GroupName="layer" Content="Hypershift" IsChecked="{Binding Hypershift}" />
-                            </StackPanel>
-                        </Border>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                            <!-- Synapse 4's remap menu button: shows or hides the key list. -->
+                            <ToggleButton Classes="remap" IsChecked="{Binding ShowKeyList}" ToolTip.Tip="Remap menu">
+                                <Rectangle Width="14" Height="11" Stroke="#FFFFFF" StrokeThickness="1.5" />
+                            </ToggleButton>
+                            <Border CornerRadius="14" BorderBrush="#4A4A4A" BorderThickness="1" Padding="2">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Classes="segment" GroupName="layer" Content="Standard" IsChecked="{Binding Standard}" />
+                                    <RadioButton Classes="segment" GroupName="layer" Content="Hypershift" IsChecked="{Binding Hypershift}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
 
                         <!-- Setting cards under the device, as in Synapse 4. -->
                         <WrapPanel HorizontalAlignment="Center">

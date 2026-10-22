@@ -6,26 +6,24 @@
         x:DataType="vm:MainViewModel"
         Title="Viper Synapse"
         Icon="/Assets/icon.png"
-        Width="1440" Height="860" MinWidth="1080" MinHeight="680"
+        Width="1440" Height="900" MinWidth="1080" MinHeight="680"
         WindowStartupLocation="CenterScreen"
         WindowDecorations="None">
 
     <Window.DataTemplates>
         <DataTemplate DataType="vm:HomeViewModel"><views:HomeView /></DataTemplate>
         <DataTemplate DataType="vm:DeviceViewModel"><views:DeviceView /></DataTemplate>
+        <DataTemplate DataType="vm:LinkedGamesViewModel"><views:LinkedGamesView /></DataTemplate>
         <DataTemplate DataType="vm:MacrosViewModel"><views:MacrosView /></DataTemplate>
         <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView /></DataTemplate>
     </Window.DataTemplates>
 
     <Panel>
-        <Grid RowDefinitions="32,*,Auto">
-            <!-- Top bar: logo, tabs, window buttons. Dragging it moves the window. -->
+        <Grid RowDefinitions="34,34,*,Auto">
+            <!-- Tabs: SYNAPSE, the devices, LINKED GAMES, MACRO, SETTINGS. Dragging the bar moves the window. -->
             <Border Grid.Row="0" Background="{StaticResource TopBarBrush}" Name="TopBar">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                        <Button Classes="chrome" Command="{Binding OpenSettingsCommand}" ToolTip.Tip="Settings">
-                            <TextBlock Text="⚙" FontSize="15" Foreground="{Binding $parent[Button].Foreground}" />
-                        </Button>
                         <Button Classes="chrome" Name="MinimizeButton" ToolTip.Tip="Minimize">
                             <Path Data="M0,0 L10,0" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1" />
                         </Button>
@@ -36,24 +34,46 @@
                             <Path Data="M0,0 L10,10 M10,0 L0,10" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1" />
                         </Button>
                     </StackPanel>
-                    <Image DockPanel.Dock="Left" Source="/Assets/icon.png" Width="20" Height="20" Margin="10,0,6,0" />
                     <ListBox Classes="topTabs" ItemsSource="{Binding Tabs}" SelectedItem="{Binding SelectedTab}"
-                             HorizontalAlignment="Left">
+                             HorizontalAlignment="Left" Margin="6,0,0,0">
                         <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:TabViewModel">
-                                <TextBlock Text="{Binding Header}" LetterSpacing="0.8" />
+                                <StackPanel Orientation="Horizontal" Spacing="9">
+                                    <Panel Width="20" Height="20" VerticalAlignment="Center">
+                                        <Ellipse Fill="{StaticResource GreenBrush}" IsVisible="{Binding Icon, Converter={x:Static views:Converters.TabInDisc}}" />
+                                        <Image Source="/Assets/icon.png" Width="20" Height="20"
+                                               IsVisible="{Binding Icon, Converter={x:Static views:Converters.Is}, ConverterParameter=Synapse}" />
+                                        <TextBlock Text="{Binding Icon, Converter={x:Static views:Converters.TabGlyph}}" FontSize="12" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{Binding Icon, Converter={x:Static views:Converters.TabGlyphBrush}}" />
+                                    </Panel>
+                                    <TextBlock Text="{Binding Header}" VerticalAlignment="Center" />
+                                </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </DockPanel>
             </Border>
 
-            <ContentControl Grid.Row="1" Content="{Binding Page}" />
+            <!-- Back, forward, refresh; the page title; help. -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" Background="{StaticResource PageBrush}">
+                <StackPanel Orientation="Horizontal" Margin="8,0,0,0" Spacing="2">
+                    <Button Classes="nav" Content="‹" Command="{Binding GoBackCommand}" IsEnabled="{Binding CanGoBack}" ToolTip.Tip="Back" />
+                    <Button Classes="nav" Content="›" Command="{Binding GoForwardCommand}" IsEnabled="{Binding CanGoForward}" ToolTip.Tip="Forward" />
+                    <Button Classes="nav" Content="⟳" Command="{Binding RefreshCommand}" ToolTip.Tip="Refresh" FontSize="16" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Classes="title" Text="{Binding Title}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
+                    <Button Classes="nav" Content="?" Name="HelpButton" ToolTip.Tip="Help and source code" FontWeight="Bold" />
+                </StackPanel>
+            </Grid>
 
-            <Border Grid.Row="2" Background="#3A1214" IsVisible="{Binding Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+            <ContentControl Grid.Row="2" Content="{Binding SelectedTab}" />
+
+            <Border Grid.Row="3" Background="#3A1214" IsVisible="{Binding Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                     Padding="12,6">
                 <TextBlock Text="{Binding Problem}" Foreground="#FFB4B4" TextWrapping="Wrap" />
             </Border>

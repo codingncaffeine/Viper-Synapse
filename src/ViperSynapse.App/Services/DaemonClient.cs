@@ -134,6 +134,36 @@ public sealed class DaemonClient : IAsyncDisposable
 
     public Task StartRecordingAsync() => CallAsync("StartRecording", null);
 
+    /// <summary>An on-screen notification through the desktop's notification service (org.freedesktop.Notifications),
+    /// which every Linux desktop provides. Failing quietly: a desktop without one simply shows nothing.</summary>
+    public async Task NotifyAsync(string summary, string body)
+    {
+        try
+        {
+            await Connection.CallMethodAsync(NotifyMessage(Connection, summary, body)).ConfigureAwait(false);
+        }
+        catch (DBusErrorReplyException)
+        {
+        }
+    }
+
+    static MessageBuffer NotifyMessage(DBusConnection connection, string summary, string body)
+    {
+        using var writer = connection.GetMessageWriter();
+        writer.WriteMethodCallHeader(destination: "org.freedesktop.Notifications", path: "/org/freedesktop/Notifications",
+            @interface: "org.freedesktop.Notifications", member: "Notify", signature: "susssasa{sv}i");
+        writer.WriteString("Viper Synapse");
+        writer.WriteUInt32(0);
+        writer.WriteString("viper-synapse");
+        writer.WriteString(summary);
+        writer.WriteString(body);
+        writer.WriteArray(Array.Empty<string>());
+        var hints = writer.WriteDictionaryStart();
+        writer.WriteDictionaryEnd(hints);
+        writer.WriteInt32(3000);
+        return writer.CreateMessage();
+    }
+
     /// <summary>Stops the service: Quit from the tray ends bindings and macros with the app.</summary>
     public Task QuitServiceAsync() => CallAsync("Quit", null);
 

@@ -40,7 +40,8 @@ public sealed record StepRow(int Index, MacroStep Step)
 /// to the service as soon as it is made, as Synapse does.</summary>
 public sealed partial class MacrosViewModel(DaemonClient client, MainViewModel main) : TabViewModel
 {
-    public override string Header => "MACROS";
+    public override string Header => "MACRO";
+    public override TabIcon Icon => TabIcon.Macro;
 
     public MacroLibrary Library { get; private set; } = MacroLibrary.Empty;
 

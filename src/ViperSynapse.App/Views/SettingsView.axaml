@@ -3,35 +3,76 @@
              xmlns:vm="using:ViperSynapse.App.ViewModels"
              x:Class="ViperSynapse.App.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
-    <Grid RowDefinitions="Auto,*">
-        <TextBlock Classes="title" Text="SETTINGS" HorizontalAlignment="Center" Margin="0,12,0,14" />
-        <ScrollViewer Grid.Row="1">
-            <WrapPanel HorizontalAlignment="Center" Margin="20">
-                <Border Classes="card" Width="520">
-                    <StackPanel Spacing="14">
-                        <TextBlock Classes="heading" Text="GENERAL" />
-                        <StackPanel Spacing="4">
-                            <ToggleSwitch IsChecked="{Binding StartAtLogin}" OnContent="Start Viper Synapse when I sign in"
-                                          OffContent="Start Viper Synapse when I sign in" />
-                            <TextBlock Classes="caption" TextWrapping="Wrap"
-                                       Text="STARTS IN THE TRAY, SO YOUR BINDINGS AND MACROS WORK FROM SIGN-IN. OFF BY DEFAULT." />
+    <Grid RowDefinitions="44,*">
+        <ListBox Classes="pills" HorizontalAlignment="Center" VerticalAlignment="Center"
+                 ItemsSource="{x:Static vm:SettingsViewModel.Pages}" SelectedItem="{Binding SelectedPage}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>
+
+        <!-- SYNAPSE -->
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding ShowSynapse}">
+            <WrapPanel HorizontalAlignment="Center" Margin="20,10">
+                <StackPanel>
+                    <Border Classes="card" Width="440">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="heading" Text="AUTO-LAUNCH" />
+                            <CheckBox IsChecked="{Binding StartAtLogin}">
+                                <StackPanel>
+                                    <TextBlock Text="Start Viper Synapse automatically when I sign in" />
+                                    <TextBlock Classes="caption" Text="OFF BY DEFAULT. BINDINGS AND MACROS NEED IT RUNNING." />
+                                </StackPanel>
+                            </CheckBox>
+                            <CheckBox IsChecked="{Binding StartMinimized}" IsEnabled="{Binding StartAtLogin}" Margin="24,0,0,0"
+                                      Content="Minimize to system tray on startup" />
+                            <CheckBox IsChecked="{Binding CloseToTray}" Content="Keep running in the tray when the window is closed" />
                         </StackPanel>
-                        <StackPanel Spacing="4">
-                            <ToggleSwitch IsChecked="{Binding CloseToTray}" OnContent="Keep running in the tray when the window is closed"
-                                          OffContent="Keep running in the tray when the window is closed" />
-                            <TextBlock Classes="caption" TextWrapping="Wrap"
-                                       Text="WHEN OFF, CLOSING THE WINDOW QUITS VIPER SYNAPSE AND YOUR DEVICES GO BACK TO THEIR OWN DEFAULTS." />
+                    </Border>
+                    <Border Classes="card" Width="440">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="heading" Text="NOTIFICATIONS" />
+                            <CheckBox IsChecked="{Binding Notifications}">
+                                <StackPanel>
+                                    <TextBlock Text="Display on-screen notifications" />
+                                    <TextBlock Classes="caption" TextWrapping="Wrap" MaxWidth="360"
+                                               Text="WHEN A PROFILE OR KEYMAP SWITCHES BY ITSELF: A LINKED GAME, THE KEYPAD'S BUTTONS." />
+                                </StackPanel>
+                            </CheckBox>
                         </StackPanel>
-                    </StackPanel>
-                </Border>
-                <Border Classes="card" Width="520">
-                    <StackPanel Spacing="8">
+                    </Border>
+                </StackPanel>
+            </WrapPanel>
+        </ScrollViewer>
+
+        <!-- GENERAL -->
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding ShowGeneral}">
+            <WrapPanel HorizontalAlignment="Center" Margin="20,10">
+                <StackPanel>
+                    <Border Classes="card" Width="440">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="heading" Text="LANGUAGE" />
+                            <ComboBox ItemsSource="{x:Static vm:SettingsViewModel.Languages}" SelectedItem="{Binding Language}" Width="220" />
+                        </StackPanel>
+                    </Border>
+                    <Border Classes="card" Width="440">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="heading" Text="WHAT'S NEW" />
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="View the latest updates in the" VerticalAlignment="Center" />
+                                <Button Classes="link" Content="Release Notes" Click="OpenReleases" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <Border Classes="card" Width="440">
+                    <StackPanel Spacing="10">
                         <TextBlock Classes="heading" Text="ABOUT" />
-                        <Image Source="/Assets/logo.png" Height="120" HorizontalAlignment="Left" />
-                        <TextBlock Text="{Binding Version}" />
-                        <TextBlock Classes="caption" TextWrapping="Wrap"
-                                   Text="FREE SOFTWARE UNDER THE GPL-3.0-OR-LATER. NOT AFFILIATED WITH OR ENDORSED BY RAZER INC. DEVICE PROTOCOL KNOWLEDGE FROM THE OPENRAZER PROJECT." />
-                        <TextBlock Classes="green" Text="github.com/codingncaffeine/Viper-Synapse" />
+                        <Image Source="/Assets/logo.png" Height="140" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Version}" HorizontalAlignment="Center" Foreground="#CCCCCC" />
+                        <TextBlock HorizontalAlignment="Center" TextAlignment="Center" Foreground="#9A9A9A" FontSize="11" TextWrapping="Wrap"
+                                   Text="Free software under the GPL-3.0-or-later. Not affiliated with or endorsed by Razer Inc.&#x0a;Device protocol knowledge from the OpenRazer project." />
+                        <Button Classes="link" Content="github.com/codingncaffeine/Viper-Synapse" HorizontalAlignment="Center" Click="OpenProject" />
                     </StackPanel>
                 </Border>
             </WrapPanel>

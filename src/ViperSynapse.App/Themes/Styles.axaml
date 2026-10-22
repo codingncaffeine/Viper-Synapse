@@ -220,8 +220,11 @@
         <Setter Property="Padding" Value="0" />
     </Style>
     <Style Selector="ListBox.topTabs ListBoxItem">
-        <Setter Property="Padding" Value="16,0" />
-        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="CornerRadius" Value="4,4,0,0" />
+        <Setter Property="BorderThickness" Value="1,1,1,0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="MinHeight" Value="0" />
         <Setter Property="Foreground" Value="#9A9A9A" />
         <Setter Property="FontSize" Value="11" />
@@ -234,6 +237,9 @@
     <Style Selector="ListBox.topTabs ListBoxItem:selected /template/ ContentPresenter">
         <Setter Property="Background" Value="{StaticResource PageBrush}" />
         <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <Style Selector="ListBox.topTabs ListBoxItem:selected">
+        <Setter Property="BorderBrush" Value="#2E8F1E" />
     </Style>
 
     <!-- Page tabs (CUSTOMIZE, LIGHTING, ...): the open one is a green pill with black text. -->
@@ -339,5 +345,112 @@
     </Style>
     <Style Selector="ListBox.rates ListBoxItem:selected /template/ ContentPresenter">
         <Setter Property="Background" Value="#14290F" />
+    </Style>
+    <!-- Small icons beside the header dropdowns. -->
+    <Style Selector="TextBlock.headerIcon">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Foreground" Value="#CCCCCC" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- The remap menu button: a round outline, green when the key list is open. -->
+    <Style Selector="ToggleButton.remap">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="#4A4A4A" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ToggleButton.remap:checked /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <!-- Back, forward, refresh and help in the bar under the tabs. -->
+    <Style Selector="Button.nav">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#E0E0E0" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="30" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.nav:disabled /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#5A5A5A" />
+    </Style>
+    <Style Selector="Button.nav:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#2C2C2C" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+    <!-- Linked Games tiles. -->
+    <Style Selector="Border.addTile">
+        <Setter Property="Width" Value="180" />
+        <Setter Property="Height" Value="200" />
+        <Setter Property="Background" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="#5A5A5A" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.gameTile">
+        <Setter Property="Width" Value="180" />
+        <Setter Property="Height" Value="200" />
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.gameTile:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#1C1C1C" />
+        <Setter Property="BorderBrush" Value="{StaticResource GreenBrush}" />
+    </Style>
+    <Style Selector="Border.deviceTile">
+        <Setter Property="Width" Value="220" />
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="Padding" Value="12" />
+    </Style>
+    <!-- Underlined green links (Release Notes, the project page). -->
+    <Style Selector="Button.link">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource GreenBrush}" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.link /template/ ContentPresenter">
+        <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#5BE443" />
+    </Style>
+    <!-- Dashboard: section headers, device cards, module cards. -->
+    <Style Selector="TextBlock.section">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="#CCCCCC" />
+        <Setter Property="LetterSpacing" Value="0.6" />
+    </Style>
+    <Style Selector="Button.deviceCard">
+        <Setter Property="Width" Value="190" />
+        <Setter Property="Height" Value="190" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.moduleCard">
+        <Setter Property="Width" Value="190" />
+        <Setter Property="Height" Value="140" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.deviceCard:pointerover /template/ ContentPresenter, Button.moduleCard:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="#1C1C1C" />
     </Style>
 </Styles>

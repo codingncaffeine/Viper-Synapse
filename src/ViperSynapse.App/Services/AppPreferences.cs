@@ -5,7 +5,7 @@ namespace ViperSynapse.App.Services;
 
 /// <summary>The window's own preferences (device settings live in the service). Stored in
 /// $XDG_CONFIG_HOME/viper-synapse/app.json.</summary>
-public sealed record AppPreferences(bool CloseToTray = true)
+public sealed record AppPreferences(bool CloseToTray = true, bool StartMinimized = true, bool Notifications = true)
 {
     static string FilePath => Path.Combine(Autostart.ConfigHome(), "viper-synapse", "app.json");
 
@@ -76,7 +76,9 @@ public static class Autostart
         return self;
     }
 
-    public static Task SetAsync(bool enabled) => Task.Run(() =>
+    /// <param name="enabled">Whether to start at sign-in.</param>
+    /// <param name="minimized">Start in the tray (Synapse's "Minimize to system tray on startup") or open the window.</param>
+    public static Task SetAsync(bool enabled, bool minimized = true) => Task.Run(() =>
     {
         if (!enabled)
         {
@@ -90,7 +92,7 @@ public static class Autostart
             Type=Application
             Name=Viper Synapse
             Comment=Razer device settings, key bindings and macros
-            Exec={(program.Contains(' ') ? $"\"{program}\"" : program)} --background
+            Exec={(program.Contains(' ') ? $"\"{program}\"" : program)}{(minimized ? " --background" : "")}
             Icon=viper-synapse
             Terminal=false
             X-GNOME-Autostart-enabled=true

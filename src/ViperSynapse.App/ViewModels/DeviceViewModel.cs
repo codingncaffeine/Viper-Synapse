@@ -31,6 +31,20 @@ public sealed partial class KeyRowViewModel(DeviceKey key) : ObservableObject
     public partial bool Changed { get; set; }
 }
 
+/// <summary>A keymap in the dropdown, with the colour Synapse gives it (the keypad's keymap light).</summary>
+public sealed record KeymapItem(int Index, string Name)
+{
+    static readonly string[] Colors = ["#F2A33A", "#E5484D", "#44D62C", "#3D8BFD", "#2EC4D6", "#C04BD8", "#F2D43A", "#E6E6E6"];
+
+    static readonly Avalonia.Media.IBrush[] Brushes = Colors.Select(c => (Avalonia.Media.IBrush)new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(c))).ToArray();
+
+    // Computed, not stored: a record compares its fields, and a stored brush would make the same keymap from two
+    // loads unequal, so the box would drop its selection each time the settings are read again.
+    public Avalonia.Media.IBrush Color => Brushes[Index % Brushes.Length];
+
+    public override string ToString() => Name;
+}
+
 public sealed record KeyGroup(string Title, IReadOnlyList<KeyRowViewModel> Keys);
 
 /// <summary>A device tab: its pages (Customize, Lighting, ...), profiles, keymaps and the key list.</summary>
@@ -88,7 +102,35 @@ public sealed partial class DeviceViewModel : TabViewModel
     public DeviceModel? Model { get; }
     public string Key => Info.Key;
     public override string Header => ShortName.ToUpperInvariant();
-    public string Title => (Model?.Name ?? Info.Name).ToUpperInvariant();
+    public override string Title => (Model?.Name ?? Info.Name).ToUpperInvariant();
+    public override TabIcon Icon => Model?.Type switch
+    {
+        "keypad" => TabIcon.Keypad,
+        "mouse" => TabIcon.Mouse,
+        "keyboard" => TabIcon.Keyboard,
+        _ => TabIcon.Device,
+    };
+
+    /// <summary>The profile in use, shown in green on the dashboard card.</summary>
+    public string ProfileName => SelectedProfile?.Name ?? "";
+
+    partial void OnSelectedProfileChanged(Profile? oldValue, Profile? newValue) => OnPropertyChanged(nameof(ProfileName));
+
+    /// <summary>The settings as last read from or sent to the service.</summary>
+    public DeviceSettings CurrentSettings => _settings;
+
+    /// <summary>Links a program to one of this device's profiles (taking it off the others), or to none.</summary>
+    public void LinkProgram(string program, Guid? profileId)
+    {
+        var profiles = _settings.Profiles.Select(p =>
+        {
+            var programs = p.LinkedPrograms.Where(x => !string.Equals(x, program, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (p.Id == profileId)
+                programs.Add(program);
+            return p with { LinkedPrograms = programs };
+        }).ToList();
+        Push(_settings with { Profiles = profiles });
+    }
     public string ShortName => (Model?.Name ?? Info.Name).Replace("Razer ", "", StringComparison.Ordinal);
     public bool IsKeypad => Model?.Type == "keypad";
 
@@ -111,22 +153,29 @@ public sealed partial class DeviceViewModel : TabViewModel
     /// <summary>Replaced whole on every load: a combo box whose items are cleared under a two-way index binding
     /// loses its selection.</summary>
     [ObservableProperty]
-    public partial IReadOnlyList<string> Keymaps { get; set; } = [];
+    public partial IReadOnlyList<KeymapItem> Keymaps { get; set; } = [];
 
     [ObservableProperty]
     public partial int SelectedKeymap { get; set; }
 
     /// <summary>What the keymap box binds to. A box whose items are replaced sends null back; that is ignored.</summary>
-    public string? SelectedKeymapName
+    public KeymapItem? SelectedKeymapItem
     {
         get => SelectedKeymap >= 0 && SelectedKeymap < Keymaps.Count ? Keymaps[SelectedKeymap] : null;
         set
         {
-            int index = value == null ? -1 : Keymaps.ToList().IndexOf(value);
-            if (index >= 0)
-                SelectedKeymap = index;
+            if (value != null)
+                SelectedKeymap = value.Index;
         }
     }
+
+    /// <summary>Synapse 4's remap menu: the key list beside the device, shown or hidden by the button next to
+    /// Standard and Hypershift.</summary>
+    [ObservableProperty]
+    public partial bool ShowKeyList { get; set; } = true;
+
+    [RelayCommand]
+    void ToggleKeyList() => ShowKeyList = !ShowKeyList;
 
     [ObservableProperty]
     public partial bool Hypershift { get; set; }
@@ -263,7 +312,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         try
         {
             var settings = await _main.Client.GetSettingsAsync(Key).ConfigureAwait(false);
-            await Dispatcher.UIThread.InvokeAsync(() => Load(settings));
+            await Dispatcher.UIThread.InvokeAsync(() => Load(settings, fromService: true));
             await ReadDeviceAsync().ConfigureAwait(false);
         }
         catch (Exception e)
@@ -272,8 +321,26 @@ public sealed partial class DeviceViewModel : TabViewModel
         }
     }
 
-    void Load(DeviceSettings settings)
+    bool _loadedOnce;
+
+    /// <summary>A profile or keymap that changed from outside the window (a linked game, the keypad's own buttons)
+    /// is announced on screen when the user wants that. Changes made here never arrive as a difference.</summary>
+    void AnnounceOutsideChange(DeviceSettings settings)
     {
+        if (!_loadedOnce || !_main.Settings.Notifications)
+            return;
+        string? what = settings.ActiveProfile != _settings.ActiveProfile ? $"Profile: {settings.Active.Name}"
+            : settings.ActiveKeymap != _settings.ActiveKeymap && IsKeypad ? $"Keymap: {settings.ActiveKeymapOrFirst.Name}"
+            : null;
+        if (what != null)
+            _ = _main.Client.NotifyAsync(ShortName, what);
+    }
+
+    void Load(DeviceSettings settings, bool fromService = false)
+    {
+        if (fromService)
+            AnnounceOutsideChange(settings);
+        _loadedOnce = true;
         _loading = true;
         try
         {
@@ -282,12 +349,11 @@ public sealed partial class DeviceViewModel : TabViewModel
             foreach (var p in settings.Profiles)
                 Profiles.Add(p);
             SelectedProfile = settings.Active;
-            Keymaps = settings.Active.Keymaps.Select(k => k.Name).ToList();
+            Keymaps = settings.Active.Keymaps.Select((k, i) => new KeymapItem(i, k.Name)).ToList();
             SelectedKeymap = Math.Clamp(settings.ActiveKeymap, 0, Math.Max(0, Keymaps.Count - 1));
             // The index often stays 0 across a load, which raises nothing; the box must still re-read its selection.
-            OnPropertyChanged(nameof(SelectedKeymapName));
+            OnPropertyChanged(nameof(SelectedKeymapItem));
             RefreshRows();
-            LinkedProgramsText = string.Join('\n', settings.Active.LinkedPrograms);
             StickMode = settings.Active.Thumbstick;
             Interruption = settings.Active.Interruption;
             Lighting.Load(settings.Active.Lighting);
@@ -391,7 +457,7 @@ public sealed partial class DeviceViewModel : TabViewModel
 
     partial void OnSelectedKeymapChanged(int value)
     {
-        OnPropertyChanged(nameof(SelectedKeymapName));
+        OnPropertyChanged(nameof(SelectedKeymapItem));
         if (_loading || value < 0 || value == _settings.ActiveKeymap)
             return;
         Push(_settings with { ActiveKeymap = value });
@@ -416,17 +482,6 @@ public sealed partial class DeviceViewModel : TabViewModel
         else keymaps[Math.Clamp(_settings.ActiveKeymap, 0, keymaps.Count - 1)] = keymap;
         profile = profile with { Keymaps = keymaps };
         return _settings with { Profiles = _settings.Profiles.Select(p => p.Id == profile.Id ? profile : p).ToList() };
-    }
-
-    /// <summary>The profile's linked programs, one per line, as the editor shows them.</summary>
-    [ObservableProperty]
-    public partial string LinkedProgramsText { get; set; } = "";
-
-    [RelayCommand]
-    void SaveLinkedPrograms()
-    {
-        var programs = LinkedProgramsText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct().ToList();
-        PushProfile(p => p with { LinkedPrograms = programs });
     }
 
     [RelayCommand]

@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ViperSynapse.App.ViewModels"
+             x:Class="ViperSynapse.App.Views.LinkedGamesView"
+             x:DataType="vm:LinkedGamesViewModel">
+    <Grid RowDefinitions="44,*">
+        <Grid ColumnDefinitions="*,Auto,*" Margin="0,2,0,6">
+            <StackPanel Orientation="Horizontal" Spacing="4" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Button Classes="nav" Content="+" ToolTip.Tip="Add a game or program" Click="Browse" />
+            </StackPanel>
+            <ListBox Grid.Column="1" Classes="pills" VerticalAlignment="Center" ItemsSource="{x:Static vm:LinkedGamesViewModel.Views}"
+                     SelectedItem="{Binding SelectedView}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+        </Grid>
+
+        <!-- GAMES: a tile per game, the dashed tile to add one; the chosen game's profiles on the right. -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" IsVisible="{Binding ShowGames}">
+            <ScrollViewer>
+                <StackPanel Margin="16,6" Spacing="10">
+                    <WrapPanel>
+                        <Border Classes="addTile" Margin="4" DragDrop.AllowDrop="True" Name="AddTile">
+                            <StackPanel Spacing="10" VerticalAlignment="Center" Width="150">
+                                <TextBlock Text="+" FontSize="34" Foreground="#9A9A9A" HorizontalAlignment="Center" />
+                                <TextBlock Text="ADD A GAME/PROGRAM&#x0a;OR DRAG AND DROP HERE" FontSize="10" Foreground="#CCCCCC"
+                                           TextAlignment="Center" HorizontalAlignment="Center" />
+                                <TextBox Text="{Binding NewProgram}" PlaceholderText="or type its name" FontSize="11" Margin="6,0" />
+                                <Button Classes="save" Content="ADD" Command="{Binding AddGameCommand}" HorizontalAlignment="Center" MinWidth="70" />
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding Games}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:GameRow">
+                                    <Button Classes="gameTile" Margin="4" Click="PickGame">
+                                        <StackPanel Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Text="◉◉" FontSize="26" Foreground="{StaticResource GreenBrush}" HorizontalAlignment="Center" />
+                                            <TextBlock Text="{Binding Name}" Foreground="#FFFFFF" FontSize="12" HorizontalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="140" />
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </WrapPanel>
+                    <TextBlock Classes="caption" TextWrapping="Wrap" MaxWidth="900" HorizontalAlignment="Left"
+                               Text="A LINKED GAME SWITCHES ITS PROFILE ON WHILE IT IS IN FRONT, AND YOUR CHOSEN PROFILE COMES BACK WHEN IT IS NOT. WORKS ON KDE PLASMA, HYPRLAND AND X11 DESKTOPS; GNOME ON WAYLAND DOES NOT TELL OTHER PROGRAMS WHICH WINDOW IS IN FRONT." />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Column="1" Classes="card" Width="380" Margin="0,10,16,10" VerticalAlignment="Top"
+                    IsVisible="{Binding SelectedGame, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Spacing="10" DataContext="{Binding SelectedGame}" x:DataType="vm:GameRow">
+                    <TextBlock Classes="heading" Text="{Binding Name}" />
+                    <TextBlock Classes="caption" Text="{Binding Program}" TextWrapping="Wrap" />
+                    <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap" Text="The profile each device switches to while this game is in front." />
+                    <ItemsControl ItemsSource="{Binding Links}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:GameLink">
+                                <StackPanel Spacing="4" Margin="0,4">
+                                    <TextBlock Classes="caption" Text="{Binding Device.Header}" />
+                                    <ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Classes="cancel" Content="REMOVE GAME" Command="{Binding $parent[UserControl].((vm:LinkedGamesViewModel)DataContext).RemoveGameCommand}" HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- DEVICES: each device and the games linked to its profiles. -->
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding ShowDevices}">
+            <ItemsControl ItemsSource="{Binding DeviceList}" Margin="16,6">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:DeviceGames">
+                        <Border Classes="deviceTile" Margin="4">
+                            <StackPanel Spacing="8">
+                                <Panel Height="96">
+                                    <Image Source="{Binding Device.Photo}" Stretch="Uniform" IsVisible="{Binding Device.Photo, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                    <Image Source="/Assets/icon.png" Width="64" IsVisible="{Binding Device.Photo, Converter={x:Static ObjectConverters.IsNull}}" />
+                                </Panel>
+                                <TextBlock Text="{Binding Device.Title}" FontSize="11" Foreground="#FFFFFF" HorizontalAlignment="Center" />
+                                <ItemsControl ItemsSource="{Binding Lines}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <TextBlock Text="{Binding}" Classes="green" FontSize="11" HorizontalAlignment="Center" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

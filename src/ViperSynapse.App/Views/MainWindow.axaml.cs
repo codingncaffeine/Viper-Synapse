@@ -17,6 +17,7 @@ public sealed partial class MainWindow : Window
         MinimizeButton.Click += (_, _) => WindowState = WindowState.Minimized;
         MaximizeButton.Click += (_, _) => ToggleMaximized();
         CloseButton.Click += (_, _) => Close();
+        HelpButton.Click += (_, _) => _ = Launcher.LaunchUriAsync(new Uri("https://github.com/codingncaffeine/Viper-Synapse"));
         Edge(EdgeLeft, WindowEdge.West);
         Edge(EdgeRight, WindowEdge.East);
         Edge(EdgeBottom, WindowEdge.South);

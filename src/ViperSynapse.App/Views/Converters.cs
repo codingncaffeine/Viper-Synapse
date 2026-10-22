@@ -32,6 +32,26 @@ public static class Converters
         _ => 0,
     });
 
+    // Top-bar tab icons. Synapse 4 draws Linked Games and Macro as a black glyph in a green disc, device tabs and
+    // Settings as a light outline glyph.
+    public static readonly IValueConverter TabInDisc = new FuncValueConverter<ViewModels.TabIcon, bool>(i =>
+        i is ViewModels.TabIcon.LinkedGames or ViewModels.TabIcon.Macro);
+
+    public static readonly IValueConverter TabGlyph = new FuncValueConverter<ViewModels.TabIcon, string>(i => i switch
+    {
+        ViewModels.TabIcon.Keypad => "▦",
+        ViewModels.TabIcon.Mouse => "⬮",
+        ViewModels.TabIcon.Keyboard => "⌨",
+        ViewModels.TabIcon.Device => "◻",
+        ViewModels.TabIcon.LinkedGames => "◉◉",
+        ViewModels.TabIcon.Macro => "M",
+        ViewModels.TabIcon.Settings => "⚙",
+        _ => "",
+    });
+
+    public static readonly IValueConverter TabGlyphBrush = new FuncValueConverter<ViewModels.TabIcon, IBrush>(i =>
+        i is ViewModels.TabIcon.LinkedGames or ViewModels.TabIcon.Macro ? Brushes.Black : new SolidColorBrush(Color.Parse("#D0D0D0")));
+
     public static readonly IValueConverter Equal = new FuncValueConverter<object?, object?, bool>((value, parameter) =>
         Equals(value?.ToString(), parameter?.ToString()));
 }
