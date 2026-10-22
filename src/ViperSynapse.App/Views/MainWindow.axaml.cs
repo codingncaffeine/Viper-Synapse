@@ -7,6 +7,9 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // For screenshots of pages taller than the default window.
+        if (int.TryParse(System.Environment.GetEnvironmentVariable("VIPER_SYNAPSE_HEIGHT"), out var height) && height > 0)
+            Height = height;
         TopBar.PointerPressed += (_, e) =>
         {
             if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)

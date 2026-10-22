@@ -60,6 +60,7 @@ public enum CycleDirection
 [JsonDerivedType(typeof(SwitchKeymapBinding), "switch-keymap")]
 [JsonDerivedType(typeof(LaunchBinding), "launch")]
 [JsonDerivedType(typeof(TextBinding), "text")]
+[JsonDerivedType(typeof(GamepadBinding), "gamepad")]
 public abstract record Binding;
 
 /// <summary>The key does what it does with no software running.</summary>
@@ -90,3 +91,6 @@ public sealed record LaunchBinding(string Command) : Binding;
 
 /// <summary>Types a piece of text.</summary>
 public sealed record TextBinding(string Text) : Binding;
+
+/// <summary>Works a control of the virtual gamepad (Synapse's Quick remapping and controller functions).</summary>
+public sealed record GamepadBinding(Input.GamepadControl Control) : Binding;

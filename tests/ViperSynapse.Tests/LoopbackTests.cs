@@ -23,6 +23,7 @@ public class LoopbackTests
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => null;
         public ShortcutList Shortcuts => ShortcutList.Empty;
+        public void Gamepad(GamepadControl control, bool down) { }
         public void Report(Exception error) { }
     }
 
@@ -184,5 +185,35 @@ public class LoopbackTests
         // The grab is gone: someone else can take the source now.
         using var again = EvdevDevice.Open(sourceNode);
         again.Grab();
+    }
+
+    [Fact]
+    public void The_virtual_gamepad_is_a_360_pad_and_moves_its_stick()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+
+        // Made up front rather than on first use, so the test can grab it before anything is sent.
+        using var device = UinputDevice.CreateGamepad("viper-synapse-test-pad");
+        using var node = EvdevDevice.Open(WaitForNode(device));
+        node.Grab();
+        Assert.Equal([0, 1, 2, 3, 4, 5, 16, 17], node.Capabilities(EventTypes.Abs).Select(a => (int)a).Order());
+        Assert.Contains((ushort)0x130, node.Capabilities(EventTypes.Key));
+
+        using var pad = new VirtualGamepad(() => device);
+        pad.Set(GamepadControl.LeftStickUp, true);
+        pad.Set(GamepadControl.RightTrigger, true);
+        pad.Set(GamepadControl.LeftStickUp, false);
+
+        var seen = new List<string>();
+        var events = new InputEvent[64];
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (seen.Count < 3 && DateTime.UtcNow < deadline)
+        {
+            int n = node.Read(events, TimeSpan.FromMilliseconds(100));
+            for (int i = 0; i < n; i++)
+                if (events[i].Type == EventTypes.Abs)
+                    seen.Add($"{events[i].Code}:{events[i].Value}");
+        }
+        Assert.Equal(["1:-32767", "5:255", "1:0"], seen);
     }
 }

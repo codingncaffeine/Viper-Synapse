@@ -189,6 +189,9 @@ public sealed class RemapEngine
             case TextBinding text:
                 Run(code, ct => _macros.PlayAsync(TextTyper.Steps(text.Text).ToList<MacroStep>(), ct));
                 break;
+            case GamepadBinding pad:
+                _host.Gamepad(pad.Control, true);
+                break;
         }
     }
 
@@ -217,6 +220,9 @@ public sealed class RemapEngine
                 break;
             case HypershiftBinding:
                 _hypershiftHeld = Math.Max(0, _hypershiftHeld - 1);
+                break;
+            case GamepadBinding pad:
+                _host.Gamepad(pad.Control, false);
                 break;
         }
     }

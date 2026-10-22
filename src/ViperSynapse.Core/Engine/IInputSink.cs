@@ -24,6 +24,9 @@ public interface IEngineHost
     void SwitchProfile(Bindings.CycleDirection direction, Guid? profileId);
     void SwitchKeymap(Bindings.CycleDirection direction, int keymap);
     Bindings.Macro? FindMacro(Guid id);
+    /// <summary>A key standing in for a control of the virtual gamepad went down or up.</summary>
+    void Gamepad(Input.GamepadControl control, bool down);
+
     /// <summary>The global shortcuts, checked before the keymap on every press.</summary>
     Bindings.ShortcutList Shortcuts { get; }
     /// <summary>A macro or turbo task failed; the engine keeps running.</summary>

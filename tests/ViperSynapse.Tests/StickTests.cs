@@ -1,5 +1,6 @@
 using ViperSynapse.Core.Bindings;
 using ViperSynapse.Core.Engine;
+using ViperSynapse.Core.Input;
 
 namespace ViperSynapse.Tests;
 
@@ -74,6 +75,7 @@ public class StickTests
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => null;
         public ShortcutList Shortcuts => ShortcutList.Empty;
+        public void Gamepad(GamepadControl control, bool down) { }
         public void Report(Exception error) => throw error;
     }
 }

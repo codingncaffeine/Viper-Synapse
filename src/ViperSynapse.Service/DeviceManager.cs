@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using ViperSynapse.Core.Bindings;
 using ViperSynapse.Core.Devices;
 using ViperSynapse.Core.Engine;
+using ViperSynapse.Core.Input;
 using ViperSynapse.Hardware;
 using ViperSynapse.Hardware.Linux;
 
@@ -45,6 +46,7 @@ public sealed class DeviceManager : IDisposable
     readonly IInputSink _output;
     readonly Lock _gate = new();
     readonly Dictionary<string, Connected> _devices = [];
+    readonly VirtualGamepad _pad = new();
     MacroLibrary _macros;
     ShortcutList _shortcuts;
 
@@ -538,6 +540,8 @@ public sealed class DeviceManager : IDisposable
 
         public ShortcutList Shortcuts => manager.Shortcuts;
 
+        public void Gamepad(GamepadControl control, bool down) => manager._pad.Set(control, down);
+
         public void Report(Exception error) => Console.Error.WriteLine($"{key}: {error.Message}");
     }
 
@@ -554,5 +558,6 @@ public sealed class DeviceManager : IDisposable
             }
             _devices.Clear();
         }
+        _pad.Dispose();
     }
 }

@@ -11,6 +11,7 @@ public enum FunctionKind
     Default,
     Keyboard,
     Mouse,
+    Gamepad,
     Macro,
     Hypershift,
     SwitchProfile,
@@ -42,6 +43,7 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         new(FunctionKind.Default, "DEFAULT", "↺"),
         new(FunctionKind.Keyboard, "KEYBOARD FUNCTION", "⌨"),
         new(FunctionKind.Mouse, "MOUSE FUNCTION", "🖱"),
+        new(FunctionKind.Gamepad, "GAMEPAD FUNCTION", "🎮"),
         new(FunctionKind.Macro, "MACRO", "M"),
         new(FunctionKind.Hypershift, "RAZER HYPERSHIFT", "⇧"),
         new(FunctionKind.SwitchProfile, "SWITCH PROFILE", "⇄"),
@@ -54,6 +56,10 @@ public sealed partial class BindingEditorViewModel : ObservableObject
 
     public static IReadOnlyList<Choice<MouseFunction>> MouseFunctions { get; } =
         Enum.GetValues<MouseFunction>().Select(f => new Choice<MouseFunction>(f, BindingText.MouseLabel(f))).ToList();
+
+    /// <summary>The virtual gamepad's controls (Quick remapping maps W, A, S, D to the left stick).</summary>
+    public static IReadOnlyList<Choice<GamepadControl>> GamepadControls { get; } =
+        Enum.GetValues<GamepadControl>().Select(c => new Choice<GamepadControl>(c, GamepadState.Label(c))).ToList();
 
     public static IReadOnlyList<Choice<MacroPlayback>> Playbacks { get; } =
     [
@@ -88,6 +94,7 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         SelectedMouse = MouseFunctions[0];
         SelectedPlayback = Playbacks[0];
         SelectedMedia = MediaKeys[0];
+        SelectedGamepad = GamepadControls[0];
         SelectedProfileChoice = ProfileChoices[0];
         SelectedKeymapChoice = KeymapChoices[0];
         SelectedMacro = MacroChoices.FirstOrDefault();
@@ -132,6 +139,7 @@ public sealed partial class BindingEditorViewModel : ObservableObject
     [ObservableProperty] public partial Choice<int> SelectedKeymapChoice { get; set; }
     [ObservableProperty] public partial string Command { get; set; } = "";
     [ObservableProperty] public partial Choice<ushort> SelectedMedia { get; set; }
+    [ObservableProperty] public partial Choice<GamepadControl> SelectedGamepad { get; set; }
     [ObservableProperty] public partial string Text { get; set; } = "";
 
     public bool CanSave => Kind switch
@@ -164,6 +172,10 @@ public sealed partial class BindingEditorViewModel : ObservableObject
                 CapturedKey = k.Key;
                 (Ctrl, Shift, Alt, Super) = (k.Modifiers.HasFlag(Modifiers.Ctrl), k.Modifiers.HasFlag(Modifiers.Shift), k.Modifiers.HasFlag(Modifiers.Alt), k.Modifiers.HasFlag(Modifiers.Super));
                 (Turbo, TurboRate) = (k.Turbo, k.TurboRate);
+                break;
+            case GamepadBinding g:
+                kind = FunctionKind.Gamepad;
+                SelectedGamepad = GamepadControls.First(c => c.Value == g.Control);
                 break;
             case MouseBinding m:
                 kind = FunctionKind.Mouse;
@@ -235,6 +247,7 @@ public sealed partial class BindingEditorViewModel : ObservableObject
             },
             FunctionKind.Launch => new LaunchBinding(Command.Trim()),
             FunctionKind.Multimedia => new KeyboardBinding(SelectedMedia.Value),
+            FunctionKind.Gamepad => new GamepadBinding(SelectedGamepad.Value),
             FunctionKind.Text => new TextBinding(Text),
             FunctionKind.Disable => new DisableBinding(),
             _ => DefaultBinding.Instance,

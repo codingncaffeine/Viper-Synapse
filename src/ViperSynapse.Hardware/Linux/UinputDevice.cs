@@ -127,6 +127,53 @@ public sealed class UinputDevice : IInputSink, IDisposable
         }
     }
 
+    /// <summary>The virtual gamepad's device: an Xbox 360 pad's buttons and axes (see <see cref="GamepadState"/>) under
+    /// its USB ids, 045e:028e.</summary>
+    public static unsafe UinputDevice CreateGamepad(string name, string path = "/dev/uinput")
+    {
+        int fd = Libc.Open(path, Libc.O_WRONLY | Libc.O_NONBLOCK | Libc.O_CLOEXEC);
+        if (fd < 0)
+        {
+            int errno = Marshal.GetLastPInvokeError();
+            string message = $"{path}: {Libc.ErrorText(errno)}";
+            throw errno == 13 ? new UnauthorizedAccessException(message) : new IOException(message);
+        }
+        var device = new UinputDevice(fd, name);
+        try
+        {
+            device.Set(UiSetEvBit, EventTypes.Key);
+            device.Set(UiSetEvBit, EventTypes.Abs);
+            device.Set(UiSetEvBit, EventTypes.Syn);
+            foreach (var button in GamepadState.Buttons.Values)
+                device.Set(UiSetKeyBit, button);
+            foreach (var (axis, min, max) in GamepadState.Axes)
+            {
+                device.Set(UiSetAbsBit, axis);
+                var abs = new byte[28];
+                BitConverter.TryWriteBytes(abs.AsSpan(0), axis);
+                BitConverter.TryWriteBytes(abs.AsSpan(8), min);
+                BitConverter.TryWriteBytes(abs.AsSpan(12), max);
+                fixed (byte* p = abs)
+                    device.Check(Libc.Ioctl(fd, UiAbsSetup, p), "set up an axis");
+            }
+            var setup = new byte[92];
+            BitConverter.TryWriteBytes(setup.AsSpan(0), (ushort)0x03);     // BUS_USB
+            BitConverter.TryWriteBytes(setup.AsSpan(2), (ushort)0x045E);
+            BitConverter.TryWriteBytes(setup.AsSpan(4), (ushort)0x028E);
+            BitConverter.TryWriteBytes(setup.AsSpan(6), (ushort)0x0114);
+            Encoding.UTF8.GetBytes(name.Length > 79 ? name[..79] : name).CopyTo(setup.AsSpan(8));
+            fixed (byte* p = setup)
+                device.Check(Libc.Ioctl(fd, UiDevSetup, p), "set up the virtual device");
+            device.Check(Libc.Ioctl(fd, UiDevCreate, 0), "create the virtual device");
+            return device;
+        }
+        catch
+        {
+            device.Dispose();
+            throw;
+        }
+    }
+
     public void Absolute(ushort axis, int value) => Write(EventTypes.Abs, axis, value);
 
     /// <summary>The /dev/input/eventN node the kernel made for this device, or null if it cannot be found.</summary>
@@ -153,7 +200,7 @@ public sealed class UinputDevice : IInputSink, IDisposable
 
     public void Sync() => Write(EventTypes.Syn, EventTypes.SynReport, 0);
 
-    unsafe void Write(ushort type, ushort code, int value)
+    internal unsafe void Write(ushort type, ushort code, int value)
     {
         var e = new InputEvent { Type = type, Code = code, Value = value };
         lock (_gate)

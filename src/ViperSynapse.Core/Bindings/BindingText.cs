@@ -30,6 +30,7 @@ public static class BindingText
         }),
         LaunchBinding l => ("LAUNCH PROGRAM", ProgramName(l.Command)),
         TextBinding t => ("TEXT FUNCTION", t.Text.Length > 24 ? t.Text[..24] + "…" : t.Text),
+        GamepadBinding g => ("GAMEPAD FUNCTION", GamepadState.Label(g.Control)),
         _ => ("", ""),
     };
 

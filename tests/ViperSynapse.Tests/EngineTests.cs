@@ -15,6 +15,7 @@ public class EngineTests
         public readonly Dictionary<Guid, Macro> Macros = [];
         public readonly List<string> Launched = [];
         public ShortcutList Shortcuts { get; set; } = ShortcutList.Empty;
+        public void Gamepad(GamepadControl control, bool down) { lock (_events) _events.Add($"pad:{control}:{(down ? 1 : 0)}"); }
 
         public void Key(ushort code, int value) { lock (_events) _events.Add($"{KeyCodes.Name(code)}:{value}"); }
         public void Relative(ushort axis, int value) { lock (_events) _events.Add($"REL{axis}:{value}"); }
@@ -313,6 +314,7 @@ public class MacroFeatureTests
         public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
         public void SwitchKeymap(CycleDirection direction, int keymap) { }
         public Macro? FindMacro(Guid id) => Macros.GetValueOrDefault(id);
+        public void Gamepad(GamepadControl control, bool down) { }
         public ShortcutList Shortcuts => ShortcutList.Empty;
         public void Report(Exception error) => throw error;
     }

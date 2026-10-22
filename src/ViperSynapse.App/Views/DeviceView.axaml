@@ -194,6 +194,19 @@
                                     <RadioButton GroupName="interrupt" Content="Any key" IsChecked="{Binding InterruptAnyKey}" />
                                 </StackPanel>
                             </Border>
+                            <Border Classes="card" Width="540" IsVisible="{Binding HasQuickRemapping}">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="heading" Text="QUICK REMAPPING" />
+                                    <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"
+                                               Text="Map your keys to emulate gamepad controls: W, A, S and D move a virtual controller's left stick, Q and E pull its left and right triggers." />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Classes="save" Content="APPLY TO THIS KEYMAP" Command="{Binding QuickRemapCommand}" IsVisible="{Binding !QuickRemapped}" />
+                                        <Button Classes="cancel" Content="BACK TO KEYS" Command="{Binding UndoQuickRemapCommand}" IsVisible="{Binding QuickRemapped}" />
+                                        <TextBlock Text="On in this keymap" Foreground="{StaticResource GreenBrush}" FontSize="12" VerticalAlignment="Center"
+                                                   IsVisible="{Binding QuickRemapped}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                         </WrapPanel>
                     </StackPanel>
                 </ScrollViewer>

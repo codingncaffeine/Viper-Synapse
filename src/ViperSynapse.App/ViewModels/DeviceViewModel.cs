@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using ViperSynapse.App.Services;
 using ViperSynapse.Core.Bindings;
 using ViperSynapse.Core.Devices;
+using ViperSynapse.Core.Input;
 
 namespace ViperSynapse.App.ViewModels;
 
@@ -425,6 +426,7 @@ public sealed partial class DeviceViewModel : TabViewModel
             SelectedKeymap = Math.Clamp(settings.ActiveKeymap, 0, Math.Max(0, Keymaps.Count - 1));
             // The index often stays 0 across a load, which raises nothing; the box must still re-read its selection.
             OnPropertyChanged(nameof(SelectedKeymapItem));
+            OnPropertyChanged(nameof(QuickRemapped));
             RefreshRows();
             StickMode = settings.Active.Thumbstick;
             Interruption = settings.Active.Interruption;
@@ -540,6 +542,7 @@ public sealed partial class DeviceViewModel : TabViewModel
     partial void OnSelectedKeymapChanged(int value)
     {
         OnPropertyChanged(nameof(SelectedKeymapItem));
+        OnPropertyChanged(nameof(QuickRemapped));
         if (_loading || value < 0 || value == _settings.ActiveKeymap)
             return;
         Push(_settings with { ActiveKeymap = value });
@@ -557,14 +560,47 @@ public sealed partial class DeviceViewModel : TabViewModel
     }
 
     /// <summary>Binds a key in the Standard layer of the keymap in use (the MACRO tab's KEY BINDS assigns this way).</summary>
-    public void Bind(DeviceKey key, Binding binding)
+    public void Bind(DeviceKey key, Binding binding) => Bind([(key, binding)]);
+
+    void Bind(IEnumerable<(DeviceKey Key, Binding Binding)> changes)
     {
         var keymap = CurrentKeymap;
         var layer = new Dictionary<ushort, Binding>(keymap.Standard);
-        if (binding is DefaultBinding) layer.Remove(key.Source);
-        else layer[key.Source] = binding;
+        foreach (var (key, binding) in changes)
+        {
+            if (binding is DefaultBinding) layer.Remove(key.Source);
+            else layer[key.Source] = binding;
+        }
         Push(ReplaceKeymap(keymap with { Standard = layer }));
+        OnPropertyChanged(nameof(QuickRemapped));
     }
+
+    // ---- Quick remapping: W, A, S, D work the virtual gamepad's left stick, Q and E its triggers ----------------
+
+    static readonly (string Key, GamepadControl Control)[] QuickMap =
+    [
+        ("KEY_W", GamepadControl.LeftStickUp), ("KEY_A", GamepadControl.LeftStickLeft), ("KEY_S", GamepadControl.LeftStickDown),
+        ("KEY_D", GamepadControl.LeftStickRight), ("KEY_Q", GamepadControl.LeftTrigger), ("KEY_E", GamepadControl.RightTrigger),
+    ];
+
+    /// <summary>The device's own keys that type W, A, S, D, Q and E (not the thumbstick's directions, which only
+    /// default to them), with the gamepad control each stands in for.</summary>
+    IEnumerable<(DeviceKey Key, GamepadControl Control)> QuickKeys =>
+        QuickMap.SelectMany(m => Rows.Where(r => r.Bindable && r.Key.Source == r.Key.Code && KeyCodes.Name(r.Key.Code) == m.Key)
+                                     .Select(r => (r.Key, m.Control)));
+
+    public bool HasQuickRemapping => IsKeypad && QuickKeys.Any();
+
+    /// <summary>The keymap in use has Quick remapping on: every one of those keys works the gamepad.</summary>
+    public bool QuickRemapped => QuickKeys.Any() && QuickKeys.All(q =>
+        CurrentKeymap.Standard.TryGetValue(q.Key.Source, out var b) && b == new GamepadBinding(q.Control));
+
+    [RelayCommand]
+    void QuickRemap() => Bind(QuickKeys.Select(q => (q.Key, (Binding)new GamepadBinding(q.Control))));
+
+    [RelayCommand]
+    void UndoQuickRemap() => Bind(QuickKeys.Where(q => CurrentKeymap.Standard.GetValueOrDefault(q.Key.Source) is GamepadBinding)
+                                           .Select(q => (q.Key, (Binding)DefaultBinding.Instance)));
 
     DeviceSettings ReplaceKeymap(Keymap keymap)
     {

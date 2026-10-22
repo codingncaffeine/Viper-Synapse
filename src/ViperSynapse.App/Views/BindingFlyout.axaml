@@ -78,6 +78,11 @@
                         <Button Classes="cancel" Content="BROWSE" Click="Browse" HorizontalAlignment="Left" />
                     </StackPanel>
 
+                    <StackPanel Spacing="8" IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=Gamepad}">
+                        <ComboBox ItemsSource="{x:Static vm:BindingEditorViewModel.GamepadControls}" SelectedItem="{Binding SelectedGamepad}" HorizontalAlignment="Stretch" />
+                        <TextBlock Text="The key works this control of a virtual Xbox 360 pad, for games that take a controller." Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+
                     <ComboBox IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=Multimedia}"
                               ItemsSource="{x:Static vm:BindingEditorViewModel.MediaKeys}" SelectedItem="{Binding SelectedMedia}" HorizontalAlignment="Stretch" />
 
