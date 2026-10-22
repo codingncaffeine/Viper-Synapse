@@ -29,11 +29,30 @@ public sealed partial class MainViewModel : ObservableObject
     public partial string? Problem { get; set; }
 
     public HomeViewModel Home { get; }
+    public SettingsViewModel Settings { get; }
+
+    /// <summary>The gear opens Settings over whatever tab is selected; picking a tab closes it.</summary>
+    [ObservableProperty]
+    public partial bool ShowingSettings { get; set; }
+
+    public object? Page => ShowingSettings ? Settings : SelectedTab;
+
+    partial void OnShowingSettingsChanged(bool value) => OnPropertyChanged(nameof(Page));
+
+    partial void OnSelectedTabChanged(TabViewModel? value)
+    {
+        ShowingSettings = false;
+        OnPropertyChanged(nameof(Page));
+    }
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    void OpenSettings() => ShowingSettings = !ShowingSettings;
     public MacrosViewModel Macros { get; }
 
-    public MainViewModel(DaemonClient client)
+    public MainViewModel(DaemonClient client, AppPreferences preferences, bool startAtLogin)
     {
         _client = client;
+        Settings = new SettingsViewModel(this, preferences, startAtLogin);
         Home = new HomeViewModel(this);
         Macros = new MacrosViewModel(client, this);
         Tabs.Add(Home);
@@ -108,6 +127,11 @@ public sealed partial class MainViewModel : ObservableObject
         if (open == "macros")
         {
             SelectedTab = Macros;
+            return;
+        }
+        if (open == "settings")
+        {
+            ShowingSettings = true;
             return;
         }
         var parts = open.Split(':');

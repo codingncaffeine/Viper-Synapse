@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ViperSynapse.App.ViewModels"
+             x:Class="ViperSynapse.App.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <TextBlock Classes="title" Text="SETTINGS" HorizontalAlignment="Center" Margin="0,12,0,14" />
+        <ScrollViewer Grid.Row="1">
+            <WrapPanel HorizontalAlignment="Center" Margin="20">
+                <Border Classes="card" Width="520">
+                    <StackPanel Spacing="14">
+                        <TextBlock Classes="heading" Text="GENERAL" />
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch IsChecked="{Binding StartAtLogin}" OnContent="Start Viper Synapse when I sign in"
+                                          OffContent="Start Viper Synapse when I sign in" />
+                            <TextBlock Classes="caption" TextWrapping="Wrap"
+                                       Text="STARTS IN THE TRAY, SO YOUR BINDINGS AND MACROS WORK FROM SIGN-IN. OFF BY DEFAULT." />
+                        </StackPanel>
+                        <StackPanel Spacing="4">
+                            <ToggleSwitch IsChecked="{Binding CloseToTray}" OnContent="Keep running in the tray when the window is closed"
+                                          OffContent="Keep running in the tray when the window is closed" />
+                            <TextBlock Classes="caption" TextWrapping="Wrap"
+                                       Text="WHEN OFF, CLOSING THE WINDOW QUITS VIPER SYNAPSE AND YOUR DEVICES GO BACK TO THEIR OWN DEFAULTS." />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Classes="card" Width="520">
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="heading" Text="ABOUT" />
+                        <Image Source="/Assets/logo.png" Height="120" HorizontalAlignment="Left" />
+                        <TextBlock Text="{Binding Version}" />
+                        <TextBlock Classes="caption" TextWrapping="Wrap"
+                                   Text="FREE SOFTWARE UNDER THE GPL-3.0-OR-LATER. NOT AFFILIATED WITH OR ENDORSED BY RAZER INC. DEVICE PROTOCOL KNOWLEDGE FROM THE OPENRAZER PROJECT." />
+                        <TextBlock Classes="green" Text="github.com/codingncaffeine/Viper-Synapse" />
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

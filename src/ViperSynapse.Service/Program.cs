@@ -30,7 +30,7 @@ static class Program
             // Grabbed devices are heard through the virtual device, which carries what they send.
             var held = devices.Devices.Where(d => d.Remapping).SelectMany(d => d.InputNodes);
             return MacroRecorder.KeyboardsAndMice(held);
-        });
+        }, stop.Cancel);
         try
         {
             await bus.ConnectAsync().ConfigureAwait(false);

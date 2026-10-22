@@ -14,6 +14,7 @@
         <DataTemplate DataType="vm:HomeViewModel"><views:HomeView /></DataTemplate>
         <DataTemplate DataType="vm:DeviceViewModel"><views:DeviceView /></DataTemplate>
         <DataTemplate DataType="vm:MacrosViewModel"><views:MacrosView /></DataTemplate>
+        <DataTemplate DataType="vm:SettingsViewModel"><views:SettingsView /></DataTemplate>
     </Window.DataTemplates>
 
     <Panel>
@@ -22,6 +23,9 @@
             <Border Grid.Row="0" Background="{StaticResource TopBarBrush}" Name="TopBar">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Classes="chrome" Command="{Binding OpenSettingsCommand}" ToolTip.Tip="Settings">
+                            <TextBlock Text="⚙" FontSize="15" Foreground="{Binding $parent[Button].Foreground}" />
+                        </Button>
                         <Button Classes="chrome" Name="MinimizeButton" ToolTip.Tip="Minimize">
                             <Path Data="M0,0 L10,0" Stroke="{Binding $parent[Button].Foreground}" StrokeThickness="1" />
                         </Button>
@@ -47,7 +51,7 @@
                 </DockPanel>
             </Border>
 
-            <ContentControl Grid.Row="1" Content="{Binding SelectedTab}" />
+            <ContentControl Grid.Row="1" Content="{Binding Page}" />
 
             <Border Grid.Row="2" Background="#3A1214" IsVisible="{Binding Problem, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                     Padding="12,6">

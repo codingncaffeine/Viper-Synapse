@@ -26,6 +26,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
           <method name="GetDeviceState"><arg direction="in" type="s" name="device"/><arg direction="out" type="s" name="json"/></method>
           <method name="GetMacros"><arg direction="out" type="s" name="json"/></method>
           <method name="SetMacros"><arg direction="in" type="s" name="json"/></method>
+          <method name="Quit"/>
           <method name="StartRecording"/>
           <method name="StopRecording"><arg direction="in" type="s" name="delayMode"/><arg direction="in" type="i" name="defaultDelayMs"/><arg direction="out" type="s" name="steps"/></method>
           <signal name="DevicesChanged"/>
@@ -35,6 +36,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
 
     readonly DeviceManager _devices;
     readonly Func<IEnumerable<string>> _recordFrom;
+    readonly Action _quit;
     readonly Lock _recordGate = new();
     DBusConnection? _connection;
     MacroRecorder? _recorder;
@@ -44,8 +46,10 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
 
     /// <param name="devices">The devices the service runs.</param>
     /// <param name="recordFrom">The input nodes a recording listens to.</param>
-    public DaemonBus(DeviceManager devices, Func<IEnumerable<string>> recordFrom)
+    /// <param name="quit">Stops the service: the window's Quit, so remaps end with the app as in Synapse.</param>
+    public DaemonBus(DeviceManager devices, Func<IEnumerable<string>> recordFrom, Action quit)
     {
+        _quit = quit;
         _devices = devices;
         _recordFrom = recordFrom;
         devices.DevicesChanged += () => Signal("DevicesChanged", null);
@@ -124,6 +128,10 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
             case "SetMacros":
                 _devices.SetMacros(SettingsJson.ReadMacros(reader.ReadString()));
                 ReplyEmpty(context);
+                break;
+            case "Quit":
+                ReplyEmpty(context);
+                _quit();
                 break;
             case "StartRecording":
                 lock (_recordGate)

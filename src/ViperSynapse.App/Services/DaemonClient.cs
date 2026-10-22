@@ -111,6 +111,9 @@ public sealed class DaemonClient : IAsyncDisposable
 
     public Task StartRecordingAsync() => CallAsync("StartRecording", null);
 
+    /// <summary>Stops the service: Quit from the tray ends bindings and macros with the app.</summary>
+    public Task QuitServiceAsync() => CallAsync("Quit", null);
+
     public async Task<IReadOnlyList<MacroStep>> StopRecordingAsync(RecordDelayMode mode, int defaultDelayMs)
     {
         var connection = Connection;
