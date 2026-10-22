@@ -14,7 +14,8 @@ public sealed record DeviceState(
     int ActiveStage,
     int PollingRate,
     int? BatteryPercent,
-    bool? Charging);
+    bool? Charging,
+    int LiftOffLevel = -1);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(DeviceState))]
@@ -29,7 +30,7 @@ internal sealed partial class DeviceStateJson : JsonSerializerContext;
 public sealed class DeviceControl(RazerTransport transport, byte transactionId, DeviceModel? model) : IDisposable
 {
     readonly Lock _gate = new();
-    string? _sentLighting, _sentPerformance, _sentPower;
+    string? _sentLighting, _sentPerformance, _sentPower, _sentCalibration;
 
     public string? LastProblem { get; private set; }
 
@@ -44,6 +45,8 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                 SendPerformance(performance);
             if (profile.Power is { } power && model?.Has("idle_time") == true && Changed(ref _sentPower, power))
                 SendPower(power);
+            if (profile.Calibration is { } calibration && model?.Has("lift_off") == true && Changed(ref _sentCalibration, calibration))
+                SendCalibration(calibration);
         }
     }
 
@@ -59,10 +62,24 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
     void SendLighting(LightingSettings lighting)
     {
         string type = model?.Type ?? "keyboard";
+        bool frameSent = false;
         foreach (var (zone, settings) in lighting.Zones)
         {
             byte led = DeviceCommands.LedId(zone, type);
-            Send(DeviceCommands.Effect(transactionId, led, settings.Effect), $"{zone} effect");
+            if (settings.Effect.Kind == EffectKind.Custom)
+            {
+                // One frame covers the whole device: send it, then switch to it, once whatever zones ask for it.
+                if (frameSent || lighting.Frame == null)
+                    continue;
+                foreach (var row in DeviceCommands.CustomFrame(transactionId, lighting.Frame))
+                    Send(row, "per-key colours");
+                Send(DeviceCommands.CustomFrameEffect(transactionId), "per-key effect");
+                frameSent = true;
+            }
+            else
+            {
+                Send(DeviceCommands.Effect(transactionId, led, settings.Effect), $"{zone} effect");
+            }
             if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
                 Send(DeviceCommands.Brightness(transactionId, led, settings.Brightness), $"{zone} brightness");
         }
@@ -81,6 +98,28 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         {
             bool hyper = model.PollRates.Any(r => r > 1000);
             Send(hyper ? DeviceCommands.HyperPollingRate(transactionId, p.PollingRate) : DeviceCommands.PollingRate(transactionId, p.PollingRate), "polling rate");
+        }
+    }
+
+    void SendCalibration(CalibrationSettings c)
+    {
+        Send(DeviceCommands.CalibrationMode(transactionId, false), "calibration mode");
+        if (c.LiftOffLevel >= 0)
+        {
+            Send(DeviceCommands.SmartTracking(transactionId, c.LiftOffLevel), "lift-off distance");
+            return;
+        }
+        // Back to the sensor's own mode 0. The Naga answers this write with Failure yet applies it, so the result is
+        // judged by reading the mode back, not by the answer.
+        try
+        {
+            transport.Send(DeviceCommands.TrackingModeDefault(transactionId));
+            if (ReadRaw(0x0B, 0x8B, 0x00, 0x04) is { } mode && mode.Arguments[2] != 0x00)
+                LastProblem = "The sensor did not go back to its default tracking.";
+        }
+        catch (IOException e)
+        {
+            LastProblem = $"Could not reset the sensor: {e.Message}";
         }
     }
 
@@ -114,6 +153,7 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             int active = 0, rate = 0;
             int? battery = null;
             bool? charging = null;
+            int liftOff = -1;
             try
             {
                 if (model?.Has("poll_rate") == true && Read(Commands.GetPollingRate) is { } poll)
@@ -132,13 +172,21 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                     battery = DeviceCommands.ReadBatteryPercent(level);
                 if (model?.Has("charging") == true && Read(Commands.GetCharging) is { } state)
                     charging = state.Arguments[1] != 0;
+                if (model?.Has("lift_off") == true && ReadRaw(0x0B, 0x8B, 0x00, 0x04) is { } tracking)
+                    liftOff = DeviceCommands.ReadLiftOffLevel(tracking);
             }
             catch (IOException e)
             {
                 LastProblem = e.Message;
             }
-            return new DeviceState(stages, active, rate, battery, charging);
+            return new DeviceState(stages, active, rate, battery, charging, liftOff);
         }
+    }
+
+    RazerReport? ReadRaw(byte commandClass, byte id, params byte[] arguments)
+    {
+        var answer = transport.Send(RazerReport.Create(transactionId, commandClass, id, arguments));
+        return answer.Status == ReportStatus.Successful ? answer : null;
     }
 
     RazerReport? Read(Commands.Command command)
@@ -158,4 +206,5 @@ static class ControlJson
 [JsonSerializable(typeof(LightingSettings))]
 [JsonSerializable(typeof(PerformanceSettings))]
 [JsonSerializable(typeof(PowerSettings))]
+[JsonSerializable(typeof(CalibrationSettings))]
 internal sealed partial class ControlJsonContext : JsonSerializerContext;

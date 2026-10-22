@@ -20,6 +20,20 @@ public sealed class DeviceDrawing : Control
     public static readonly StyledProperty<KeyRowViewModel?> SelectedProperty =
         AvaloniaProperty.Register<DeviceDrawing, KeyRowViewModel?>(nameof(Selected), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+    /// <summary>Paint mode (per-key lighting): each key filled with its LED colour, and a click paints instead of
+    /// selecting. Null is the ordinary binding view.</summary>
+    public static readonly StyledProperty<IReadOnlyDictionary<int, Color>?> PaintColorsProperty =
+        AvaloniaProperty.Register<DeviceDrawing, IReadOnlyDictionary<int, Color>?>(nameof(PaintColors));
+
+    public IReadOnlyDictionary<int, Color>? PaintColors
+    {
+        get => GetValue(PaintColorsProperty);
+        set => SetValue(PaintColorsProperty, value);
+    }
+
+    /// <summary>A key clicked in paint mode.</summary>
+    public event Action<KeyRowViewModel>? KeyPainted;
+
     public DeviceViewModel? Device
     {
         get => GetValue(DeviceProperty);
@@ -34,7 +48,7 @@ public sealed class DeviceDrawing : Control
 
     static DeviceDrawing()
     {
-        AffectsRender<DeviceDrawing>(DeviceProperty, SelectedProperty);
+        AffectsRender<DeviceDrawing>(DeviceProperty, SelectedProperty, PaintColorsProperty);
     }
 
     // Shapes in layout units, laid out once per device; Render scales them into the control.
@@ -233,6 +247,8 @@ public sealed class DeviceDrawing : Control
         if (chosen || hovered)
             context.DrawGeometry(GreenGlow, null, KeyGeometry(key with { Box = key.Box.Inflate(4) }));
         context.DrawGeometry(KeyFill, chosen ? GreenPen : hovered ? new Pen(Green, 1.2) : KeyPen, shape);
+        if (PaintColors is { } paint && paint.TryGetValue(key.Row.Key.Number, out var led))
+            context.DrawGeometry(new SolidColorBrush(led, 0.85), null, shape);
         if (key.Round)
             return;
         var number = Text(key.Row.Number, 10, key.Row.Changed ? Green : LabelDim);
@@ -305,7 +321,10 @@ public sealed class DeviceDrawing : Control
         base.OnPointerPressed(e);
         if (HitTest(e.GetPosition(this)) is { } hit)
         {
-            Selected = hit;
+            if (PaintColors != null)
+                KeyPainted?.Invoke(hit);
+            else
+                Selected = hit;
             e.Handled = true;
         }
     }

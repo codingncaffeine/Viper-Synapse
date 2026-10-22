@@ -100,6 +100,9 @@ public static class DeviceCommands
                     size = 0x09;
                 }
                 break;
+            case EffectKind.Custom:
+                // The frame itself goes first, row by row (CustomFrameRow); this switches the device over to it.
+                return CustomFrameEffect(tid);
             case EffectKind.Wheel:
                 a[2] = 0x0A;
                 a[3] = e.Reverse ? (byte)0x02 : (byte)0x01;
@@ -110,6 +113,30 @@ public static class DeviceCommands
                 throw new ArgumentOutOfRangeException(nameof(e), e.Kind, "Unknown effect.");
         }
         return RazerReport.Create(tid, 0x0F, 0x02, a.AsSpan(0, size), size);
+    }
+
+    /// <summary>One row of the per-key frame (0x0F/0x03, data size 0x47 as the driver sends it): row, first and last
+    /// column, then an RGB triple per LED.</summary>
+    public static RazerReport CustomFrameRow(byte tid, int row, int start, int stop, IReadOnlyList<Rgb> colors)
+    {
+        var a = new byte[RazerReport.MaxArguments];
+        a[2] = (byte)row;
+        a[3] = (byte)start;
+        a[4] = (byte)stop;
+        for (int i = 0; i <= stop - start && 5 + i * 3 + 2 < a.Length; i++)
+            Put(a, 5 + i * 3, colors[i]);
+        return RazerReport.Create(tid, 0x0F, 0x03, a, 0x47);
+    }
+
+    /// <summary>Shows the frame sent with <see cref="CustomFrameRow"/> (effect 0x08, no storage, as the driver sends it).</summary>
+    public static RazerReport CustomFrameEffect(byte tid) =>
+        RazerReport.Create(tid, 0x0F, 0x02, new byte[] { 0x00, 0x00, 0x08, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, 0x0C);
+
+    /// <summary>The whole frame, a report per row.</summary>
+    public static IEnumerable<RazerReport> CustomFrame(byte tid, CustomFrame frame)
+    {
+        for (int r = 0; r < frame.Rows; r++)
+            yield return CustomFrameRow(tid, r, 0, frame.Columns - 1, frame.Colors.Skip(r * frame.Columns).Take(frame.Columns).ToList());
     }
 
     /// <summary>Brightness 0-100 % as the device's 0-255.</summary>
@@ -176,6 +203,22 @@ public static class DeviceCommands
         0x08 => 125,
         _ => 0,
     };
+
+    // Sensor calibration (class 0x0B), as captured from Synapse by others (OpenRazer issue 783, the fang project) and
+    // verified on the Naga Left-Handed 2020 by reading back: 0x00 then the sensor id 0x04 lead every command.
+
+    /// <summary>Calibration mode off resets the sensor to its own defaults.</summary>
+    public static RazerReport CalibrationMode(byte tid, bool on) => RazerReport.Create(tid, 0x0B, 0x03, 0x00, 0x04, on ? (byte)0x01 : (byte)0x00);
+
+    /// <summary>Smart Tracking at level 0, 1 or 2 (1, 2 or 3 mm lift-off).</summary>
+    public static RazerReport SmartTracking(byte tid, int level) =>
+        RazerReport.Create(tid, 0x0B, 0x0B, 0x00, 0x04, 0x01, (byte)Math.Clamp(level, 0, 2));
+
+    /// <summary>Tracking mode 0, the sensor's own default, as the Naga Left-Handed 2020 reads before Synapse touches it.</summary>
+    public static RazerReport TrackingModeDefault(byte tid) => RazerReport.Create(tid, 0x0B, 0x0B, 0x00, 0x04, 0x00, 0x00);
+
+    /// <summary>The tracking mode read back (0x0B/0x8B): the Smart Tracking level, or -1 for the sensor's default.</summary>
+    public static int ReadLiftOffLevel(RazerReport answer) => answer.Arguments[2] == 0x01 ? answer.Arguments[3] : -1;
 
     public static RazerReport IdleTime(byte tid, int seconds)
     {

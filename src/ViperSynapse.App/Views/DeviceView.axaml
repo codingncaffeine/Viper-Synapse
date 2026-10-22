@@ -160,6 +160,32 @@
                         <CheckBox Content="Reverse direction" IsChecked="{Binding Reverse}" IsVisible="{Binding ShowDirection}" />
                     </StackPanel>
                 </Border>
+                <Border Classes="card" Width="780" IsVisible="{Binding ShowFrameEditor}">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="heading" Text="PER-KEY COLOURS" />
+                        <TextBlock Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap"
+                                   Text="Pick a colour, then click the keys to paint them. The keypad shows it as you go." />
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <ColorPicker Color="{Binding PaintColor}" />
+                            <Button Classes="cancel" Content="FILL ALL" Command="{Binding FillAllCommand}" />
+                            <Button Classes="cancel" Content="ALL OFF" Command="{Binding AllOffCommand}" />
+                        </StackPanel>
+                        <controls:DeviceDrawing Name="PaintCanvas" Height="460" IsVisible="{Binding ShowKeyCanvas}"
+                                                Device="{Binding $parent[UserControl].((vm:DeviceViewModel)DataContext)}"
+                                                PaintColors="{Binding KeyColors}" />
+                        <ItemsControl ItemsSource="{Binding Cells}" IsVisible="{Binding ShowLedGrid}" HorizontalAlignment="Left">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><UniformGrid Columns="{Binding GridColumns}" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LedCell">
+                                    <Button Width="44" Height="44" Margin="3" Background="{Binding Brush}" CornerRadius="6"
+                                            BorderBrush="#3A3A3A" BorderThickness="1" Click="PaintCell" ToolTip.Tip="LED" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
             </WrapPanel>
         </ScrollViewer>
 
@@ -204,6 +230,21 @@
                                 <DataTemplate x:DataType="x:Int32"><TextBlock Text="{Binding StringFormat='{}{0} Hz'}" /></DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+        </ScrollViewer>
+
+        <!-- CALIBRATION -->
+        <ScrollViewer Grid.Row="1" IsVisible="{Binding SelectedPage, Converter={x:Static views:Converters.Equal}, ConverterParameter=CALIBRATION}">
+            <WrapPanel HorizontalAlignment="Center" Margin="20" DataContext="{Binding Calibration}" x:DataType="vm:CalibrationViewModel">
+                <Border Classes="card" Width="520">
+                    <StackPanel Spacing="10">
+                        <TextBlock Classes="heading" Text="SMART TRACKING" />
+                        <TextBlock Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap"
+                                   Text="How far above the surface the sensor stops tracking. Lower keeps the cursor still when you lift and reposition the mouse; higher suits thick or uneven surfaces." />
+                        <TextBlock Classes="caption" Text="LIFT-OFF DISTANCE" />
+                        <ComboBox ItemsSource="{x:Static vm:CalibrationViewModel.Levels}" SelectedItem="{Binding Level}" HorizontalAlignment="Stretch" />
                     </StackPanel>
                 </Border>
             </WrapPanel>

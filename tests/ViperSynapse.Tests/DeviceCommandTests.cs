@@ -31,6 +31,18 @@ public class DeviceCommandTests
     }
 
     [Fact]
+    public void A_custom_frame_is_a_report_per_row_then_the_custom_effect()
+    {
+        var frame = CustomFrame.Filled(5, 6, new Rgb(0, 0x40, 0)).With([(0, 1)], new Rgb(0xFF, 0, 0));
+        var rows = DeviceCommands.CustomFrame(0x1F, frame).ToList();
+        Assert.Equal(5, rows.Count);
+        // Row 0: row, start, stop, then RGB per LED; data size 0x47 as the driver sends it.
+        Assert.StartsWith("0f 03 [47] 00 00 00 00 05 00 40 00 ff 00 00 00 40 00", Hex(rows[0]));
+        Assert.StartsWith("0f 03 [47] 00 00 04 00 05 00 40 00", Hex(rows[4]));
+        Assert.Equal("0f 02 [0c] 00 00 08 00 00 00 00 00 00 00 00 00", Hex(DeviceCommands.Effect(0x1F, 0x05, ZoneEffect.Default with { Kind = EffectKind.Custom })));
+    }
+
+    [Fact]
     public void Brightness_is_a_percentage_of_255()
     {
         Assert.Equal("0f 04 [03] 01 04 ff", Hex(DeviceCommands.Brightness(0x1F, 0x04, 100)));

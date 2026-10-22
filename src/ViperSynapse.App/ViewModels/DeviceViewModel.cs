@@ -52,6 +52,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         Lighting = new LightingViewModel(Model, l => PushProfile(p => p with { Lighting = l }));
         Performance = new PerformanceViewModel(Model, p => PushProfile(x => x with { Performance = p }));
         Power = new PowerViewModel(p => PushProfile(x => x with { Power = p }));
+        Calibration = new CalibrationViewModel(c => PushProfile(x => x with { Calibration = c }));
         Pages = BuildPages();
         SelectedPage = Pages[0];
         _ = Services.DeviceImages.LoadAsync(Model).ContinueWith(t =>
@@ -91,6 +92,7 @@ public sealed partial class DeviceViewModel : TabViewModel
     public LightingViewModel Lighting { get; }
     public PerformanceViewModel Performance { get; }
     public PowerViewModel Power { get; }
+    public CalibrationViewModel Calibration { get; }
 
     [ObservableProperty]
     public partial string SelectedPage { get; set; }
@@ -155,6 +157,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         if (Model?.Zones.Count > 0 || IsKeypad) pages.Add("LIGHTING");
         if (Model?.Has("dpi") == true || Model?.Has("poll_rate") == true) pages.Add("PERFORMANCE");
         if (Model?.Has("battery") == true) pages.Add("POWER");
+        if (Model?.Has("lift_off") == true) pages.Add("CALIBRATION");
         return pages;
     }
 
@@ -200,6 +203,7 @@ public sealed partial class DeviceViewModel : TabViewModel
             Lighting.Load(settings.Active.Lighting);
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
             Power.Load(settings.Active.Power ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
+            Calibration.Load(settings.Active.Calibration ?? new Core.Lighting.CalibrationSettings(_liftOff));
         }
         finally
         {
@@ -210,6 +214,7 @@ public sealed partial class DeviceViewModel : TabViewModel
     Core.Lighting.PerformanceSettings? _deviceDefaults;
     int? _battery;
     bool? _charging;
+    int _liftOff = -1;
 
     /// <summary>Reads what the device itself is set to, so Performance and Power show real values before the user
     /// changes anything.</summary>
@@ -224,6 +229,7 @@ public sealed partial class DeviceViewModel : TabViewModel
                 if (state.Stages is { Count: > 0 } stages)
                     _deviceDefaults = new Core.Lighting.PerformanceSettings(stages, state.ActiveStage, state.PollingRate);
                 (_battery, _charging) = (state.BatteryPercent, state.Charging);
+                _liftOff = state.LiftOffLevel;
                 Load(_settings);
             });
         }

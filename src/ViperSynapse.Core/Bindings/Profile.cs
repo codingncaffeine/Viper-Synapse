@@ -40,7 +40,8 @@ public sealed record Profile(
     IReadOnlyList<string> LinkedPrograms,
     LightingSettings? Lighting = null,
     PerformanceSettings? Performance = null,
-    PowerSettings? Power = null)
+    PowerSettings? Power = null,
+    CalibrationSettings? Calibration = null)
 {
     public const int MaxKeymaps = 8;
 

@@ -18,3 +18,10 @@ public sealed record PowerSettings(int SleepSeconds, int LowBatteryPercent)
 {
     public static PowerSettings Default { get; } = new(300, 15);
 }
+
+/// <summary>A mouse's Calibration page: the lift-off distance through Smart Tracking. Level 0, 1, 2 = 1, 2, 3 mm;
+/// -1 = the sensor's own default.</summary>
+public sealed record CalibrationSettings(int LiftOffLevel)
+{
+    public static CalibrationSettings Default { get; } = new(-1);
+}

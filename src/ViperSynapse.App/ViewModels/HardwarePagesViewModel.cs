@@ -25,6 +25,9 @@ sealed class Debounce(Action action)
     }
 }
 
+/// <summary>One LED of the plain grid editor.</summary>
+public sealed record LedCell(int Row, int Column, IBrush Brush);
+
 public sealed record EffectChoice(EffectKind Kind, string Label, IReadOnlyList<ColorMode> Modes)
 {
     public override string ToString() => Label;
@@ -71,6 +74,75 @@ public sealed partial class LightingViewModel : ObservableObject
     public bool ShowSpeed => SelectedEffect?.Kind is EffectKind.Reactive or EffectKind.Starlight;
     public bool ShowDirection => SelectedEffect?.Kind is EffectKind.Wave or EffectKind.Wheel;
 
+    // ---- Per-key (Custom) ----------------------------------------------------------------------------
+
+    /// <summary>The device has an LED grid the custom effect can paint.</summary>
+    public bool HasFrame => _model is { MatrixRows: > 0, MatrixColumns: > 0 } && _model.Has("custom_frame");
+
+    /// <summary>Keys know their LEDs (the Tartarus): paint on the drawn device. Otherwise paint a plain LED grid.</summary>
+    public bool PaintsKeys => _model?.Keys.Any(k => k.Leds.Count > 0) == true;
+
+    public bool ShowFrameEditor => SelectedEffect?.Kind == EffectKind.Custom;
+    public bool ShowKeyCanvas => ShowFrameEditor && PaintsKeys;
+    public bool ShowLedGrid => ShowFrameEditor && !PaintsKeys;
+
+    CustomFrame _frame = CustomFrame.Filled(1, 1, Rgb.RazerGreen);
+
+    [ObservableProperty] public partial Color PaintColor { get; set; } = Color.Parse("#44D62C");
+
+    /// <summary>Key number to the colour under it, for the drawing.</summary>
+    [ObservableProperty] public partial IReadOnlyDictionary<int, Color>? KeyColors { get; set; }
+
+    /// <summary>The LED grid for devices whose keys are not drawn.</summary>
+    [ObservableProperty] public partial IReadOnlyList<LedCell> Cells { get; set; } = [];
+
+    public int GridColumns => _frame.Columns;
+
+    Rgb Paint => new(PaintColor.R, PaintColor.G, PaintColor.B);
+
+    public void PaintKey(DeviceKey key)
+    {
+        if (key.Leds.Count == 0)
+            return;
+        SetFrame(_frame.With(key.Leds, Paint));
+    }
+
+    public void PaintCell(LedCell cell) => SetFrame(_frame.With([(cell.Row, cell.Column)], Paint));
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    void FillAll() => SetFrame(CustomFrame.Filled(_frame.Rows, _frame.Columns, Paint));
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    void AllOff() => SetFrame(CustomFrame.Filled(_frame.Rows, _frame.Columns, new Rgb(0, 0, 0)));
+
+    void SetFrame(CustomFrame frame)
+    {
+        _frame = frame;
+        ShowFrame();
+        Changed();
+    }
+
+    void ShowFrame()
+    {
+        var colors = new Dictionary<int, Color>();
+        foreach (var key in _model?.Keys ?? [])
+            if (key.Leds.Count > 0)
+            {
+                var c = _frame[key.Leds[0].Row, key.Leds[0].Column];
+                colors[key.Number] = Color.FromRgb(c.R, c.G, c.B);
+            }
+        KeyColors = colors;
+        var cells = new List<LedCell>();
+        for (int r = 0; r < _frame.Rows; r++)
+            for (int c = 0; c < _frame.Columns; c++)
+            {
+                var rgb = _frame[r, c];
+                cells.Add(new LedCell(r, c, new SolidColorBrush(Color.FromRgb(rgb.R, rgb.G, rgb.B))));
+            }
+        Cells = cells;
+        OnPropertyChanged(nameof(GridColumns));
+    }
+
     public static string ZoneLabel(string zone) => zone switch
     {
         "main" => "Device",
@@ -104,6 +176,8 @@ public sealed partial class LightingViewModel : ObservableObject
         Add(EffectKind.Starlight, "Starlight", "starlight");
         Add(EffectKind.Wheel, "Wheel", "wheel");
         Add(EffectKind.Off, "Off", "none");
+        if (HasFrame)
+            choices.Add(new EffectChoice(EffectKind.Custom, "Custom (per key)", [ColorMode.Single]));
         return choices;
     }
 
@@ -113,6 +187,10 @@ public sealed partial class LightingViewModel : ObservableObject
         try
         {
             _zones = settings?.Zones.ToDictionary(z => z.Key, z => z.Value) ?? [];
+            _frame = settings?.Frame is { } f && f.Rows == _model?.MatrixRows && f.Columns == _model?.MatrixColumns
+                ? f
+                : CustomFrame.Filled(Math.Max(1, _model?.MatrixRows ?? 1), Math.Max(1, _model?.MatrixColumns ?? 1), Rgb.RazerGreen);
+            ShowFrame();
             ShowZone(SelectedZone);
         }
         finally
@@ -147,6 +225,9 @@ public sealed partial class LightingViewModel : ObservableObject
 
     void Notify()
     {
+        OnPropertyChanged(nameof(ShowFrameEditor));
+        OnPropertyChanged(nameof(ShowKeyCanvas));
+        OnPropertyChanged(nameof(ShowLedGrid));
         OnPropertyChanged(nameof(ShowColor1));
         OnPropertyChanged(nameof(ShowColor2));
         OnPropertyChanged(nameof(ShowModes));
@@ -198,7 +279,8 @@ public sealed partial class LightingViewModel : ObservableObject
         _debounce.Poke();
     }
 
-    void Commit() => _save(new LightingSettings(new Dictionary<string, ZoneLighting>(_zones)));
+    void Commit() => _save(new LightingSettings(new Dictionary<string, ZoneLighting>(_zones),
+        _zones.Values.Any(z => z.Effect.Kind == EffectKind.Custom) ? _frame : null));
 }
 
 /// <summary>One row of the sensitivity stages.</summary>
@@ -345,5 +427,34 @@ public sealed partial class PowerViewModel(Action<PowerSettings> save) : Observa
     {
         if (!_loading)
             save(new PowerSettings((int)(SleepMinutes * 60), (int)LowBattery));
+    }
+}
+
+/// <summary>The CALIBRATION page: Smart Tracking's lift-off distance.</summary>
+public sealed partial class CalibrationViewModel(Action<CalibrationSettings> save) : ObservableObject
+{
+    bool _loading;
+
+    public static IReadOnlyList<Choice<int>> Levels { get; } =
+    [
+        new(-1, "Sensor default"),
+        new(0, "1 mm"),
+        new(1, "2 mm"),
+        new(2, "3 mm"),
+    ];
+
+    [ObservableProperty] public partial Choice<int> Level { get; set; } = Levels[0];
+
+    public void Load(CalibrationSettings settings)
+    {
+        _loading = true;
+        Level = Levels.FirstOrDefault(l => l.Value == settings.LiftOffLevel) ?? Levels[0];
+        _loading = false;
+    }
+
+    partial void OnLevelChanged(Choice<int> value)
+    {
+        if (!_loading)
+            save(new CalibrationSettings(value.Value));
     }
 }

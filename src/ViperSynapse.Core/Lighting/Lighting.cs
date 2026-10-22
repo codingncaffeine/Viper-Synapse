@@ -31,6 +31,8 @@ public enum EffectKind
     Reactive,
     Starlight,
     Wheel,
+    /// <summary>Every LED its own colour: the per-key frame in <see cref="LightingSettings.Frame"/>.</summary>
+    Custom,
 }
 
 /// <summary>How many colours an effect that takes colours uses: Synapse's "random", single and dual.</summary>
@@ -50,9 +52,26 @@ public sealed record ZoneEffect(EffectKind Kind, Rgb Color1, Rgb Color2, ColorMo
 /// <summary>A zone's effect and brightness (0 to 100 percent).</summary>
 public sealed record ZoneLighting(ZoneEffect Effect, int Brightness = 100);
 
-/// <summary>A profile's lighting: zone name (main, logo, scroll, right, ...) to its settings. An empty map leaves
-/// the device's lighting alone.</summary>
-public sealed record LightingSettings(IReadOnlyDictionary<string, ZoneLighting> Zones)
+/// <summary>Per-key colours: the device's LED grid, row by row (Rows x Columns entries).</summary>
+public sealed record CustomFrame(int Rows, int Columns, IReadOnlyList<Rgb> Colors)
+{
+    public static CustomFrame Filled(int rows, int columns, Rgb color) => new(rows, columns, Enumerable.Repeat(color, rows * columns).ToList());
+
+    public Rgb this[int row, int column] => Colors[row * Columns + column];
+
+    public CustomFrame With(IEnumerable<(int Row, int Column)> cells, Rgb color)
+    {
+        var colors = Colors.ToArray();
+        foreach (var (r, c) in cells)
+            if (r >= 0 && r < Rows && c >= 0 && c < Columns)
+                colors[r * Columns + c] = color;
+        return this with { Colors = colors };
+    }
+}
+
+/// <summary>A profile's lighting: zone name (main, logo, scroll, right, ...) to its settings, and the per-key frame a
+/// Custom effect shows. An empty map leaves the device's lighting alone.</summary>
+public sealed record LightingSettings(IReadOnlyDictionary<string, ZoneLighting> Zones, CustomFrame? Frame = null)
 {
     public static LightingSettings None { get; } = new(new Dictionary<string, ZoneLighting>());
 

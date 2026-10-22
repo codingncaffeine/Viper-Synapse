@@ -11,7 +11,11 @@ public sealed record LightingZone(IReadOnlyList<string> Effects, bool Brightness
 /// <summary>One programmable control: its printed number, label, the key it sends by default (0 when it sends
 /// none, like Hypershift), its id in the device's own key map, the group it is listed under, and the source
 /// code the remap engine knows it by: its key code, or a wheel direction for controls that send no key.</summary>
-public sealed record DeviceKey(int Number, string Label, ushort Code, byte HardwareId, string Group, ushort Source);
+public sealed record DeviceKey(int Number, string Label, ushort Code, byte HardwareId, string Group, ushort Source)
+{
+    /// <summary>The cells of the LED grid under this key (row, column): two for the long keys.</summary>
+    public IReadOnlyList<(int Row, int Column)> Leds { get; init; } = [];
+}
 
 /// <summary>What is known about one Razer device model before talking to it.</summary>
 public sealed record DeviceModel(
@@ -93,7 +97,7 @@ public sealed class DeviceCatalogue
                         "wheel-left" => Bindings.SourceKeys.WheelLeft,
                         "wheel-right" => Bindings.SourceKeys.WheelRight,
                         _ => throw new InvalidDataException($"{d.Name}: unknown key source {k.Source}"),
-                    })).ToList(),
+                    }) { Leds = (k.Led ?? []).Where(c => c.Count == 2).Select(c => (c[0], c[1])).ToList() }).ToList(),
                 d.Image);
         }
     }
@@ -115,7 +119,7 @@ public sealed class DeviceCatalogue
         List<KeyJson>? Keys,
         string? Image);
 
-    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group, string? Source);
+    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group, string? Source, List<List<int>>? Led);
 }
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
