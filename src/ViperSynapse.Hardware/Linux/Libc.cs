@@ -20,6 +20,19 @@ internal static partial class Libc
     [LibraryImport("libc", EntryPoint = "write", SetLastError = true)]
     public static unsafe partial nint Write(int fd, byte* buffer, nuint count);
 
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PollFd
+    {
+        public int Fd;
+        public short Events;
+        public short Revents;
+    }
+
+    public const short POLLIN = 0x001, POLLERR = 0x008, POLLHUP = 0x010, POLLNVAL = 0x020;
+
+    [LibraryImport("libc", EntryPoint = "poll", SetLastError = true)]
+    public static unsafe partial int Poll(PollFd* fds, nuint count, int timeoutMs);
+
     [LibraryImport("libc", EntryPoint = "ioctl", SetLastError = true)]
     public static unsafe partial int Ioctl(int fd, nuint request, void* argument);
 

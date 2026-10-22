@@ -100,6 +100,26 @@ public sealed class EvdevDevice : IDisposable
 
     public void Release() => Check(Libc.Ioctl(_fd, Libc.IoW('E', 0x90, sizeof(int)), 0), "release");
 
+    /// <summary>Waits up to <paramref name="timeout"/> for events; returns how many landed in <paramref name="events"/>
+    /// (0 when none came). Throws <see cref="IOException"/> when the device goes away.</summary>
+    public unsafe int Read(Span<InputEvent> events, TimeSpan timeout)
+    {
+        var poll = new Libc.PollFd { Fd = _fd, Events = Libc.POLLIN };
+        int ready = Libc.Poll(&poll, 1, (int)timeout.TotalMilliseconds);
+        if (ready < 0)
+        {
+            int errno = Marshal.GetLastPInvokeError();
+            if (errno == Libc.EINTR)
+                return 0;
+            throw new IOException($"{Path}: {Libc.ErrorText(errno)}");
+        }
+        if (ready == 0)
+            return 0;
+        if ((poll.Revents & (Libc.POLLERR | Libc.POLLHUP | Libc.POLLNVAL)) != 0)
+            throw new IOException($"{Path}: the device went away");
+        return Read(events);
+    }
+
     /// <summary>Blocks until the device sends events; returns how many landed in <paramref name="events"/>.
     /// Throws <see cref="IOException"/> when the device goes away.</summary>
     public unsafe int Read(Span<InputEvent> events)

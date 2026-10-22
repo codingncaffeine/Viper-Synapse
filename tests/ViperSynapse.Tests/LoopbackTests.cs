@@ -1,0 +1,112 @@
+using ViperSynapse.Core.Bindings;
+using ViperSynapse.Core.Engine;
+using ViperSynapse.Core.Input;
+using ViperSynapse.Hardware;
+using ViperSynapse.Hardware.Linux;
+
+namespace ViperSynapse.Tests;
+
+/// <summary>
+/// The whole input path through the kernel: a stand-in device made with uinput, a session that grabs it
+/// and remaps it, and the virtual output device, which the test grabs itself so that no key ever reaches
+/// the desktop. Skipped where /dev/uinput cannot be opened (CI, a machine without the udev rule).
+/// </summary>
+public class LoopbackTests
+{
+    const ushort A = 30, B = 48, C = 46;
+
+    sealed class NoHost : IEngineHost
+    {
+        public void Launch(string command) { }
+        public void SwitchProfile(CycleDirection direction, Guid? profileId) { }
+        public void SwitchKeymap(CycleDirection direction, int keymap) { }
+        public Macro? FindMacro(Guid id) => null;
+        public void Report(Exception error) { }
+    }
+
+    static bool UinputAvailable()
+    {
+        try { UinputDevice.Create("viper-synapse-probe").Dispose(); return true; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
+    }
+
+    static string WaitForNode(UinputDevice device)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (device.EventNode is { } node && File.Exists(node))
+            {
+                try { EvdevDevice.Open(node).Dispose(); return node; }
+                catch (UnauthorizedAccessException) { }   // udev has not applied the ACL yet
+            }
+            Thread.Sleep(10);
+        }
+        throw new TimeoutException($"{device.Name}: no readable event node appeared");
+    }
+
+    static List<string> ReadKeys(EvdevDevice output, int count)
+    {
+        var keys = new List<string>();
+        var events = new InputEvent[64];
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (keys.Count < count && DateTime.UtcNow < deadline)
+        {
+            int n = output.Read(events, TimeSpan.FromMilliseconds(100));
+            for (int i = 0; i < n; i++)
+                if (events[i].Type == EventTypes.Key)
+                    keys.Add($"{KeyCodes.Name(events[i].Code)}:{events[i].Value}");
+        }
+        return keys;
+    }
+
+    [Fact]
+    public void A_remapped_key_comes_out_of_the_virtual_device()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+
+        using var source = UinputDevice.Create("viper-synapse-test-source");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        using var outputNode = EvdevDevice.Open(WaitForNode(output));
+        outputNode.Grab();
+        var sourceNode = WaitForNode(source);
+
+        var engine = new RemapEngine(output, new NoHost())
+        {
+            Keymap = Keymap.Empty("k").With(A, new KeyboardBinding(C, Modifiers.Shift)),
+        };
+        using (var session = DeviceSession.Start([sourceNode], engine))
+        {
+            Assert.Equal([sourceNode], session.NodePaths);
+            source.Key(A, 1); source.Sync();
+            source.Key(A, 0); source.Sync();
+            source.Key(B, 1); source.Sync();
+            source.Key(B, 0); source.Sync();
+
+            Assert.Equal(["KEY_LEFTSHIFT:1", "KEY_C:1", "KEY_C:0", "KEY_LEFTSHIFT:0", "KEY_B:1", "KEY_B:0"], ReadKeys(outputNode, 6));
+        }
+    }
+
+    [Fact]
+    public void Closing_the_session_lets_go_of_a_held_key_and_of_the_grab()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+
+        using var source = UinputDevice.Create("viper-synapse-test-source");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        using var outputNode = EvdevDevice.Open(WaitForNode(output));
+        outputNode.Grab();
+        var sourceNode = WaitForNode(source);
+
+        var engine = new RemapEngine(output, new NoHost()) { Keymap = Keymap.Empty("k").With(A, new KeyboardBinding(C)) };
+        var session = DeviceSession.Start([sourceNode], engine);
+        source.Key(A, 1); source.Sync();
+        Assert.Equal(["KEY_C:1"], ReadKeys(outputNode, 1));
+        session.Dispose();
+        Assert.Equal(["KEY_C:0"], ReadKeys(outputNode, 1));
+
+        // The grab is gone: someone else can take the source now.
+        using var again = EvdevDevice.Open(sourceNode);
+        again.Grab();
+    }
+}
