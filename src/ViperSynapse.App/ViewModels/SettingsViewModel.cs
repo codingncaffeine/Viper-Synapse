@@ -13,8 +13,10 @@ public sealed partial class SettingsViewModel : TabViewModel
     /// <param name="main">The window.</param>
     /// <param name="preferences">Read before the UI thread started.</param>
     /// <param name="startAtLogin">Whether the autostart entry exists, also read before the UI thread started.</param>
-    public SettingsViewModel(MainViewModel main, AppPreferences preferences, bool startAtLogin)
+    /// <param name="built">When this build was made.</param>
+    public SettingsViewModel(MainViewModel main, AppPreferences preferences, bool startAtLogin, string built = "")
     {
+        _built = built;
         _main = main;
         _preferences = preferences;
         StartAtLogin = startAtLogin;
@@ -24,7 +26,9 @@ public sealed partial class SettingsViewModel : TabViewModel
 
     public override string Header => "SETTINGS";
 
-    public string Version => $"Viper Synapse {typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3)}";
+    readonly string _built;
+
+    public string Version => $"Viper Synapse {typeof(SettingsViewModel).Assembly.GetName().Version?.ToString(3)}" + (_built.Length > 0 ? $"  ·  built {_built}" : "");
 
     [ObservableProperty]
     public partial bool StartAtLogin { get; set; }

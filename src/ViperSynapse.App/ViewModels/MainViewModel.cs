@@ -49,10 +49,10 @@ public sealed partial class MainViewModel : ObservableObject
     void OpenSettings() => ShowingSettings = !ShowingSettings;
     public MacrosViewModel Macros { get; }
 
-    public MainViewModel(DaemonClient client, AppPreferences preferences, bool startAtLogin)
+    public MainViewModel(DaemonClient client, AppPreferences preferences, bool startAtLogin, string built = "")
     {
         _client = client;
-        Settings = new SettingsViewModel(this, preferences, startAtLogin);
+        Settings = new SettingsViewModel(this, preferences, startAtLogin, built);
         Home = new HomeViewModel(this);
         Macros = new MacrosViewModel(client, this);
         Tabs.Add(Home);

@@ -30,7 +30,7 @@ static class Program
             return 0;
 
         // Read before the UI thread starts: nothing that touches the disk runs on it.
-        App.Start = new StartupState(AppPreferences.Load(), Autostart.IsEnabled, args.Contains("--background"), windowBus);
+        App.Start = new StartupState(AppPreferences.Load(), Autostart.IsEnabled, args.Contains("--background"), windowBus, BuildTime());
         try
         {
             return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
@@ -39,6 +39,13 @@ static class Program
         {
             windowBus.Dispose();
         }
+    }
+
+    /// <summary>When this build was made, shown in Settings so it is always clear which build is running.</summary>
+    static string BuildTime()
+    {
+        try { return File.GetLastWriteTime(typeof(Program).Assembly.Location).ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException) { return ""; }
     }
 
     /// <summary>Used by <see cref="Main"/>, the designer and the headless tests.</summary>
@@ -50,4 +57,4 @@ static class Program
 }
 
 /// <summary>What Main learned before the UI thread started.</summary>
-sealed record StartupState(AppPreferences Preferences, bool StartAtLogin, bool Background, WindowBus Bus);
+sealed record StartupState(AppPreferences Preferences, bool StartAtLogin, bool Background, WindowBus Bus, string Built = "");

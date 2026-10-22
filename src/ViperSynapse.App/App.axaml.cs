@@ -29,7 +29,7 @@ public sealed class App : Application
             var start = Start ?? new StartupState(new AppPreferences(), false, false, new WindowBus());
             _desktop = desktop;
             _client = new DaemonClient();
-            _main = new MainViewModel(_client, start.Preferences, start.StartAtLogin);
+            _main = new MainViewModel(_client, start.Preferences, start.StartAtLogin, start.Built);
             BuildTray();
             start.Bus.ShowRequested += () => Dispatcher.UIThread.Post(ShowWindow);
             start.Bus.ReplaceRequested += () => Dispatcher.UIThread.Post(Quit);

@@ -37,6 +37,12 @@ cp packaging/README.txt "$PUB/README.txt"
 cp packaging/udev/70-viper-synapse.rules "$PUB/"
 cp assets/icon-512.png "$PUB/viper-synapse.png"
 
+# Publishing for linux-x64 leaves a second, frozen build under each project's bin/Release/net10.0/linux-x64; running
+# that by mistake looks exactly like a fix that never landed. Remove it.
+for p in src/ViperSynapse.App src/ViperSynapse.Service src/ViperSynapse.Cli src/ViperSynapse.Hardware src/ViperSynapse.Core; do
+    rm -rf "${p:?}/bin/Release/net10.0/linux-x64" "${p:?}/obj/Release/net10.0/linux-x64"
+done
+
 echo "── tarball"
 tar -C "$PUB" -czf "$OUT/ViperSynapse-$VER-linux-x64.tar.gz" .
 

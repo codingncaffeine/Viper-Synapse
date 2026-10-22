@@ -69,10 +69,12 @@ The rule gives the logged-in user access to Razer devices and to `/dev/uinput`, 
 Requires the .NET 10 SDK.
 
 ```sh
-dotnet build ViperSynapse.slnx -c Release
+./run.sh                            # build the current source and start it
 dotnet test ViperSynapse.slnx -c Release
 packaging/build-release.sh          # tarball and .deb in packaging/out
 ```
+
+Settings → About shows when the running build was made.
 
 `viper-cli list` shows the Razer devices it can see; `viper-cli probe /dev/hidrawN` reads a device's
 serial, firmware and settings without changing anything.
