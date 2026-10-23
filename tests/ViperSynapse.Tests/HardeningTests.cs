@@ -68,3 +68,28 @@ public class HardeningTests
         Assert.Equal(2 * MacroRunner.MaxLoops, host.Keys);
     }
 }
+
+public class StageTableTests
+{
+    static readonly PerformanceSettings Five = new(
+        [new(400, 400), new(800, 800), new(1600, 1600), new(3200, 3200), new(6400, 6400)], 2, 1000);
+
+    [Fact]
+    public void The_basilisk_v4_pro_table_is_written_byte_for_byte_as_the_mouse_keeps_it()
+    {
+        // 04/86 as read from the Basilisk V4 Pro on 2026-10-22: each stage is id, x, y and x once more.
+        byte[] read = Convert.FromHexString("010305" + "0101900190" + "0190" + "0203200320" + "0320" + "0306400640" + "0640"
+                                            + "040C800C80" + "0C80" + "0519001900" + "1900" + "00");
+        var written = DeviceCommands.DpiStages(0x1F, Five, thirdValue: true).Arguments.ToArray()[..read.Length];
+        Assert.Equal(read, written);
+    }
+
+    [Fact]
+    public void The_naga_table_keeps_zeros_after_each_stage()
+    {
+        // 04/86 from the Naga Left-Handed 2020: id, x, y, then 00 00.
+        byte[] read = Convert.FromHexString("010305" + "01019001900000" + "02032003200000" + "03064006400000" + "040C800C800000" + "05190019000000");
+        var written = DeviceCommands.DpiStages(0x1F, Five).Arguments.ToArray()[..read.Length];
+        Assert.Equal(read, written);
+    }
+}

@@ -153,8 +153,10 @@ public static class DeviceCommands
     /// <summary>Sensitivity as the device takes it: two bytes, and no sensor goes below 100.</summary>
     public static int ClampDpi(int dpi) => Math.Clamp(dpi, 100, ushort.MaxValue);
 
-    /// <summary>The stage table: active stage (1-based), count, then seven bytes a stage.</summary>
-    public static RazerReport DpiStages(byte tid, PerformanceSettings p)
+    /// <summary>The stage table: active stage (1-based), count, then seven bytes a stage. Devices that keep a third copy
+    /// of each stage's sensitivity in the last two bytes of its entry (the Basilisk V4 Pro reads back 400 400 400) get
+    /// it written the same way when <paramref name="thirdValue"/> is set; others (the Naga) keep zeros.</summary>
+    public static RazerReport DpiStages(byte tid, PerformanceSettings p, bool thirdValue = false)
     {
         var a = new byte[0x26];
         a[0] = VarStore;
@@ -171,6 +173,11 @@ public static class DeviceCommands
             a[at + 2] = (byte)x;
             a[at + 3] = (byte)(y >> 8);
             a[at + 4] = (byte)y;
+            if (thirdValue)
+            {
+                a[at + 5] = (byte)(x >> 8);
+                a[at + 6] = (byte)x;
+            }
         }
         return RazerReport.Create(tid, 0x04, 0x06, a, 0x26);
     }

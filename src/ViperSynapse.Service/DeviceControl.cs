@@ -160,7 +160,7 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         if (p.Stages.Count > 0 && model?.Has("dpi") == true)
         {
             if (model?.Has("dpi_stages") == true)
-                Send(DeviceCommands.DpiStages(transactionId, p), "sensitivity stages");
+                Send(DeviceCommands.DpiStages(transactionId, p, model.Has("dpi_stage_third")), "sensitivity stages");
             var active = p.Stages[Math.Clamp(p.ActiveStage, 0, p.Stages.Count - 1)];
             Send(DeviceCommands.Dpi(transactionId, active.X, active.Y), "sensitivity");
         }

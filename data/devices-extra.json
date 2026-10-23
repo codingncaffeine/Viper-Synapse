@@ -113,7 +113,7 @@
         "scroll" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] },
         "underglow" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] }
       },
-      "features" : [ "dpi", "dpi_stages", "poll_rate", "battery", "charging", "idle_time", "low_battery_threshold", "lift_off", "scroll_wheel" ],
+      "features" : [ "dpi", "dpi_stages", "poll_rate", "battery", "charging", "idle_time", "low_battery_threshold", "lift_off", "scroll_wheel", "dpi_stage_third" ],
       "dpi_max" : 50000,
       "poll_rates" : [ 125, 250, 500, 1000, 2000, 4000, 8000 ],
       "verified" : [ "tid 0x1F, control interface 3 (HyperSpeed dongle)", "LEDs 01 scroll, 04 logo, 0A underglow", "HyperPolling 00/C0", "scroll acceleration 02/16 + Smart-Reel 02/17 on/off read back" ],
