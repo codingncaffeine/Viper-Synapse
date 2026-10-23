@@ -91,6 +91,49 @@ public class LoopbackTests
     }
 
     [Fact]
+    public void A_device_held_down_when_the_session_starts_is_taken_only_after_it_is_let_go()
+    {
+        Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");
+        // KEY_UNKNOWN: until the session takes the stand-in, its events reach the real desktop, and this one has no
+        // keysym there.
+        const ushort Unknown = 240;
+
+        using var source = UinputDevice.Create("viper-synapse-test-source");
+        using var output = UinputDevice.Create("viper-synapse-test-output");
+        using var outputNode = EvdevDevice.Open(WaitForNode(output));
+        outputNode.Grab();
+        var sourceNode = WaitForNode(source);
+        using var watch = EvdevDevice.Open(sourceNode);
+
+        // The click that turned the remap on is still down.
+        source.Key(Unknown, 1); source.Sync();
+        Wait(watch.AnyKeyDown);
+
+        using var session = DeviceSession.Start([sourceNode], new RemapEngine(output, new NoHost()));
+        Assert.False(session.AllGrabbed);
+
+        // Its release belongs to the desktop, which saw the press; the session takes the device after it.
+        source.Key(Unknown, 0); source.Sync();
+        Wait(() => session.AllGrabbed);
+        source.Key(Unknown, 1); source.Sync();
+        source.Key(Unknown, 0); source.Sync();
+
+        // Only the second press and release come out: the first release was not split from its press.
+        Assert.Equal(["KEY_UNKNOWN:1", "KEY_UNKNOWN:0"], ReadKeys(outputNode, 3));
+    }
+
+    static void Wait(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (!condition())
+        {
+            if (DateTime.UtcNow > deadline)
+                throw new TimeoutException("Gave up waiting");
+            Thread.Sleep(5);
+        }
+    }
+
+    [Fact]
     public void The_virtual_device_is_a_keyboard_and_mouse_and_never_a_game_controller()
     {
         Assert.SkipUnless(UinputAvailable(), "/dev/uinput is not available");

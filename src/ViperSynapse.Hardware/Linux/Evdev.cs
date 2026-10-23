@@ -96,9 +96,32 @@ public sealed class EvdevDevice : IDisposable
 
     /// <summary>Takes the device for ourselves: its events stop reaching the desktop until <see cref="Release"/>
     /// or until this handle closes (the kernel drops a grab with its file, so a crash cannot leave a dead device).</summary>
-    public void Grab() => Check(Libc.Ioctl(_fd, Libc.IoW('E', 0x90, sizeof(int)), 1), "grab");
+    public void Grab()
+    {
+        Check(Libc.Ioctl(_fd, Libc.IoW('E', 0x90, sizeof(int)), 1), "grab");
+        IsGrabbed = true;
+    }
 
-    public void Release() => Check(Libc.Ioctl(_fd, Libc.IoW('E', 0x90, sizeof(int)), 0), "release");
+    public void Release()
+    {
+        Check(Libc.Ioctl(_fd, Libc.IoW('E', 0x90, sizeof(int)), 0), "release");
+        IsGrabbed = false;
+    }
+
+    public bool IsGrabbed { get; private set; }
+
+    /// <summary>Whether any key or button of the device is down right now, by the kernel's own record
+    /// (EVIOCGKEY = _IOR('E', 0x18, len)).</summary>
+    public unsafe bool AnyKeyDown()
+    {
+        var bits = new byte[0x300 / 8 + 1];
+        int n;
+        fixed (byte* p = bits)
+            n = Libc.Ioctl(_fd, Libc.IoR('E', 0x18, (uint)bits.Length), p);
+        if (n < 0)
+            throw new IOException($"{Path}: could not read the key state: {Libc.ErrorText(Marshal.GetLastPInvokeError())}");
+        return bits.Any(b => b != 0);
+    }
 
     /// <summary>Waits up to <paramref name="timeout"/> for events; returns how many landed in <paramref name="events"/>
     /// (0 when none came). Throws <see cref="IOException"/> when the device goes away.</summary>

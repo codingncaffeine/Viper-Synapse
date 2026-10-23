@@ -81,7 +81,7 @@ public sealed class DeviceSession : IDisposable
                 bool gamepad = keys.Any(Core.Input.KeyCodes.IsJoystickButton);
                 if (gamepad && stick != ThumbstickMode.Analog && node.Capabilities(EventTypes.Abs).Count > 0)
                 {
-                    node.Grab();
+                    GrabIfIdle(node);
                     session._nodes.Add(node);
                     session._stickNodes.Add(node.Path);
                     continue;
@@ -93,7 +93,7 @@ public sealed class DeviceSession : IDisposable
                     node.Dispose();
                     continue;
                 }
-                node.Grab();
+                GrabIfIdle(node);
                 session._nodes.Add(node);
             }
             foreach (var node in session._nodes)
@@ -110,6 +110,9 @@ public sealed class DeviceSession : IDisposable
             throw;
         }
     }
+
+    /// <summary>Every node is taken (a node held down when the session started is taken once it is let go).</summary>
+    public bool AllGrabbed => _nodes.All(n => n.IsGrabbed);
 
     /// <summary>Changes the keymap. Keys held across the change are let go first, so none stays down.</summary>
     public void Apply(Keymap keymap)
@@ -130,11 +133,46 @@ public sealed class DeviceSession : IDisposable
             action(Engine);
     }
 
+    /// <summary>Takes the node now unless one of its keys or buttons is down. Grabbing mid-press splits the press
+    /// from its release: the desktop saw the press from the real device, the release would come from the virtual
+    /// one, and the desktop would hold the button forever (a slider dragged by the click that turned this on stuck
+    /// to the pointer). A held node is taken by its own thread once everything is let go.</summary>
+    static void GrabIfIdle(EvdevDevice node)
+    {
+        if (!node.AnyKeyDown())
+            node.Grab();
+    }
+
+    /// <summary>Waits for every key and button of the node to be let go, then grabs it. A press that slips in between
+    /// the check and the grab is caught by checking again after: the grab is let go and the wait goes on. Whatever
+    /// queued before the grab already reached the desktop, so it is thrown away rather than played twice.</summary>
+    void GrabWhenIdle(EvdevDevice node, Span<InputEvent> events)
+    {
+        while (!_stopping && !node.IsGrabbed)
+        {
+            if (node.AnyKeyDown())
+            {
+                Thread.Sleep(10);
+                continue;
+            }
+            node.Grab();
+            if (node.AnyKeyDown())
+            {
+                node.Release();
+                continue;
+            }
+            while (node.Read(events, TimeSpan.Zero) > 0)
+            {
+            }
+        }
+    }
+
     void Pump(EvdevDevice node)
     {
         var events = new InputEvent[64];
         try
         {
+            GrabWhenIdle(node, events);
             while (!_stopping)
             {
                 int n = node.Read(events, TimeSpan.FromMilliseconds(100));
