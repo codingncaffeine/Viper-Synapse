@@ -15,7 +15,11 @@ public sealed record DeviceState(
     int PollingRate,
     int? BatteryPercent,
     bool? Charging,
-    int LiftOffLevel = -1);
+    int LiftOffLevel = -1,
+    int SleepSeconds = 0,
+    int LowBatteryPercent = 0,
+    bool? ScrollAcceleration = null,
+    bool? SmartReel = null);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(DeviceState))]
@@ -30,7 +34,7 @@ internal sealed partial class DeviceStateJson : JsonSerializerContext;
 public sealed class DeviceControl(RazerTransport transport, byte transactionId, DeviceModel? model) : IDisposable
 {
     readonly Lock _gate = new();
-    string? _sentLighting, _sentPerformance, _sentPower, _sentCalibration;
+    string? _sentLighting, _sentPerformance, _sentPower, _sentCalibration, _sentScroll;
     int _sentKeymap = -1;
 
     public string? LastProblem { get; private set; }
@@ -57,6 +61,12 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                 SendPower(power);
             if (profile.Calibration is { } calibration && model?.Has("lift_off") == true && Changed(ref _sentCalibration, calibration))
                 SendCalibration(calibration);
+            // Only the firmware's part: the scroll speed is the remap engine's.
+            if (profile.Scroll is { } scroll && model?.Has("scroll_wheel") == true && Changed(ref _sentScroll, scroll with { LinesPerNotch = 1 }))
+            {
+                Send(DeviceCommands.ScrollAcceleration(transactionId, scroll.Acceleration), "scroll acceleration");
+                Send(DeviceCommands.SmartReel(transactionId, scroll.SmartReel), "Smart-Reel");
+            }
         }
     }
 
@@ -210,7 +220,8 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             int active = 0, rate = 0;
             int? battery = null;
             bool? charging = null;
-            int liftOff = -1;
+            int liftOff = -1, sleep = 0, lowBattery = 0;
+            bool? acceleration = null, smartReel = null;
             try
             {
                 if (model?.Has("poll_rate") == true)
@@ -242,12 +253,23 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                     charging = state.Arguments[1] != 0;
                 if (model?.Has("lift_off") == true && ReadRaw(0x0B, 0x8B, 0x00, 0x04) is { } tracking)
                     liftOff = DeviceCommands.ReadLiftOffLevel(tracking);
+                if (model?.Has("idle_time") == true && ReadRaw(0x07, 0x83) is { } idle)
+                    sleep = (idle.Arguments[0] << 8) | idle.Arguments[1];
+                if (model?.Has("low_battery_threshold") == true && ReadRaw(0x07, 0x81) is { } low)
+                    lowBattery = (int)Math.Round(low.Arguments[0] / 2.55);
+                if (model?.Has("scroll_wheel") == true)
+                {
+                    if (ReadRaw(0x02, 0x96, DeviceCommands.VarStore) is { } accel)
+                        acceleration = accel.Arguments[1] != 0;
+                    if (ReadRaw(0x02, 0x97, DeviceCommands.VarStore) is { } reel)
+                        smartReel = reel.Arguments[1] != 0;
+                }
             }
             catch (IOException e)
             {
                 LastProblem = e.Message;
             }
-            return new DeviceState(stages, active, rate, battery, charging, liftOff);
+            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel);
         }
     }
 
@@ -273,6 +295,7 @@ static class ControlJson
 
 [JsonSerializable(typeof(LightingSettings))]
 [JsonSerializable(typeof(PerformanceSettings))]
+[JsonSerializable(typeof(ScrollSettings))]
 [JsonSerializable(typeof(PowerSettings))]
 [JsonSerializable(typeof(CalibrationSettings))]
 internal sealed partial class ControlJsonContext : JsonSerializerContext;

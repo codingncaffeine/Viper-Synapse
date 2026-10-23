@@ -64,7 +64,8 @@ public sealed record Profile(
     PowerSettings? Power = null,
     CalibrationSettings? Calibration = null,
     ThumbstickMode Thumbstick = ThumbstickMode.Analog,
-    MacroInterruption Interruption = MacroInterruption.DedicatedKey)
+    MacroInterruption Interruption = MacroInterruption.DedicatedKey,
+    ScrollSettings? Scroll = null)
 {
     public const int MaxKeymaps = 8;
 

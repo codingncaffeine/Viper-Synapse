@@ -86,6 +86,33 @@
       "dpi_max" : 20000,
       "poll_rates" : [ 125, 500, 1000 ],
       "source" : "openrazer RazerNagaLeftHanded2020 + Viper Synapse probe + master guide"
+    },
+    {
+      "pid" : "00e3",
+      "name" : "Razer Basilisk V4 Pro",
+      "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/hd0/hb2/10458042105886/basilisk-v4-pro-black-500x500.png",
+      "type" : "mouse",
+      "keys" : [
+        { "number" : 1, "label" : "Left Click", "code" : "BTN_LEFT", "group" : "mouse" },
+        { "number" : 2, "label" : "Right Click", "code" : "BTN_RIGHT", "group" : "mouse" },
+        { "number" : 3, "label" : "Scroll Click", "code" : "BTN_MIDDLE", "group" : "mouse" },
+        { "number" : 4, "label" : "Scroll Up", "code" : "", "source" : "wheel-up", "group" : "mouse" },
+        { "number" : 5, "label" : "Scroll Down", "code" : "", "source" : "wheel-down", "group" : "mouse" },
+        { "number" : 6, "label" : "Repeat Scroll Left", "code" : "", "source" : "wheel-left", "group" : "mouse" },
+        { "number" : 7, "label" : "Repeat Scroll Right", "code" : "", "source" : "wheel-right", "group" : "mouse" },
+        { "number" : 8, "label" : "Mouse Button 4", "code" : "BTN_SIDE", "group" : "mouse" },
+        { "number" : 9, "label" : "Mouse Button 5", "code" : "BTN_EXTRA", "group" : "mouse" }
+      ],
+      "zones" : {
+        "logo" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] },
+        "scroll" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] },
+        "underglow" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] }
+      },
+      "features" : [ "dpi", "dpi_stages", "poll_rate", "battery", "charging", "idle_time", "low_battery_threshold", "lift_off", "scroll_wheel" ],
+      "dpi_max" : 50000,
+      "poll_rates" : [ 125, 250, 500, 1000, 2000, 4000, 8000 ],
+      "verified" : [ "tid 0x1F, control interface 3 (HyperSpeed dongle)", "LEDs 01 scroll, 04 logo, 0A underglow", "HyperPolling 00/C0", "scroll acceleration 02/16 + Smart-Reel 02/17 on/off read back" ],
+      "source" : "Viper Synapse probe + Razer master guide"
     }
   ]
 }

@@ -40,7 +40,7 @@ public sealed class DeviceManager : IDisposable
     public const ushort RazerVendor = 0x1532;
 
     /// <summary>Model ids verified on real hardware; the rest of the catalogue is OpenRazer's word.</summary>
-    static readonly HashSet<ushort> Verified = [0x02EB, 0x008D];
+    static readonly HashSet<ushort> Verified = [0x02EB, 0x008D, 0x00E3];
 
     readonly SettingsStore _store;
     readonly IInputSink _output;
@@ -281,7 +281,9 @@ public sealed class DeviceManager : IDisposable
                 var stick = device.Model?.Has("thumbstick") == true ? profile.Thumbstick : ThumbstickMode.Analog;
                 // A global shortcut made of this device's keys needs its input too.
                 bool shortcut = _shortcuts.Shortcuts.Any(s => device.Model is not { } m || s.Keys.All(k => m.Keys.Any(dk => dk.Source == k)));
-                if (!bindsAnything && !shortcut && stick == ThumbstickMode.Analog)
+                // A faster wheel is the engine's work too.
+                int scrollLines = profile.Scroll?.LinesPerNotch ?? 1;
+                if (!bindsAnything && !shortcut && scrollLines <= 1 && stick == ThumbstickMode.Analog)
                 {
                     if (device.Session != null)
                     {
@@ -294,7 +296,7 @@ public sealed class DeviceManager : IDisposable
                 if (device.Session != null && device.SessionStick == stick)
                 {
                     device.Session.Apply(keymap);
-                    device.Session.WithEngine(e => e.Interruption = profile.Interruption);
+                    device.Session.WithEngine(e => (e.Interruption, e.ScrollLines) = (profile.Interruption, scrollLines));
                     continue;
                 }
                 // A new stick mode takes over (or gives back) a different set of nodes: start again.
@@ -306,6 +308,7 @@ public sealed class DeviceManager : IDisposable
                     Keymap = keymap,
                     Defaults = source => DefaultFor(model, source),
                     Interruption = profile.Interruption,
+                    ScrollLines = scrollLines,
                 };
                 try
                 {

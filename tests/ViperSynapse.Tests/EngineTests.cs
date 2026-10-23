@@ -264,6 +264,18 @@ public class EngineTests
     }
 
     [Fact]
+    public void Scroll_speed_multiplies_an_unbound_wheel_and_leaves_a_bound_one()
+    {
+        var (engine, rec, _) = Make(Keymap.Empty("k").With(SourceKeys.WheelDown, new KeyboardBinding(A)));
+        engine.ScrollLines = 3;
+        engine.Wheel(RelativeAxes.Wheel, 1);
+        engine.Wheel(RelativeAxes.WheelHiRes, 120);
+        engine.Wheel(RelativeAxes.Wheel, -1);
+        // Up is unbound: three notches' worth, in both resolutions. Down is bound: one key press per notch.
+        Assert.Equal(["REL8:3", "REL11:360", "KEY_A:1", "KEY_A:0"], rec.Events);
+    }
+
+    [Fact]
     public void A_global_shortcut_beats_the_keymap_and_the_held_key_keeps_its_own_binding()
     {
         var (engine, rec, _) = Make(Keymap.Empty("k").With(B, new KeyboardBinding(C)));

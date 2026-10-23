@@ -126,10 +126,14 @@ static class Program
             // Sensor settings: calibration mode, tracking mode, lift-off table. Never 0x09 (starts surface sampling).
             || bytes[0] == 0x0B && bytes[1] is 0x03 or 0x05 or 0x0B
             // Selecting a keymap (as the keypad's own keymap button does), for reading each preset.
-            || bytes[0] == 0x02 && bytes[1] == 0x37;
+            || bytes[0] == 0x02 && bytes[1] == 0x37
+            // The scroll wheel: acceleration and Smart-Reel (OpenRazer's 02 16 and 02 17).
+            || bytes[0] == 0x02 && bytes[1] is 0x16 or 0x17
+            // Power: low battery threshold and sleep timer.
+            || bytes[0] == 0x07 && bytes[1] is 0x01 or 0x03;
         if (!allowed)
         {
-            Console.Error.WriteLine("Refusing: only lighting (0F 02/03/04), DPI (04 05/06), polling rate (00 05/40) and sensor settings (0B 03/05/0B) may be set from here.");
+            Console.Error.WriteLine("Refusing: only lighting (0F 02/03/04), DPI (04 05/06), polling rate (00 05/40), sensor settings (0B 03/05/0B), keymaps (02 37) the scroll wheel (02 16/17) and power (07 01/03) may be set from here.");
             return 64;
         }
         var arguments = bytes.AsSpan(2).ToArray();

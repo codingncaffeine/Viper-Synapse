@@ -194,6 +194,32 @@
                                     <RadioButton GroupName="interrupt" Content="Any key" IsChecked="{Binding InterruptAnyKey}" />
                                 </StackPanel>
                             </Border>
+                            <Border Classes="card" Width="540" IsVisible="{Binding IsMouse}">
+                                <StackPanel Spacing="10" DataContext="{Binding ScrollWheel}" x:DataType="vm:ScrollWheelViewModel">
+                                    <TextBlock Classes="heading" Text="SCROLL WHEEL" />
+                                    <TextBlock Text="SCROLL SPEED" Foreground="#FFFFFF" FontSize="12" />
+                                    <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"
+                                               Text="How far each notch of the wheel scrolls: 1 is the mouse's own speed, 3 scrolls three times as far." />
+                                    <controls:ValueSlider Value="{Binding LinesPerNotch}" Minimum="1" Maximum="10" />
+                                    <StackPanel Spacing="10" IsVisible="{Binding $parent[UserControl].((vm:DeviceViewModel)DataContext).HasScrollFirmware}">
+                                        <Border Height="1" Background="#2A2A2A" Margin="0,4" />
+                                        <TextBlock Text="SCROLLING MODE" Foreground="#FFFFFF" FontSize="12" />
+                                        <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"
+                                                   Text="Tactile, Free-Spin and Precision Tactile switch with the button below the wheel." />
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="SCROLL ACCELERATION" Foreground="#FFFFFF" FontSize="12" VerticalAlignment="Center" />
+                                            <ToggleSwitch IsChecked="{Binding Acceleration}" OnContent="" OffContent="" MinWidth="0" Margin="0,-4,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap" Text="Amplifies your scrolling speed when in Free Spinning mode." />
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="SMART-REEL" Foreground="#FFFFFF" FontSize="12" VerticalAlignment="Center" />
+                                            <ToggleSwitch IsChecked="{Binding SmartReel}" OnContent="" OffContent="" MinWidth="0" Margin="0,-4,0,0" />
+                                        </StackPanel>
+                                        <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"
+                                                   Text="Automatically switches to Free-Spin as you quickly flick the scroll wheel, and back to Tactile when the wheel stops." />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
                             <Border Classes="card" Width="540" IsVisible="{Binding HasQuickRemapping}">
                                 <StackPanel Spacing="10">
                                     <TextBlock Classes="heading" Text="QUICK REMAPPING" />
@@ -402,7 +428,7 @@
                     <StackPanel Spacing="12">
                         <TextBlock Classes="heading" Text="LOW POWER MODE" />
                         <TextBlock Foreground="#CCCCCC" FontSize="12" Text="When wireless, enter Low Power Mode if the battery level is below (%)" TextWrapping="Wrap" />
-                        <controls:ValueSlider Value="{Binding LowBattery}" Minimum="5" Maximum="25" />
+                        <controls:ValueSlider Value="{Binding LowBattery}" Minimum="5" Maximum="100" />
                         <TextBlock Text="{Binding Battery, StringFormat='Battery: {0}'}" Foreground="#CCCCCC" FontSize="12" />
                     </StackPanel>
                 </Border>

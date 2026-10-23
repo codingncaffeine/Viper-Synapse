@@ -42,6 +42,21 @@ public class CatalogueTests
     }
 
     [Fact]
+    public void The_basilisk_v4_pro_has_its_probed_zones_rates_and_scroll_wheel()
+    {
+        var basilisk = DeviceCatalogue.Default.Find(0x00E3);
+        Assert.NotNull(basilisk);
+        Assert.Equal("mouse", basilisk.Type);
+        Assert.Equal(50000, basilisk.DpiMax);
+        Assert.Equal(["logo", "scroll", "underglow"], basilisk.Zones.Keys.Order());
+        // The LED ids the probe answered on: 01 scroll, 04 logo, 0A underglow.
+        Assert.Equal([0x04, 0x01, 0x0A], new[] { "logo", "scroll", "underglow" }.Select(z => (int)Core.Protocol.DeviceCommands.LedId(z, "mouse")));
+        Assert.Equal(8000, basilisk.PollRates.Max());
+        Assert.True(basilisk.Has("scroll_wheel") && basilisk.Has("battery") && basilisk.Has("idle_time"));
+        Assert.Equal(9, basilisk.Keys.Count);
+    }
+
+    [Fact]
     public void An_extra_entry_replaces_the_imported_one()
     {
         static Stream Json(string name) => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(

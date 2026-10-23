@@ -52,7 +52,8 @@ public sealed class DeviceDrawing : Control
     }
 
     // Shapes in layout units, laid out once per device; Render scales them into the control.
-    readonly record struct KeyShape(KeyRowViewModel Row, Rect Box, double Slant, bool Round);
+    // A callout (Anchor set) is a label beside the picture with a line to its button, as Synapse labels a mouse.
+    readonly record struct KeyShape(KeyRowViewModel Row, Rect Box, double Slant, bool Round, Point? Anchor = null, bool LabelOnLeft = false);
 
     List<KeyShape> _keys = [];
     List<(Geometry Shape, IBrush Fill, IPen? Pen)> _body = [];
@@ -174,6 +175,11 @@ public sealed class DeviceDrawing : Control
     /// <summary>A top-down mouse with its main buttons, and the side grid beside it when it has one.</summary>
     void LayoutMouse(DeviceViewModel device)
     {
+        if (!device.Rows.Any(r => r.Key.Group == "side"))
+        {
+            LayoutMouseCallouts(device);
+            return;
+        }
         var mouse = new StreamGeometry();
         using (var g = mouse.Open())
         {
@@ -201,6 +207,63 @@ public sealed class DeviceDrawing : Control
             _keys.Add(new KeyShape(side[i], new Rect(200 + i % 3 * 44, 40 + i / 3 * 44, 38, 38), 0, false));
         if (side.Count > 0)
             _body.Add((new RectangleGeometry(new Rect(188, 28, 3 * 44 + 10, (side.Count + 2) / 3 * 44 + 10), 14, 14), BodyFill, BodyPen));
+    }
+
+    /// <summary>Where each button sits on the top-down mouse of <see cref="LayoutMouseCallouts"/>, by its catalogue label.</summary>
+    static readonly Dictionary<string, (Point At, bool Left)> MouseAnchors = new()
+    {
+        ["Left Click"] = (new Point(38, 60), true),
+        ["Scroll Click"] = (new Point(75, 58), true),
+        ["Repeat Scroll Left"] = (new Point(68, 46), true),
+        ["Mouse Button 5"] = (new Point(3, 150), true),
+        ["Mouse Button 4"] = (new Point(3, 196), true),
+        ["Right Click"] = (new Point(112, 60), false),
+        ["Scroll Up"] = (new Point(75, 34), false),
+        ["Repeat Scroll Right"] = (new Point(82, 46), false),
+        ["Scroll Down"] = (new Point(75, 84), false),
+    };
+
+    /// <summary>A mouse with no side grid, as Synapse 4 shows one: the top-down mouse in the middle, each button's
+    /// function in a column beside it with a line to the button.</summary>
+    void LayoutMouseCallouts(DeviceViewModel device)
+    {
+        var mouse = new StreamGeometry();
+        using (var g = mouse.Open())
+        {
+            g.BeginFigure(new Point(60, 0), true);
+            g.CubicBezierTo(new Point(130, 0), new Point(150, 60), new Point(150, 140));
+            g.CubicBezierTo(new Point(150, 240), new Point(130, 300), new Point(75, 300));
+            g.CubicBezierTo(new Point(20, 300), new Point(0, 240), new Point(0, 140));
+            g.CubicBezierTo(new Point(0, 60), new Point(-10, 0), new Point(60, 0));
+            g.EndFigure(true);
+        }
+        _body.Add((mouse, BodyFill, BodyPen));
+        _body.Add((new LineGeometry(new Point(75, 4), new Point(75, 110)), Brushes.Transparent, KeyPen));
+        _body.Add((new LineGeometry(new Point(4, 110), new Point(146, 110)), Brushes.Transparent, KeyPen));
+        // The wheel and the two thumb buttons on the left side.
+        _body.Add((new RectangleGeometry(new Rect(67, 30, 16, 58), 8, 8), KeyFill, KeyPen));
+        _body.Add((new RectangleGeometry(new Rect(-4, 132, 8, 38), 4, 4), KeyFill, KeyPen));
+        _body.Add((new RectangleGeometry(new Rect(-4, 178, 8, 38), 4, 4), KeyFill, KeyPen));
+
+        const double rowHeight = 34, labelWidth = 170, gap = 70;
+        var rows = device.Rows.Where(r => r.Key.Group is "mouse" or "other").ToList();
+        var left = rows.Where(r => MouseAnchors.GetValueOrDefault(r.Key.Label, (default, rows.IndexOf(r) % 2 == 0)).Item2).ToList();
+        var right = rows.Except(left).ToList();
+        void Column(List<KeyRowViewModel> column, bool onLeft)
+        {
+            double top = 150 - column.Count * rowHeight / 2;
+            for (int i = 0; i < column.Count; i++)
+            {
+                var row = column[i];
+                var anchor = MouseAnchors.TryGetValue(row.Key.Label, out var a) ? a.At : new Point(75, 150);
+                double x = onLeft ? -gap - labelWidth : 150 + gap;
+                _keys.Add(new KeyShape(row, new Rect(x, top + i * rowHeight, labelWidth, rowHeight - 6), 0, false, anchor, onLeft));
+            }
+        }
+        // Each column runs top to bottom in the order its buttons do on the mouse, so the lines do not cross.
+        double AnchorY(KeyRowViewModel r) => MouseAnchors.TryGetValue(r.Key.Label, out var a) ? a.At.Y : 150;
+        Column(left.OrderBy(AnchorY).ToList(), true);
+        Column(right.OrderBy(AnchorY).ToList(), false);
     }
 
     void LayoutGrid(DeviceViewModel device)
@@ -244,6 +307,11 @@ public sealed class DeviceDrawing : Control
     void DrawKey(DrawingContext context, KeyShape key)
     {
         bool chosen = key.Row == Selected, hovered = key.Row == _hover;
+        if (key.Anchor is { } anchor)
+        {
+            DrawCallout(context, key, anchor, chosen || hovered);
+            return;
+        }
         var shape = KeyGeometry(key);
         if (chosen || hovered)
             context.DrawGeometry(GreenGlow, null, KeyGeometry(key with { Box = key.Box.Inflate(4) }));
@@ -259,6 +327,28 @@ public sealed class DeviceDrawing : Control
         if (value.Width > key.Box.Width - key.Slant - 6)
             value = Text(Shorten(key.Row.Value), 8.5, key.Row.Changed ? Green : Label);
         context.DrawText(value, new Point(key.Box.X + (key.Box.Width - key.Slant - value.Width) / 2, key.Box.Bottom - value.Height - 7));
+    }
+
+    /// <summary>The label, right-aligned on the left column and left-aligned on the right, and its leader line: across
+    /// to the edge of the picture's column, then to the button, ending in a dot.</summary>
+    void DrawCallout(DrawingContext context, KeyShape key, Point anchor, bool lit)
+    {
+        var brush = lit || key.Row.Changed ? Green : Label;
+        var text = Text(key.Row.Value, 12, brush);
+        if (text.Width > key.Box.Width - 14)
+            text = Text(Shorten(key.Row.Value), 12, brush);
+        double y = key.Box.Center.Y;
+        double textX = key.LabelOnLeft ? key.Box.Right - 14 - text.Width : key.Box.X + 14;
+        if (lit)
+            context.DrawGeometry(GreenGlow, null, new RectangleGeometry(new Rect(textX - 6, key.Box.Y, text.Width + 12, key.Box.Height), 4, 4));
+        context.DrawText(text, new Point(textX, y - text.Height / 2));
+        var pen = lit ? new Pen(Green, 1.2) : new Pen(LabelDim, 0.8);
+        var start = new Point(key.LabelOnLeft ? key.Box.Right - 6 : key.Box.X + 6, y);
+        var elbow = new Point(key.LabelOnLeft ? key.Box.Right + 30 : key.Box.X - 30, y);
+        context.DrawLine(pen, start, elbow);
+        context.DrawLine(pen, elbow, anchor);
+        context.DrawEllipse(lit ? Green : LabelDim, null, start, 2, 2);
+        context.DrawEllipse(lit ? Green : Label, null, anchor, 2.5, 2.5);
     }
 
     static Geometry KeyGeometry(KeyShape key)

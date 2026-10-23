@@ -94,6 +94,7 @@ public sealed partial class DeviceViewModel : TabViewModel
         Performance = new PerformanceViewModel(Model, p => PushProfile(x => x with { Performance = p }));
         Power = new PowerViewModel(p => PushProfile(x => x with { Power = p }));
         Calibration = new CalibrationViewModel(c => PushProfile(x => x with { Calibration = c }));
+        ScrollWheel = new ScrollWheelViewModel(s => PushProfile(x => x with { Scroll = s }));
         Pages = BuildPages();
         SelectedPage = Pages[0];
         if (HasThumbstick)
@@ -213,6 +214,12 @@ public sealed partial class DeviceViewModel : TabViewModel
     public LightingViewModel Lighting { get; }
     public PerformanceViewModel Performance { get; }
     public PowerViewModel Power { get; }
+    public ScrollWheelViewModel ScrollWheel { get; }
+
+    /// <summary>Every mouse gets the Scroll Wheel card (scroll speed); acceleration and Smart-Reel need the firmware's.</summary>
+    public bool IsMouse => Model?.Type == "mouse";
+
+    public bool HasScrollFirmware => Model?.Has("scroll_wheel") == true;
     public CalibrationViewModel Calibration { get; }
 
     [ObservableProperty]
@@ -432,7 +439,8 @@ public sealed partial class DeviceViewModel : TabViewModel
             Interruption = settings.Active.Interruption;
             Lighting.Load(settings.Active.Lighting);
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
-            Power.Load(settings.Active.Power ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
+            Power.Load(settings.Active.Power ?? _devicePower ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
+            ScrollWheel.Load(settings.Active.Scroll ?? _deviceScroll ?? Core.Lighting.ScrollSettings.Default);
             Calibration.Load(settings.Active.Calibration ?? new Core.Lighting.CalibrationSettings(_liftOff));
         }
         finally
@@ -446,6 +454,8 @@ public sealed partial class DeviceViewModel : TabViewModel
     int? _battery;
     bool? _charging;
     int _liftOff = -1;
+    Core.Lighting.PowerSettings? _devicePower;
+    Core.Lighting.ScrollSettings? _deviceScroll;
 
     /// <summary>Reads what the device itself is set to, so Performance and Power show real values before the user
     /// changes anything.</summary>
@@ -462,6 +472,10 @@ public sealed partial class DeviceViewModel : TabViewModel
                     _deviceDefaults = new Core.Lighting.PerformanceSettings(state.Stages ?? [], state.ActiveStage, state.PollingRate);
                 (_battery, _charging) = (state.BatteryPercent, state.Charging);
                 _liftOff = state.LiftOffLevel;
+                if (state.SleepSeconds > 0)
+                    _devicePower = new Core.Lighting.PowerSettings(state.SleepSeconds, state.LowBatteryPercent > 0 ? state.LowBatteryPercent : Core.Lighting.PowerSettings.Default.LowBatteryPercent);
+                if (state.ScrollAcceleration != null || state.SmartReel != null)
+                    _deviceScroll = new Core.Lighting.ScrollSettings(1, state.ScrollAcceleration == true, state.SmartReel == true);
                 Load(_settings);
             });
         }

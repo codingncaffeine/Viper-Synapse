@@ -149,6 +149,7 @@ public sealed partial class LightingViewModel : ObservableObject
         "logo" => "Logo",
         "scroll" => "Scroll Wheel",
         "right" => "Side Grid",
+        "underglow" => "Underglow",
         "left" => "Left Side",
         "backlight" => "Backlight",
         _ => zone,
@@ -533,7 +534,36 @@ public sealed partial class PowerViewModel(Action<PowerSettings> save) : Observa
     }
 }
 
-/// <summary>The CALIBRATION page: Smart Tracking's lift-off distance.</summary>
+/// <summary>The Scroll Wheel card on a mouse's Customize page: scroll speed (lines per notch, done in software, so any
+/// mouse has it) and, where the firmware has them, scroll acceleration and Smart-Reel.</summary>
+public sealed partial class ScrollWheelViewModel(Action<ScrollSettings> save) : ObservableObject
+{
+    bool _loading;
+
+    [ObservableProperty] public partial double LinesPerNotch { get; set; } = 1;
+    [ObservableProperty] public partial bool Acceleration { get; set; }
+    [ObservableProperty] public partial bool SmartReel { get; set; }
+
+    public void Load(ScrollSettings settings)
+    {
+        _loading = true;
+        LinesPerNotch = settings.LinesPerNotch;
+        Acceleration = settings.Acceleration;
+        SmartReel = settings.SmartReel;
+        _loading = false;
+    }
+
+    partial void OnLinesPerNotchChanged(double value) => Changed();
+    partial void OnAccelerationChanged(bool value) => Changed();
+    partial void OnSmartReelChanged(bool value) => Changed();
+
+    void Changed()
+    {
+        if (!_loading)
+            save(new ScrollSettings(Math.Clamp((int)Math.Round(LinesPerNotch), 1, ScrollSettings.MaxLinesPerNotch), Acceleration, SmartReel));
+    }
+}
+
 /// <summary>The CALIBRATION page: Smart Tracking on or off (off leaves the sensor at its own default) and the tracking
 /// distance LOW / MEDIUM / HIGH (1, 2, 3 mm).</summary>
 public sealed partial class CalibrationViewModel(Action<CalibrationSettings> save) : ObservableObject

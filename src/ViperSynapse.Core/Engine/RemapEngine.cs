@@ -39,6 +39,10 @@ public sealed class RemapEngine
     /// <summary>Any key press stops running macros (Synapse's "Macro and Keystroke Interruption: any key").</summary>
     public MacroInterruption Interruption { get; set; } = MacroInterruption.DedicatedKey;
 
+    /// <summary>How far one notch of the wheel scrolls, in notches (the Scroll Wheel card's scroll speed). Applies to the
+    /// wheel where it is not rebound.</summary>
+    public int ScrollLines { get; set; } = 1;
+
     bool _hypershiftButton;
 
     /// <summary>The keypad's own Hypershift button, reported by its firmware rather than as a key.</summary>
@@ -93,7 +97,7 @@ public sealed class RemapEngine
         var binding = Keymap.Resolve(source, HypershiftActive);
         if (binding is DefaultBinding)
         {
-            _sink.Relative(axis, value);
+            _sink.Relative(axis, value * Math.Max(1, ScrollLines));
             return;
         }
         // A bound wheel fires once per detent; the high-resolution twin of the same detent is dropped.

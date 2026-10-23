@@ -23,6 +23,7 @@ public static class DeviceCommands
         "right" => 0x10,
         "left" => 0x11,
         "charging" => 0x20,
+        "underglow" => 0x0A,
         _ => 0x00,
     };
 
@@ -244,9 +245,17 @@ public static class DeviceCommands
         return RazerReport.Create(tid, 0x07, 0x03, (byte)(seconds >> 8), (byte)seconds);
     }
 
-    /// <summary>The low-battery threshold as the device's 0-255 scale (OpenRazer clamps to 0x0C-0x3F).</summary>
+    /// <summary>The low-battery threshold on the device's 0-255 scale, 5% to 100%. OpenRazer stops at 0x3F (25%), but the
+    /// Basilisk V4 Pro ships set to 0x4D (30%) and stores any value written.</summary>
     public static RazerReport LowBatteryThreshold(byte tid, int percent) =>
-        RazerReport.Create(tid, 0x07, 0x01, (byte)Math.Clamp((int)Math.Round(percent * 2.55), 0x0C, 0x3F));
+        RazerReport.Create(tid, 0x07, 0x01, (byte)Math.Clamp((int)Math.Round(percent * 2.55), 0x0C, 0xFF));
+
+    /// <summary>Scroll acceleration on or off (0x02/0x16; read back with 0x02/0x96). On or off only: a level byte is
+    /// accepted but not kept.</summary>
+    public static RazerReport ScrollAcceleration(byte tid, bool on) => RazerReport.Create(tid, 0x02, 0x16, VarStore, on ? (byte)1 : (byte)0);
+
+    /// <summary>Smart-Reel on or off (0x02/0x17; read back with 0x02/0x97).</summary>
+    public static RazerReport SmartReel(byte tid, bool on) => RazerReport.Create(tid, 0x02, 0x17, VarStore, on ? (byte)1 : (byte)0);
 
     public static int ReadBatteryPercent(RazerReport answer) => (int)Math.Round(answer.Arguments[1] / 2.55);
 
