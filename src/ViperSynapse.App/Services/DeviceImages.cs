@@ -12,6 +12,22 @@ namespace ViperSynapse.App.Services;
 public static class DeviceImages
 {
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+
+    /// <summary>A product photo is well under a megabyte; anything past this is not one.</summary>
+    public const long MaxBytes = 4 * 1024 * 1024;
+
+    /// <summary>Razer's own sites and the two storage hosts Razer serves product pictures from. A catalogue address
+    /// anywhere else is not fetched: the photo is a nicety, not worth trusting an arbitrary server for.</summary>
+    static readonly string[] Hosts = ["razer.com", "razerzone.com", "hybrismediaprod.blob.core.windows.net", "rzrwarranty.s3.amazonaws.com"];
+
+    static readonly string[] Extensions = [".png", ".jpg", ".jpeg", ".webp"];
+
+    /// <summary>Whether a catalogue address may be fetched: HTTPS, on one of <see cref="Hosts"/>, a picture by its name.</summary>
+    public static bool Allowed(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttps
+        && Hosts.Any(h => uri.Host.Equals(h, StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith("." + h, StringComparison.OrdinalIgnoreCase))
+        && Extensions.Contains(Path.GetExtension(uri.AbsolutePath).ToLowerInvariant());
     static readonly SemaphoreSlim OneAtATime = new(1, 1);
 
     static string CacheDir()
@@ -40,13 +56,36 @@ public static class DeviceImages
         }
     }
 
-    public static Task<Bitmap?> LoadAsync(DeviceModel? model) => model?.Image is not { Length: > 0 } url
+    /// <summary>Fetches a picture of at most <see cref="MaxBytes"/>, refusing anything the server does not call an image
+    /// (an error page, say) and stopping the moment a body runs past the limit, whatever its header claimed.</summary>
+    static async Task<byte[]?> DownloadAsync(string url)
+    {
+        using var response = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode
+            || response.Content.Headers.ContentType?.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) != true
+            || response.Content.Headers.ContentLength > MaxBytes)
+            return null;
+        await using var body = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        using var copy = new MemoryStream();
+        var buffer = new byte[81920];
+        int n;
+        while ((n = await body.ReadAsync(buffer).ConfigureAwait(false)) > 0)
+        {
+            if (copy.Length + n > MaxBytes)
+                return null;
+            copy.Write(buffer, 0, n);
+        }
+        return copy.ToArray();
+    }
+
+    public static Task<Bitmap?> LoadAsync(DeviceModel? model) => model?.Image is not { Length: > 0 } url || !Allowed(url)
         ? Task.FromResult<Bitmap?>(null)
         : Task.Run(() => LoadAsync(model.ProductId, url));
 
     static async Task<Bitmap?> LoadAsync(ushort productId, string url)
     {
-        var file = Path.Combine(CacheDir(), $"{productId:x4}{Path.GetExtension(new Uri(url).AbsolutePath)}");
+        // The file name is ours (product id + a checked extension), never taken from the server.
+        var file = Path.Combine(CacheDir(), $"{productId:x4}{Path.GetExtension(new Uri(url).AbsolutePath).ToLowerInvariant()}");
         try
         {
             if (!File.Exists(file))
@@ -56,7 +95,9 @@ public static class DeviceImages
                 {
                     if (!File.Exists(file))
                     {
-                        var bytes = await Http.GetByteArrayAsync(url).ConfigureAwait(false);
+                        var bytes = await DownloadAsync(url).ConfigureAwait(false);
+                        if (bytes == null)
+                            return null;
                         Directory.CreateDirectory(Path.GetDirectoryName(file)!);
                         var temp = file + ".tmp";
                         await File.WriteAllBytesAsync(temp, bytes).ConfigureAwait(false);

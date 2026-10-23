@@ -154,6 +154,9 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
 
     void SendPerformance(PerformanceSettings p)
     {
+        // No stage above what the sensor can do, whatever the settings file says.
+        if (model?.DpiMax is int max && max > 0)
+            p = p with { Stages = p.Stages.Select(s => new DpiStage(Math.Min(s.X, max), Math.Min(s.Y, max))).ToList() };
         if (p.Stages.Count > 0 && model?.Has("dpi") == true)
         {
             if (model?.Has("dpi_stages") == true)

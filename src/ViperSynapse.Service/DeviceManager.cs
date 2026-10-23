@@ -282,7 +282,7 @@ public sealed class DeviceManager : IDisposable
                 // A global shortcut made of this device's keys needs its input too.
                 bool shortcut = _shortcuts.Shortcuts.Any(s => device.Model is not { } m || s.Keys.All(k => m.Keys.Any(dk => dk.Source == k)));
                 // A faster wheel is the engine's work too.
-                int scrollLines = profile.Scroll?.LinesPerNotch ?? 1;
+                int scrollLines = Math.Clamp(profile.Scroll?.LinesPerNotch ?? 1, 1, Core.Lighting.ScrollSettings.MaxLinesPerNotch);
                 if (!bindsAnything && !shortcut && scrollLines <= 1 && stick == ThumbstickMode.Analog)
                 {
                     if (device.Session != null)

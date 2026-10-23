@@ -144,24 +144,33 @@ public static class DeviceCommands
     public static RazerReport Brightness(byte tid, byte led, int percent) =>
         RazerReport.Create(tid, 0x0F, 0x04, VarStore, led, (byte)Math.Round(Math.Clamp(percent, 0, 100) * 255 / 100.0, MidpointRounding.AwayFromZero));
 
-    public static RazerReport Dpi(byte tid, int x, int y) =>
-        RazerReport.Create(tid, 0x04, 0x05, VarStore, (byte)(x >> 8), (byte)x, (byte)(y >> 8), (byte)y, 0, 0);
+    public static RazerReport Dpi(byte tid, int x, int y)
+    {
+        (x, y) = (ClampDpi(x), ClampDpi(y));
+        return RazerReport.Create(tid, 0x04, 0x05, VarStore, (byte)(x >> 8), (byte)x, (byte)(y >> 8), (byte)y, 0, 0);
+    }
+
+    /// <summary>Sensitivity as the device takes it: two bytes, and no sensor goes below 100.</summary>
+    public static int ClampDpi(int dpi) => Math.Clamp(dpi, 100, ushort.MaxValue);
 
     /// <summary>The stage table: active stage (1-based), count, then seven bytes a stage.</summary>
     public static RazerReport DpiStages(byte tid, PerformanceSettings p)
     {
         var a = new byte[0x26];
         a[0] = VarStore;
-        a[1] = (byte)(Math.Clamp(p.ActiveStage, 0, p.Stages.Count - 1) + 1);
-        a[2] = (byte)p.Stages.Count;
+        // Never more stages than the table holds, so the count matches what follows it.
+        int count = Math.Min(p.Stages.Count, PerformanceSettings.MaxStages);
+        a[1] = (byte)(Math.Clamp(p.ActiveStage, 0, count - 1) + 1);
+        a[2] = (byte)count;
         for (int i = 0; i < p.Stages.Count && i < PerformanceSettings.MaxStages; i++)
         {
             int at = 3 + i * 7;
             a[at] = (byte)(i + 1);
-            a[at + 1] = (byte)(p.Stages[i].X >> 8);
-            a[at + 2] = (byte)p.Stages[i].X;
-            a[at + 3] = (byte)(p.Stages[i].Y >> 8);
-            a[at + 4] = (byte)p.Stages[i].Y;
+            int x = ClampDpi(p.Stages[i].X), y = ClampDpi(p.Stages[i].Y);
+            a[at + 1] = (byte)(x >> 8);
+            a[at + 2] = (byte)x;
+            a[at + 3] = (byte)(y >> 8);
+            a[at + 4] = (byte)y;
         }
         return RazerReport.Create(tid, 0x04, 0x06, a, 0x26);
     }

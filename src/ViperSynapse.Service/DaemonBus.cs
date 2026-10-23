@@ -1,5 +1,6 @@
 using Tmds.DBus.Protocol;
 using ViperSynapse.Core.Bindings;
+using ViperSynapse.Core.Engine;
 using ViperSynapse.Core.Input;
 using ViperSynapse.Hardware;
 
@@ -93,6 +94,15 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
             {
                 context.ReplyError(InvalidError, e.Message);
             }
+            // Anything else (a device gone mid-write, a full disk) is answered too: the caller gets an error instead of
+            // a timeout, and one bad call never takes the service down.
+#pragma warning disable CA1031
+            catch (Exception e)
+#pragma warning restore CA1031
+            {
+                Console.Error.WriteLine($"{context.Request.MemberAsString}: {e.Message}");
+                context.ReplyError("org.vipersynapse.Error.Failed", e.Message);
+            }
         }));
     }
 
@@ -128,7 +138,7 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
             case "SetSettings":
             {
                 string key = DeviceKey(reader.ReadString());
-                _devices.SetSettings(key, SettingsJson.ReadSettings(reader.ReadString()));
+                _devices.SetSettings(key, SettingsJson.ReadSettings(Json(reader.ReadString())));
                 ReplyEmpty(context);
                 break;
             }
@@ -142,14 +152,14 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
                 ReplyString(context, SettingsJson.Write(_devices.Macros));
                 break;
             case "SetMacros":
-                _devices.SetMacros(SettingsJson.ReadMacros(reader.ReadString()));
+                _devices.SetMacros(SettingsJson.ReadMacros(Json(reader.ReadString())));
                 ReplyEmpty(context);
                 break;
             case "GetShortcuts":
                 ReplyString(context, SettingsJson.Write(_devices.Shortcuts));
                 break;
             case "SetShortcuts":
-                _devices.SetShortcuts(SettingsJson.ReadShortcuts(reader.ReadString()));
+                _devices.SetShortcuts(SettingsJson.ReadShortcuts(Json(reader.ReadString())));
                 ReplyEmpty(context);
                 break;
             case "ActiveWindow":
@@ -190,9 +200,11 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
                 break;
             case "StopRecording":
             {
-                var mode = Enum.Parse<RecordDelayMode>(reader.ReadString(), ignoreCase: true);
-                int defaultDelay = reader.ReadInt32();
-                int randomMin = reader.ReadInt32(), randomMax = reader.ReadInt32();
+                if (!Enum.TryParse<RecordDelayMode>(reader.ReadString(), ignoreCase: true, out var mode) || !Enum.IsDefined(mode))
+                    throw new ArgumentException("Not a delay mode.");
+                int defaultDelay = Math.Clamp(reader.ReadInt32(), 0, MacroRunner.MaxDelayMs);
+                int randomMin = Math.Clamp(reader.ReadInt32(), 0, MacroRunner.MaxDelayMs);
+                int randomMax = Math.Clamp(reader.ReadInt32(), 0, MacroRunner.MaxDelayMs);
                 IReadOnlyList<RecordedEvent> events;
                 lock (_recordGate)
                 {
@@ -216,6 +228,13 @@ public sealed class DaemonBus : IPathMethodHandler, IDisposable
             end--;
         return events.Take(end);
     }
+
+    /// <summary>The most a settings, macro or shortcut document may be. A whole library of long recordings is a few
+    /// hundred kilobytes; this stops a caller on the bus making the service parse and store something huge.</summary>
+    public const int MaxJsonChars = 8 * 1024 * 1024;
+
+    static string Json(string value) =>
+        value.Length <= MaxJsonChars ? value : throw new InvalidDataException($"Refused: {value.Length} characters is more than settings ever take.");
 
     /// <summary>Device keys are product ids in hex; nothing else may reach a file name.</summary>
     static string DeviceKey(string key) =>

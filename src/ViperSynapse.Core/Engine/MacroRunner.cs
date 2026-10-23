@@ -10,6 +10,10 @@ public sealed class MacroRunner(IInputSink sink, IEngineHost host, TimeProvider 
     /// each other stop instead of running forever.</summary>
     public const int MaxNesting = 8;
 
+    /// <summary>Limits on what a macro step can ask for, whoever wrote the macro file: an hour's delay, ten thousand
+    /// passes of a loop, a hundred wheel clicks at once.</summary>
+    public const int MaxDelayMs = 3_600_000, MaxLoops = 10_000, MaxScrollClicks = 100;
+
     /// <summary>Plays <paramref name="steps"/> once. Returns normally when cancelled.</summary>
     public async Task PlayAsync(IReadOnlyList<MacroStep> steps, CancellationToken cancel) => await PlayAsync(steps, cancel, 0).ConfigureAwait(false);
 
@@ -29,17 +33,19 @@ public sealed class MacroRunner(IInputSink sink, IEngineHost host, TimeProvider 
                         Press(key, down);
                         break;
                     case DelayStep delay when delay.Milliseconds > 0:
-                        await Task.Delay(TimeSpan.FromMilliseconds(delay.Milliseconds), time, cancel).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(delay.Milliseconds, MaxDelayMs)), time, cancel).ConfigureAwait(false);
                         break;
                     case RandomDelayStep random:
-                        int lo = Math.Min(random.MinMilliseconds, random.MaxMilliseconds), hi = Math.Max(random.MinMilliseconds, random.MaxMilliseconds);
+                        int lo = Math.Clamp(Math.Min(random.MinMilliseconds, random.MaxMilliseconds), 0, MaxDelayMs);
+                        int hi = Math.Clamp(Math.Max(random.MinMilliseconds, random.MaxMilliseconds), 0, MaxDelayMs);
                         int ms = Random.Shared.Next(lo, hi + 1);
                         if (ms > 0)
                             await Task.Delay(TimeSpan.FromMilliseconds(ms), time, cancel).ConfigureAwait(false);
                         break;
                     case ScrollStep scroll:
-                        sink.Relative(scroll.Horizontal ? RelativeAxes.HWheel : RelativeAxes.Wheel, scroll.Clicks);
-                        sink.Relative(scroll.Horizontal ? RelativeAxes.HWheelHiRes : RelativeAxes.WheelHiRes, scroll.Clicks * 120);
+                        int clicks = Math.Clamp(scroll.Clicks, -MaxScrollClicks, MaxScrollClicks);
+                        sink.Relative(scroll.Horizontal ? RelativeAxes.HWheel : RelativeAxes.Wheel, clicks);
+                        sink.Relative(scroll.Horizontal ? RelativeAxes.HWheelHiRes : RelativeAxes.WheelHiRes, clicks * 120);
                         sink.Sync();
                         break;
                     case TextStep text:
@@ -56,7 +62,7 @@ public sealed class MacroRunner(IInputSink sink, IEngineHost host, TimeProvider 
                         await PlayAsync(inner.Steps, cancel, depth + 1).ConfigureAwait(false);
                         break;
                     case LoopStartStep loop:
-                        loops.Push((i, Math.Max(1, loop.Count) - 1));
+                        loops.Push((i, Math.Clamp(loop.Count, 1, MaxLoops) - 1));
                         break;
                     case LoopEndStep when loops.Count > 0:
                         var (start, left) = loops.Pop();
