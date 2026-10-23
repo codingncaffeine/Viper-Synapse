@@ -55,8 +55,21 @@
                     <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
-            <TextBlock Grid.Column="2" Classes="caption" Text="{Binding Status}" HorizontalAlignment="Right"
-                       VerticalAlignment="Center" Margin="0,0,16,0" />
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
+                        Spacing="14" Margin="0,0,16,0">
+                <!-- The charge left, where Synapse shows it: "58 %" and a battery gauge, refreshed every minute. -->
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" IsVisible="{Binding BatteryKnown}"
+                            ToolTip.Tip="Battery charge">
+                    <TextBlock Text="{Binding BatteryText}" FontSize="12" Foreground="#DDDDDD" VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="22" Height="11" BorderBrush="#BBBBBB" BorderThickness="1" CornerRadius="2" Padding="1">
+                            <Border Width="{Binding BatteryFill}" HorizontalAlignment="Left" Background="{Binding BatteryBrush}" CornerRadius="1" />
+                        </Border>
+                        <Border Width="2" Height="5" Background="#BBBBBB" VerticalAlignment="Center" CornerRadius="0,1,1,0" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock Classes="caption" Text="{Binding Status}" VerticalAlignment="Center" />
+            </StackPanel>
         </Grid>
 
         <!-- CUSTOMIZE -->
@@ -105,8 +118,8 @@
                             <ItemsControl ItemsSource="{Binding FirmwareButtons}" IsVisible="{Binding HasFirmwareButtons}" Margin="0,6,0,0">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:FirmwareButtonLine">
-                                        <Grid ColumnDefinitions="40,1,*" Height="40" ToolTip.Tip="Handled by the keypad's firmware">
-                                            <TextBlock Text="Keypad" FontSize="9" Foreground="#CCCCCC" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Grid ColumnDefinitions="40,1,*" Height="40" ToolTip.Tip="Handled by the device's own firmware: not remappable yet">
+                                            <TextBlock Text="{Binding Where}" FontSize="9" Foreground="#CCCCCC" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             <Rectangle Grid.Column="1" Fill="#4A4A4A" Margin="0,6" />
                                             <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="6,0">
                                                 <TextBlock Text="{Binding Category}" FontSize="8" Foreground="#8A8A8A" />
@@ -429,7 +442,6 @@
                         <TextBlock Classes="heading" Text="LOW POWER MODE" />
                         <TextBlock Foreground="#CCCCCC" FontSize="12" Text="When wireless, enter Low Power Mode if the battery level is below (%)" TextWrapping="Wrap" />
                         <controls:ValueSlider Value="{Binding LowBattery}" Minimum="5" Maximum="100" />
-                        <TextBlock Text="{Binding Battery, StringFormat='Battery: {0}'}" Foreground="#CCCCCC" FontSize="12" />
                     </StackPanel>
                 </Border>
             </WrapPanel>

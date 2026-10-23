@@ -513,14 +513,11 @@ public sealed partial class PowerViewModel(Action<PowerSettings> save) : Observa
 
     [ObservableProperty] public partial double SleepMinutes { get; set; } = 5;
     [ObservableProperty] public partial double LowBattery { get; set; } = 15;
-    [ObservableProperty] public partial string Battery { get; set; } = "";
-
-    public void Load(PowerSettings settings, int? battery, bool? charging)
+    public void Load(PowerSettings settings)
     {
         _loading = true;
         SleepMinutes = settings.SleepSeconds / 60.0;
         LowBattery = settings.LowBatteryPercent;
-        Battery = battery is int b ? $"{b}%{(charging == true ? "  (charging)" : "")}" : "Unknown";
         _loading = false;
     }
 

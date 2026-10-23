@@ -101,7 +101,12 @@
         { "number" : 6, "label" : "Repeat Scroll Left", "code" : "", "source" : "wheel-left", "group" : "mouse" },
         { "number" : 7, "label" : "Repeat Scroll Right", "code" : "", "source" : "wheel-right", "group" : "mouse" },
         { "number" : 8, "label" : "Mouse Button 4", "code" : "BTN_SIDE", "group" : "mouse" },
-        { "number" : 9, "label" : "Mouse Button 5", "code" : "BTN_EXTRA", "group" : "mouse" }
+        { "number" : 9, "label" : "Mouse Button 5", "code" : "BTN_EXTRA", "group" : "mouse" },
+        { "number" : 10, "label" : "Hypershift Clutch", "code" : "", "group" : "mouse" },
+        { "number" : 11, "label" : "Scroll Mode Toggle", "code" : "", "group" : "mouse" },
+        { "number" : 12, "label" : "Cycle Up Sensitivity Stages", "code" : "", "group" : "mouse" },
+        { "number" : 13, "label" : "Cycle Up Profile", "code" : "", "group" : "mouse" },
+        { "number" : 14, "label" : "AI Prompt Master", "code" : "", "group" : "mouse" }
       ],
       "zones" : {
         "logo" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] },

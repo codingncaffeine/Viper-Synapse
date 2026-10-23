@@ -53,7 +53,9 @@ public class CatalogueTests
         Assert.Equal([0x04, 0x01, 0x0A], new[] { "logo", "scroll", "underglow" }.Select(z => (int)Core.Protocol.DeviceCommands.LedId(z, "mouse")));
         Assert.Equal(8000, basilisk.PollRates.Max());
         Assert.True(basilisk.Has("scroll_wheel") && basilisk.Has("battery") && basilisk.Has("idle_time"));
-        Assert.Equal(9, basilisk.Keys.Count);
+        // Nine buttons Linux sees, five the firmware keeps (DPI, profile, scroll mode, clutch, M1).
+        Assert.Equal(9, basilisk.Keys.Count(k => k.Source != 0));
+        Assert.Equal(14, basilisk.Keys.Count);
     }
 
     [Fact]

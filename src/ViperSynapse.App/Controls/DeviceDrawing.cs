@@ -210,17 +210,23 @@ public sealed class DeviceDrawing : Control
     }
 
     /// <summary>Where each button sits on the top-down mouse of <see cref="LayoutMouseCallouts"/>, by its catalogue label.</summary>
-    static readonly Dictionary<string, (Point At, bool Left)> MouseAnchors = new()
+    /// The side and the place in its column follow Synapse 4's Basilisk V4 Pro picture.
+    static readonly Dictionary<string, (Point At, bool Left, int Order)> MouseAnchors = new()
     {
-        ["Left Click"] = (new Point(38, 60), true),
-        ["Scroll Click"] = (new Point(75, 58), true),
-        ["Repeat Scroll Left"] = (new Point(68, 46), true),
-        ["Mouse Button 5"] = (new Point(3, 150), true),
-        ["Mouse Button 4"] = (new Point(3, 196), true),
-        ["Right Click"] = (new Point(112, 60), false),
-        ["Scroll Up"] = (new Point(75, 34), false),
-        ["Repeat Scroll Right"] = (new Point(82, 46), false),
-        ["Scroll Down"] = (new Point(75, 84), false),
+        ["Left Click"] = (new Point(38, 60), true, 0),
+        ["Scroll Click"] = (new Point(75, 58), true, 1),
+        ["Repeat Scroll Left"] = (new Point(68, 46), true, 2),
+        ["Cycle Up Profile"] = (new Point(75, 230), true, 3),
+        ["Hypershift Clutch"] = (new Point(3, 128), true, 4),
+        ["AI Prompt Master"] = (new Point(10, 34), true, 5),
+        ["Mouse Button 5"] = (new Point(3, 162), true, 6),
+        ["Right Click"] = (new Point(112, 60), false, 0),
+        ["Scroll Up"] = (new Point(75, 34), false, 1),
+        ["Repeat Scroll Right"] = (new Point(82, 46), false, 2),
+        ["Scroll Down"] = (new Point(75, 84), false, 3),
+        ["Scroll Mode Toggle"] = (new Point(75, 100), false, 4),
+        ["Cycle Up Sensitivity Stages"] = (new Point(75, 122), false, 5),
+        ["Mouse Button 4"] = (new Point(3, 200), false, 6),
     };
 
     /// <summary>A mouse with no side grid, as Synapse 4 shows one: the top-down mouse in the middle, each button's
@@ -240,14 +246,16 @@ public sealed class DeviceDrawing : Control
         _body.Add((mouse, BodyFill, BodyPen));
         _body.Add((new LineGeometry(new Point(75, 4), new Point(75, 110)), Brushes.Transparent, KeyPen));
         _body.Add((new LineGeometry(new Point(4, 110), new Point(146, 110)), Brushes.Transparent, KeyPen));
-        // The wheel and the two thumb buttons on the left side.
+        // The wheel, and the thumb buttons on the left side (the clutch in front of the two side buttons).
         _body.Add((new RectangleGeometry(new Rect(67, 30, 16, 58), 8, 8), KeyFill, KeyPen));
-        _body.Add((new RectangleGeometry(new Rect(-4, 132, 8, 38), 4, 4), KeyFill, KeyPen));
-        _body.Add((new RectangleGeometry(new Rect(-4, 178, 8, 38), 4, 4), KeyFill, KeyPen));
+        if (device.Rows.Any(r => r.Key.Label == "Hypershift Clutch"))
+            _body.Add((new RectangleGeometry(new Rect(-4, 116, 8, 24), 4, 4), KeyFill, KeyPen));
+        _body.Add((new RectangleGeometry(new Rect(-4, 144, 8, 38), 4, 4), KeyFill, KeyPen));
+        _body.Add((new RectangleGeometry(new Rect(-4, 184, 8, 34), 4, 4), KeyFill, KeyPen));
 
-        const double rowHeight = 34, labelWidth = 170, gap = 70;
+        const double rowHeight = 34, labelWidth = 200, gap = 70;
         var rows = device.Rows.Where(r => r.Key.Group is "mouse" or "other").ToList();
-        var left = rows.Where(r => MouseAnchors.GetValueOrDefault(r.Key.Label, (default, rows.IndexOf(r) % 2 == 0)).Item2).ToList();
+        var left = rows.Where(r => MouseAnchors.TryGetValue(r.Key.Label, out var a) ? a.Left : rows.IndexOf(r) % 2 == 0).ToList();
         var right = rows.Except(left).ToList();
         void Column(List<KeyRowViewModel> column, bool onLeft)
         {
@@ -260,10 +268,10 @@ public sealed class DeviceDrawing : Control
                 _keys.Add(new KeyShape(row, new Rect(x, top + i * rowHeight, labelWidth, rowHeight - 6), 0, false, anchor, onLeft));
             }
         }
-        // Each column runs top to bottom in the order its buttons do on the mouse, so the lines do not cross.
-        double AnchorY(KeyRowViewModel r) => MouseAnchors.TryGetValue(r.Key.Label, out var a) ? a.At.Y : 150;
-        Column(left.OrderBy(AnchorY).ToList(), true);
-        Column(right.OrderBy(AnchorY).ToList(), false);
+        // Each column in Synapse's order; buttons it does not place go last, top to bottom.
+        double Place(KeyRowViewModel r) => MouseAnchors.TryGetValue(r.Key.Label, out var a) ? a.Order : 100 + rows.IndexOf(r);
+        Column(left.OrderBy(Place).ToList(), true);
+        Column(right.OrderBy(Place).ToList(), false);
     }
 
     void LayoutGrid(DeviceViewModel device)
@@ -334,9 +342,12 @@ public sealed class DeviceDrawing : Control
     void DrawCallout(DrawingContext context, KeyShape key, Point anchor, bool lit)
     {
         var brush = lit || key.Row.Changed ? Green : Label;
-        var text = Text(key.Row.Value, 12, brush);
+        // A firmware-only button has no binding to show: its name says what it does.
+        string label = key.Row.Bindable ? key.Row.Value : key.Row.Key.Label;
+        var brushFinal = key.Row.Bindable ? brush : LabelDim;
+        var text = Text(label, 12, brushFinal);
         if (text.Width > key.Box.Width - 14)
-            text = Text(Shorten(key.Row.Value), 12, brush);
+            text = Text(label.Length > 24 ? label[..23] + "…" : label, 12, brushFinal);
         double y = key.Box.Center.Y;
         double textX = key.LabelOnLeft ? key.Box.Right - 14 - text.Width : key.Box.X + 14;
         if (lit)

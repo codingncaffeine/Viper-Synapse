@@ -63,7 +63,7 @@ public sealed record KeyListLine(string? Title, KeyRowViewModel? Left, KeyRowVie
 
 /// <summary>A button the device's firmware handles itself (the keypad's Hypershift, keymap and profile buttons): listed
 /// with what it does, not remappable.</summary>
-public sealed record FirmwareButtonLine(string Category, string Value);
+public sealed record FirmwareButtonLine(string Category, string Value, string Where = "Keypad");
 
 /// <summary>A device tab: its pages (Customize, Lighting, ...), profiles, keymaps and the key list.</summary>
 public sealed partial class DeviceViewModel : TabViewModel
@@ -85,6 +85,10 @@ public sealed partial class DeviceViewModel : TabViewModel
         SelectedKeyFilter = KeyFilters[0];
         if (Model?.Has("keypad_buttons") == true)
             FirmwareButtons = [new("RAZER HYPERSHIFT", "Razer Hypershift"), new("SWITCH KEYMAP", "Cycle Keymap"), new("SWITCH PROFILE", "Cycle Profile")];
+        else
+            // A mouse's firmware-only buttons are catalogue keys with no key code (the Basilisk V4 Pro's DPI, profile,
+            // scroll-mode, clutch and M1 buttons): listed under the others with what they do.
+            FirmwareButtons = Rows.Where(r => !r.Bindable).Select(r => new FirmwareButtonLine(FirmwareCategory(r.Key.Label), r.Key.Label, "Mouse")).ToList();
         Lighting = new LightingViewModel(Model, l => PushProfile(p => p with { Lighting = l }));
         Lighting.ApplyToOthers += effect =>
         {
@@ -102,6 +106,13 @@ public sealed partial class DeviceViewModel : TabViewModel
             var watch = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(5) };
             watch.Tick += (_, _) => KeepWatchingStick();
             watch.Start();
+        }
+        if (HasBattery)
+        {
+            // The charge changes on its own: read it again every minute, battery only, so a page being edited is left be.
+            var battery = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMinutes(1) };
+            battery.Tick += (_, _) => _ = RefreshBatteryAsync();
+            battery.Start();
         }
         _ = Services.DeviceImages.LoadAsync(Model).ContinueWith(t =>
         {
@@ -190,7 +201,8 @@ public sealed partial class DeviceViewModel : TabViewModel
                 if (keys.Count == 0)
                     continue;
                 lines.Add(new KeyListLine(group.Title, null, null));
-                if (keys.Count <= 6)
+                // Synapse 4 runs a keypad's keys down two columns and a mouse's down one.
+                if (keys.Count <= 6 || !IsKeypad)
                 {
                     lines.AddRange(keys.Select(k => new KeyListLine(null, k, null)));
                     continue;
@@ -357,6 +369,49 @@ public sealed partial class DeviceViewModel : TabViewModel
     [ObservableProperty]
     public partial BindingEditorViewModel? Editor { get; set; }
 
+    // ---- Battery: the charge readout in the header, on the Power page and on the dashboard card ------------------
+
+    static readonly Avalonia.Media.IBrush BatteryGreen = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#44D62C"));
+    static readonly Avalonia.Media.IBrush BatteryRed = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#E5484D"));
+
+    public bool HasBattery => Model?.Has("battery") == true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(BatteryText), nameof(BatteryFill), nameof(BatteryKnown), nameof(BatteryBrush))]
+    public partial int? BatteryPercent { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(BatteryText))]
+    public partial bool Charging { get; set; }
+
+    public bool BatteryKnown => HasBattery && BatteryPercent != null;
+
+    public string BatteryText => BatteryPercent is int p ? $"{p} %" + (Charging ? "  ⚡" : "") : "";
+
+    /// <summary>The width of the gauge's fill, out of 18.</summary>
+    public double BatteryFill => Math.Clamp(BatteryPercent ?? 0, 0, 100) * 18 / 100.0;
+
+    /// <summary>Green, red once the charge is at or below the low power level.</summary>
+    public Avalonia.Media.IBrush BatteryBrush =>
+        BatteryPercent is int p && p <= (_settings.Active.Power ?? _devicePower ?? Core.Lighting.PowerSettings.Default).LowBatteryPercent
+            ? BatteryRed : BatteryGreen;
+
+    void ShowBattery(int? percent, bool? charging)
+    {
+        Charging = charging == true;
+        BatteryPercent = percent;
+    }
+
+    async Task RefreshBatteryAsync()
+    {
+        try
+        {
+            if (await _main.Client.GetDeviceStateAsync(Key).ConfigureAwait(false) is { } state && state.BatteryPercent != null)
+                await Dispatcher.UIThread.InvokeAsync(() => ShowBattery(state.BatteryPercent, state.Charging));
+        }
+        catch (Exception e) when (e is Tmds.DBus.Protocol.DBusErrorReplyException or InvalidOperationException or System.Text.Json.JsonException) { }
+    }
+
     public string Status => Info.Problem ?? (Info.Remapping ? "Active" : "Ready");
     public string Details => $"{Info.Firmware}  ·  {(Info.Verified ? "Tested on this hardware" : Info.Known ? "From the OpenRazer catalogue, not yet tested here" : "Unknown model")}";
 
@@ -368,14 +423,24 @@ public sealed partial class DeviceViewModel : TabViewModel
 
     IReadOnlyList<string> BuildPages()
     {
+        // Synapse 4's order: Customize, Performance, Lighting, Power, Calibration.
         var pages = new List<string> { "CUSTOMIZE" };
-        if (Model?.Zones.Count > 0 || IsKeypad) pages.Add("LIGHTING");
         // Keypads show their polling rate on Customize; Performance is the mouse page.
         if (Model?.Has("dpi") == true) pages.Add("PERFORMANCE");
+        if (Model?.Zones.Count > 0 || IsKeypad) pages.Add("LIGHTING");
         if (Model?.Has("battery") == true) pages.Add("POWER");
         if (Model?.Has("lift_off") == true) pages.Add("CALIBRATION");
         return pages;
     }
+
+    static string FirmwareCategory(string label) => label switch
+    {
+        _ when label.Contains("Profile", StringComparison.Ordinal) => "SWITCH PROFILE",
+        _ when label.Contains("Sensitivity", StringComparison.Ordinal) => "SENSITIVITY",
+        _ when label.Contains("Hypershift", StringComparison.Ordinal) => "RAZER HYPERSHIFT",
+        _ when label.Contains("Scroll", StringComparison.Ordinal) => "MOUSE",
+        _ => "FIRMWARE",
+    };
 
     static string GroupTitle(string group) => group switch
     {
@@ -439,7 +504,8 @@ public sealed partial class DeviceViewModel : TabViewModel
             Interruption = settings.Active.Interruption;
             Lighting.Load(settings.Active.Lighting);
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
-            Power.Load(settings.Active.Power ?? _devicePower ?? Core.Lighting.PowerSettings.Default, _battery, _charging);
+            Power.Load(settings.Active.Power ?? _devicePower ?? Core.Lighting.PowerSettings.Default);
+            OnPropertyChanged(nameof(BatteryBrush));
             ScrollWheel.Load(settings.Active.Scroll ?? _deviceScroll ?? Core.Lighting.ScrollSettings.Default);
             Calibration.Load(settings.Active.Calibration ?? new Core.Lighting.CalibrationSettings(_liftOff));
         }
@@ -451,8 +517,6 @@ public sealed partial class DeviceViewModel : TabViewModel
     }
 
     Core.Lighting.PerformanceSettings? _deviceDefaults;
-    int? _battery;
-    bool? _charging;
     int _liftOff = -1;
     Core.Lighting.PowerSettings? _devicePower;
     Core.Lighting.ScrollSettings? _deviceScroll;
@@ -470,7 +534,9 @@ public sealed partial class DeviceViewModel : TabViewModel
                 // A keypad reports a polling rate and no stages; its rate is still the device's own value.
                 if (state.Stages is { Count: > 0 } || state.PollingRate > 0)
                     _deviceDefaults = new Core.Lighting.PerformanceSettings(state.Stages ?? [], state.ActiveStage, state.PollingRate);
-                (_battery, _charging) = (state.BatteryPercent, state.Charging);
+                // A mouse asleep answers nothing: keep the last reading rather than blanking it.
+                if (state.BatteryPercent != null)
+                    ShowBattery(state.BatteryPercent, state.Charging);
                 _liftOff = state.LiftOffLevel;
                 if (state.SleepSeconds > 0)
                     _devicePower = new Core.Lighting.PowerSettings(state.SleepSeconds, state.LowBatteryPercent > 0 ? state.LowBatteryPercent : Core.Lighting.PowerSettings.Default.LowBatteryPercent);
