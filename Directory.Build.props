@@ -23,7 +23,7 @@
     <Company>Viper Synapse</Company>
     <Authors>codingncaffeine</Authors>
     <Copyright>Copyright (C) 2026 Viper Synapse contributors</Copyright>
-    <VersionPrefix>0.0.3</VersionPrefix>
+    <VersionPrefix>0.0.4</VersionPrefix>
   </PropertyGroup>
 
   <!-- Central package versions: bump here and nowhere else. -->
