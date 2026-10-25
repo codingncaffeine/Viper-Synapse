@@ -61,6 +61,20 @@ public sealed partial class LightingViewModel : ObservableObject
     [ObservableProperty] public partial EffectChoice? SelectedEffect { get; set; }
     [ObservableProperty] public partial IReadOnlyList<ColorMode> ColorModes { get; set; } = [];
     [ObservableProperty] public partial ColorMode SelectedColorMode { get; set; }
+
+    /// <summary>The colour mode box's side of <see cref="SelectedColorMode"/>. The box holds nothing for a moment when an
+    /// effect brings its own modes; that empty pick is not a mode and is ignored (as a ColorMode it is a binding error,
+    /// shown in red under the box).</summary>
+    public ColorMode? ColorModeChoice
+    {
+        get => SelectedColorMode;
+        set
+        {
+            if (value is { } mode)
+                SelectedColorMode = mode;
+        }
+    }
+
     [ObservableProperty] public partial Color Color1 { get; set; } = Color.Parse("#44D62C");
     [ObservableProperty] public partial Color Color2 { get; set; } = Color.Parse("#0000FF");
     [ObservableProperty] public partial double Speed { get; set; } = 2;
@@ -155,8 +169,15 @@ public sealed partial class LightingViewModel : ObservableObject
         _ => zone,
     };
 
+    readonly Dictionary<string, IReadOnlyList<EffectChoice>> _effects = [];
+
+    /// <summary>The effects a zone takes, built once per zone: the effect boxes are bound to these lists, and a new list
+    /// under a box resets it, which puts back the item it held and undoes the pick being made.</summary>
+    IReadOnlyList<EffectChoice> EffectsFor(string zone) =>
+        _effects.TryGetValue(zone, out var choices) ? choices : _effects[zone] = BuildEffects(zone);
+
     /// <summary>The effects a zone takes, from the catalogue's names (static, breath_single, starlight_random, ...).</summary>
-    IReadOnlyList<EffectChoice> EffectsFor(string zone)
+    List<EffectChoice> BuildEffects(string zone)
     {
         var names = _model?.Zones.TryGetValue(zone, out var z) == true ? z.Effects : ["static", "spectrum", "none"];
         var choices = new List<EffectChoice>();
@@ -232,7 +253,7 @@ public sealed partial class LightingViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(EffectTab));
         OnPropertyChanged(nameof(ShowQuick));
-        OnPropertyChanged(nameof(QuickEffects));
+        OnPropertyChanged(nameof(ColorModeChoice));
         OnPropertyChanged(nameof(ShowFrameEditor));
         OnPropertyChanged(nameof(ShowKeyCanvas));
         OnPropertyChanged(nameof(ShowLedGrid));
@@ -318,8 +339,11 @@ public sealed partial class LightingViewModel : ObservableObject
 
     public bool ShowQuick => EffectTab == EffectTabs[0];
 
-    /// <summary>The quick effects, without the per-key one (that is the Advanced side).</summary>
-    public IReadOnlyList<EffectChoice> QuickEffects => Effects.Where(e => e.Kind != EffectKind.Custom).ToList();
+    /// <summary>The quick effects, without the per-key one (that is the Advanced side). Made only when the zone's effects
+    /// change, never on a read, for the reason given on <see cref="EffectsFor"/>.</summary>
+    [ObservableProperty] public partial IReadOnlyList<EffectChoice> QuickEffects { get; private set; } = [];
+
+    partial void OnEffectsChanged(IReadOnlyList<EffectChoice> value) => QuickEffects = value.Where(e => e.Kind != EffectKind.Custom).ToList();
 
     partial void OnLightingOnChanged(bool value) => Changed();
     partial void OnOffWhenDisplayOffChanged(bool value) => Changed();

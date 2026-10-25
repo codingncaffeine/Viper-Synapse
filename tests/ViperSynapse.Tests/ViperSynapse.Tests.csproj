@@ -12,6 +12,7 @@
     <PackageReference Include="xunit.v3" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitRunnerVersion)" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="$(TimeProviderTestingVersion)" />
+    <PackageReference Include="Avalonia.Headless" Version="$(AvaloniaVersion)" />
   </ItemGroup>
 
   <ItemGroup>
