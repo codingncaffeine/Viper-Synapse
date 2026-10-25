@@ -1,5 +1,6 @@
 using System.Globalization;
 using ViperSynapse.Core.Devices;
+using ViperSynapse.Core.Lighting;
 using ViperSynapse.Core.Protocol;
 using ViperSynapse.Hardware;
 using ViperSynapse.Hardware.Linux;
@@ -24,6 +25,7 @@ static class Program
                 "inputs" => Inputs(),
                 "watch" when args.Length >= 2 => Watch(args[1..]),
                 "raw" when args.Length >= 2 => Raw(args[1..]),
+                "bench" when args.Length >= 3 => Bench(args[1], args[2..]),
                 _ => Usage(),
             };
         }
@@ -50,6 +52,8 @@ static class Program
             viper-cli inputs          Razer input nodes and what each can send
             viper-cli watch NODE...   print events from input nodes (no grab)
             viper-cli raw HIDRAW...    print input reports from hidraw nodes (changes only), e.g. a vendor interface
+            viper-cli bench NODE frame ROWS COLS | zones LED...   frames per second a software effect gets: a moving hue to
+                                      the live slot for 3 s (per-key rows, or a static colour per LED). Leaves the device on it.
             """);
         return 64;
     }
@@ -140,6 +144,51 @@ static class Program
         using var transport = new RazerTransport(HidrawDevice.Open(path)) { AnswerDelay = TimeSpan.FromMilliseconds(2) };
         Console.WriteLine(Describe(transport.Send(RazerReport.Create(0x1F, bytes[0], bytes[1], arguments))));
         return 0;
+    }
+
+    /// <summary>How many frames a second a software effect can send: a hue moving across the LEDs, live slot only, for
+    /// three seconds. Per-key devices get their rows; zone devices a static colour per LED.</summary>
+    static int Bench(string path, string[] spec)
+    {
+        using var transport = new RazerTransport(HidrawDevice.Open(path));
+        if (RazerProbe.Identify(transport) is not { } identity)
+        {
+            Console.Error.WriteLine("The device did not answer.");
+            return 1;
+        }
+        byte tid = identity.TransactionId;
+        bool frame = spec[0] == "frame" && spec.Length == 3;
+        int rows = frame ? int.Parse(spec[1], CultureInfo.InvariantCulture) : 0, columns = frame ? int.Parse(spec[2], CultureInfo.InvariantCulture) : 0;
+        byte[] leds = frame ? [] : spec.Skip(1).Select(h => byte.Parse(h, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToArray();
+        int frames = 0, refused = 0;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        while (clock.Elapsed < TimeSpan.FromSeconds(3))
+        {
+            double t = clock.Elapsed.TotalSeconds / 3;
+            if (frame)
+            {
+                for (int r = 0; r < rows; r++)
+                {
+                    var colors = Enumerable.Range(0, columns).Select(c => Rgb.FromHue(t + (double)c / columns)).ToList();
+                    if (transport.Send(DeviceCommands.CustomFrameRow(tid, r, 0, columns - 1, colors)).Status != ReportStatus.Successful)
+                        refused++;
+                }
+                if (frames == 0 && transport.Send(DeviceCommands.CustomFrameEffect(tid)).Status != ReportStatus.Successful)
+                    refused++;
+            }
+            else
+            {
+                for (int i = 0; i < leds.Length; i++)
+                {
+                    var effect = new ZoneEffect(EffectKind.Static, Rgb.FromHue(t + (double)i / leds.Length), default);
+                    if (transport.Send(DeviceCommands.Effect(tid, leds[i], effect, DeviceCommands.NoStore)).Status != ReportStatus.Successful)
+                        refused++;
+                }
+            }
+            frames++;
+        }
+        Console.WriteLine($"{frames / clock.Elapsed.TotalSeconds:F1} frames/s ({frames} frames, {refused} refused)");
+        return refused == 0 ? 0 : 1;
     }
 
     static int Scan(string path)
