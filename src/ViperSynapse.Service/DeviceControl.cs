@@ -83,10 +83,17 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
     {
         string type = model?.Type ?? "keyboard";
         bool frameSent = false;
+        // Stopped before anything goes out, so a last drawn frame cannot land on top of a firmware effect.
+        _software.Stop();
+        var drawn = lighting.Zones.Where(z => _software.Draws(z.Key, z.Value.Effect)).ToDictionary(z => z.Key, z => z.Value.Effect);
         foreach (var (zone, settings) in lighting.Zones)
         {
             byte led = DeviceCommands.LedId(zone, type);
-            if (settings.Effect.Kind == EffectKind.Custom)
+            if (drawn.ContainsKey(zone))
+            {
+                // Drawn by the service (below); only its brightness goes to the device.
+            }
+            else if (settings.Effect.Kind == EffectKind.Custom)
             {
                 // One frame covers the whole device: send it, then switch to it, once whatever zones ask for it.
                 if (frameSent || lighting.Frame == null)
@@ -103,7 +110,14 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
                 SendBoth(store => DeviceCommands.Brightness(transactionId, led, lighting.Off || _dimmed ? 0 : settings.Brightness, store), $"{zone} brightness");
         }
+        _software.Paused = lighting.Off || _dimmed;
+        _software.Show(drawn, type);
     }
+
+    readonly SoftwareLighting _software = new(transport, transactionId, model);
+
+    /// <summary>A key or button went down (its source code): for the drawn Reactive and Ripple effects. Any thread.</summary>
+    public void Press(ushort source) => _software.Press(source);
 
     bool _dimmed;
     LightingSettings? _lighting;
@@ -123,6 +137,7 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             if (dimmed == _dimmed || _lighting is not { } lighting)
                 return;
             _dimmed = dimmed;
+            _software.Paused = lighting.Off || dimmed;
             string type = model?.Type ?? "keyboard";
             foreach (var (zone, settings) in lighting.Zones)
                 if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
@@ -297,7 +312,11 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         return answer.Status == ReportStatus.Successful ? answer : null;
     }
 
-    public void Dispose() => transport.Dispose();
+    public void Dispose()
+    {
+        _software.Dispose();
+        transport.Dispose();
+    }
 }
 
 static class ControlJson

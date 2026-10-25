@@ -21,7 +21,9 @@ same on Wayland and X11.
   optional start countdown; edit the action list (keystrokes, delays, text, commands, reorder); play once,
   a set number of times, while held, or toggle on and off.
 - **Lighting** — brightness and quick effects per zone: static, breathing, spectrum cycling, wave,
-  reactive, starlight, wheel.
+  reactive, starlight, wheel, and effects Viper Synapse draws itself on any device, Synapse's Fire and
+  Ripple and iCUE-style Color Shift, Color Pulse, Color Wave, Visor, Rain, Watercolor, Marquee,
+  Sequential, Strobing, Gradient, Heartbeat and Temperature (follows the CPU); per-key colours on keypads.
 - **Performance** — up to five sensitivity stages with optional separate X and Y, and the polling rate.
 - **Power** — sleep timer and low-battery threshold on wireless mice.
 - **Profiles** — per device, switched by hand, by a key, or automatically while a linked program is in

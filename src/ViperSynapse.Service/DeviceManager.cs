@@ -315,6 +315,7 @@ public sealed class DeviceManager : IDisposable
                     device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick);
                     var watched = device;
                     device.Session.StickMoved += (x, y) => SendStick(watched, x, y);
+                    device.Session.KeyPressed += source => watched.Control?.Press(source);
                     // The session now holds the stick; an analog-mode monitor would read nothing.
                     if (stick != ThumbstickMode.Analog)
                     {

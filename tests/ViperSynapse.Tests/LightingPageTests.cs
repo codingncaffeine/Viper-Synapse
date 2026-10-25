@@ -33,8 +33,8 @@ public class LightingPageTests
 
     static void Settle()
     {
-        // The page saves 300 ms after the last edit: let that timer run.
-        var until = DateTime.UtcNow.AddMilliseconds(450);
+        // The page saves a moment after the last edit (shortened to 20 ms here): let that timer run.
+        var until = DateTime.UtcNow.AddMilliseconds(70);
         while (DateTime.UtcNow < until)
         {
             Dispatcher.UIThread.RunJobs();
@@ -51,6 +51,7 @@ public class LightingPageTests
     {
         var sink = new Sink();
         Logger.Sink = sink;
+        Debounce.Delay = TimeSpan.FromMilliseconds(20);
         var main = new MainViewModel(new DaemonClient(), new AppPreferences(), false);
         var info = new DeviceInfo("test-" + productId, productId, "Test", "keypad", "usb-viper-test", true, true, null, null, null, [], false, null);
         var device = new DeviceViewModel(info, main) { SelectedPage = "LIGHTING" };

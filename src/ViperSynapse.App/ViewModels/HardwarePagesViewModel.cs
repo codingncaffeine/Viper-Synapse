@@ -10,7 +10,10 @@ namespace ViperSynapse.App.ViewModels;
 /// <summary>Coalesces a burst of edits (a slider being dragged) into one save, 300 ms after the last.</summary>
 sealed class Debounce(Action action)
 {
-    readonly DispatcherTimer _timer = new(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(300) };
+    /// <summary>The wait after the last edit; tests shorten it.</summary>
+    internal static TimeSpan Delay { get; set; } = TimeSpan.FromMilliseconds(300);
+
+    readonly DispatcherTimer _timer = new(DispatcherPriority.Background) { Interval = Delay };
     bool _wired;
 
     public void Poke()
@@ -81,12 +84,33 @@ public sealed partial class LightingViewModel : ObservableObject
     [ObservableProperty] public partial bool Reverse { get; set; }
     [ObservableProperty] public partial double Brightness { get; set; } = 100;
 
-    public bool ShowColor1 => SelectedEffect?.Kind is EffectKind.Static or EffectKind.Reactive
-        || SelectedEffect?.Kind is EffectKind.Breathing or EffectKind.Starlight && SelectedColorMode != ColorMode.Random;
-    public bool ShowColor2 => SelectedEffect?.Kind is EffectKind.Breathing or EffectKind.Starlight && SelectedColorMode == ColorMode.Dual;
+    /// <summary>Effects that always take two colours (iCUE's two-colour effects; Temperature's cool and hot).</summary>
+    static bool TwoColours(EffectKind? kind) =>
+        kind is EffectKind.Gradient or EffectKind.ColorShift or EffectKind.ColorWave or EffectKind.Marquee or EffectKind.Temperature;
+
+    public bool ShowColor1 => SelectedEffect?.Kind is { } kind
+        && kind is not (EffectKind.Off or EffectKind.Custom or EffectKind.Spectrum or EffectKind.Wave or EffectKind.Wheel or EffectKind.Fire or EffectKind.Watercolor)
+        && (SelectedColorMode != ColorMode.Random || TwoColours(kind));
+    public bool ShowColor2 => TwoColours(SelectedEffect?.Kind) || ShowColor1 && SelectedColorMode == ColorMode.Dual;
     public bool ShowModes => ColorModes.Count > 1;
-    public bool ShowSpeed => SelectedEffect?.Kind is EffectKind.Reactive or EffectKind.Starlight;
-    public bool ShowDirection => SelectedEffect?.Kind is EffectKind.Wave or EffectKind.Wheel;
+
+    /// <summary>The service draws the effect on the selected zone (the firmware does not run it in this mode).</summary>
+    bool Drawn => SelectedEffect is { } e && e.Kind is not (EffectKind.Off or EffectKind.Custom)
+        && !EffectSupport.RunsOnDevice(new ZoneEffect(e.Kind, default, default, SelectedColorMode), NativeNames(SelectedZone));
+
+    public bool ShowSpeed => SelectedEffect?.Kind is EffectKind.Reactive or EffectKind.Starlight
+        || Drawn && SelectedEffect?.Kind is not (EffectKind.Static or EffectKind.Gradient or EffectKind.Temperature);
+    public bool ShowDirection => SelectedEffect?.Kind is EffectKind.Wave or EffectKind.Wheel
+        || Drawn && SelectedEffect?.Kind is EffectKind.ColorWave or EffectKind.Marquee or EffectKind.Gradient;
+
+    /// <summary>A line under the effect where it needs saying how it works.</summary>
+    public string? EffectHint => SelectedEffect?.Kind switch
+    {
+        EffectKind.Temperature => "Follows the CPU's temperature: the first colour at 40 °C, the second at 90 °C.",
+        EffectKind.Reactive or EffectKind.Ripple when Drawn => "Answers key presses while Viper Synapse is remapping the device.",
+        _ when Drawn => "Drawn by Viper Synapse while it runs; the device shows its last frame when it stops.",
+        _ => null,
+    };
 
     // ---- Per-key (Custom) ----------------------------------------------------------------------------
 
@@ -176,28 +200,36 @@ public sealed partial class LightingViewModel : ObservableObject
     IReadOnlyList<EffectChoice> EffectsFor(string zone) =>
         _effects.TryGetValue(zone, out var choices) ? choices : _effects[zone] = BuildEffects(zone);
 
-    /// <summary>The effects a zone takes, from the catalogue's names (static, breath_single, starlight_random, ...).</summary>
+    /// <summary>Synapse's quick effects, then iCUE's, as the box lists them.</summary>
+    static readonly (EffectKind Kind, string Label)[] EffectLabels =
+    [
+        (EffectKind.Static, "Static"), (EffectKind.Breathing, "Breathing"), (EffectKind.Spectrum, "Spectrum Cycling"),
+        (EffectKind.Wave, "Wave"), (EffectKind.Wheel, "Wheel"), (EffectKind.Reactive, "Reactive"), (EffectKind.Ripple, "Ripple"),
+        (EffectKind.Starlight, "Starlight"), (EffectKind.Fire, "Fire"), (EffectKind.ColorShift, "Color Shift"),
+        (EffectKind.ColorPulse, "Color Pulse"), (EffectKind.ColorWave, "Color Wave"), (EffectKind.Visor, "Visor"),
+        (EffectKind.Rain, "Rain"), (EffectKind.Watercolor, "Watercolor"), (EffectKind.Marquee, "Marquee"),
+        (EffectKind.Sequential, "Sequential"), (EffectKind.Strobing, "Strobing"), (EffectKind.Gradient, "Gradient"),
+        (EffectKind.Heartbeat, "Heartbeat"), (EffectKind.Temperature, "Temperature"), (EffectKind.Off, "Off"),
+    ];
+
+    /// <summary>The zone's catalogue effect names (static, breath_single, starlight_random, ...).</summary>
+    IReadOnlyCollection<string> NativeNames(string zone) =>
+        _model?.Zones.TryGetValue(zone, out var z) == true ? z.Effects : ["static", "spectrum", "none"];
+
+    /// <summary>The effects a zone takes: the firmware's own (from the catalogue), and every other one the service draws
+    /// for a known device, in the modes either can show.</summary>
     List<EffectChoice> BuildEffects(string zone)
     {
-        var names = _model?.Zones.TryGetValue(zone, out var z) == true ? z.Effects : ["static", "spectrum", "none"];
+        var names = NativeNames(zone);
         var choices = new List<EffectChoice>();
-        void Add(EffectKind kind, string label, string prefix)
+        foreach (var (kind, label) in EffectLabels)
         {
-            var modes = names.Where(n => n == prefix || n.StartsWith(prefix + "_", StringComparison.Ordinal))
-                .Select(n => n.EndsWith("_dual", StringComparison.Ordinal) ? ColorMode.Dual
-                    : n.EndsWith("_random", StringComparison.Ordinal) ? ColorMode.Random : ColorMode.Single)
+            var modes = EffectSupport.NativeModes(kind, names)
+                .Union(_model != null && kind != EffectKind.Off ? EffectSupport.SoftwareModes(kind) : [])
                 .Distinct().Order().ToList();
             if (modes.Count > 0)
                 choices.Add(new EffectChoice(kind, label, modes));
         }
-        Add(EffectKind.Static, "Static", "static");
-        Add(EffectKind.Breathing, "Breathing", "breath");
-        Add(EffectKind.Spectrum, "Spectrum Cycling", "spectrum");
-        Add(EffectKind.Wave, "Wave", "wave");
-        Add(EffectKind.Reactive, "Reactive", "reactive");
-        Add(EffectKind.Starlight, "Starlight", "starlight");
-        Add(EffectKind.Wheel, "Wheel", "wheel");
-        Add(EffectKind.Off, "Off", "none");
         if (HasFrame)
             choices.Add(new EffectChoice(EffectKind.Custom, "Custom (per key)", [ColorMode.Single]));
         return choices;
@@ -262,6 +294,7 @@ public sealed partial class LightingViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowModes));
         OnPropertyChanged(nameof(ShowSpeed));
         OnPropertyChanged(nameof(ShowDirection));
+        OnPropertyChanged(nameof(EffectHint));
     }
 
     partial void OnSelectedZoneChanged(string value)

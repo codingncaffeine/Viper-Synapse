@@ -305,6 +305,8 @@
                             <ComboBox ItemsSource="{Binding QuickEffects}" SelectedItem="{Binding SelectedEffect}" Width="200" />
                             <Button Classes="link" Content="Apply to other devices" Command="{Binding ApplyToOtherDevicesCommand}" VerticalAlignment="Center" />
                         </StackPanel>
+                        <TextBlock Foreground="#AAAAAA" FontSize="12" TextWrapping="Wrap" Text="{Binding EffectHint}"
+                                   IsVisible="{Binding EffectHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                         <ComboBox ItemsSource="{Binding ColorModes}" SelectedItem="{Binding ColorModeChoice}" HorizontalAlignment="Stretch" IsVisible="{Binding ShowModes}" />
                         <StackPanel Orientation="Horizontal" Spacing="12">
                             <ColorPicker Color="{Binding Color1}" IsVisible="{Binding ShowColor1}" />

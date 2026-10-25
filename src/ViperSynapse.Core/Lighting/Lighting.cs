@@ -17,6 +17,33 @@ public readonly record struct Rgb(byte R, byte G, byte B)
             byte.Parse(hex.AsSpan(4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture));
     }
 
+    /// <summary>A fully saturated colour at a point round the colour wheel (0 red, 1/3 green, 2/3 blue, 1 red again).</summary>
+    public static Rgb FromHue(double hue)
+    {
+        hue = (hue % 1 + 1) % 1 * 6;
+        int sector = (int)hue;
+        byte up = (byte)Math.Round((hue - sector) * 255), down = (byte)(255 - up);
+        return sector switch
+        {
+            0 => new(255, up, 0),
+            1 => new(down, 255, 0),
+            2 => new(0, 255, up),
+            3 => new(0, down, 255),
+            4 => new(up, 0, 255),
+            _ => new(255, 0, down),
+        };
+    }
+
+    /// <summary>The colour a fraction t of the way from a to b.</summary>
+    public static Rgb Mix(Rgb a, Rgb b, double t)
+    {
+        t = Math.Clamp(t, 0, 1);
+        return new((byte)Math.Round(a.R + (b.R - a.R) * t), (byte)Math.Round(a.G + (b.G - a.G) * t), (byte)Math.Round(a.B + (b.B - a.B) * t));
+    }
+
+    /// <summary>This colour at a fraction of its brightness.</summary>
+    public Rgb Dim(double level) => Mix(default, this, level);
+
     public override string ToString() => $"#{R:X2}{G:X2}{B:X2}";
 }
 
@@ -33,6 +60,22 @@ public enum EffectKind
     Wheel,
     /// <summary>Every LED its own colour: the per-key frame in <see cref="LightingSettings.Frame"/>.</summary>
     Custom,
+
+    // Drawn by the service, frame by frame (see Animation): Razer Synapse's and Corsair iCUE's software effects.
+    Fire,
+    Ripple,
+    ColorShift,
+    ColorPulse,
+    ColorWave,
+    Visor,
+    Rain,
+    Watercolor,
+    Marquee,
+    Sequential,
+    Strobing,
+    Gradient,
+    Heartbeat,
+    Temperature,
 }
 
 /// <summary>How many colours an effect that takes colours uses: Synapse's "random", single and dual.</summary>

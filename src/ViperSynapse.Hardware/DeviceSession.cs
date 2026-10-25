@@ -56,6 +56,10 @@ public sealed class DeviceSession : IDisposable
     /// <summary>The stick moved (4-way and 8-way mode): x and y from -1 to 1. Raised on the reader thread.</summary>
     public event Action<double, double>? StickMoved;
 
+    /// <summary>A key or button of the device went down (its code, before any remapping). Raised on a reader thread, for
+    /// the lighting effects that answer key presses.</summary>
+    public event Action<ushort>? KeyPressed;
+
     /// <summary>Raised on a reader thread when a node goes away (unplugged) or fails.</summary>
     public event Action<string, Exception>? NodeLost;
 
@@ -227,6 +231,8 @@ public sealed class DeviceSession : IDisposable
         switch (e.Type)
         {
             case EventTypes.Key:
+                if (e.Value == 1)
+                    KeyPressed?.Invoke(e.Code);
                 Engine.Key(e.Code, e.Value);
                 break;
             case EventTypes.Rel when e.Code is RelativeAxes.Wheel or RelativeAxes.HWheel or RelativeAxes.WheelHiRes or RelativeAxes.HWheelHiRes:
