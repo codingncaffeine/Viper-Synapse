@@ -43,6 +43,15 @@ public class DeviceCommandTests
     }
 
     [Fact]
+    public void Lighting_for_the_live_slot_differs_only_in_the_store_byte()
+    {
+        // The wave the Tartarus V2 Pro took into its live slot (it then left the per-key frame), 2026-10-25.
+        var wave = new ZoneEffect(EffectKind.Wave, Red, Blue, ColorMode.Single, Speed: 2);
+        Assert.Equal("0f 02 [06] 00 05 04 01 28 00", Hex(DeviceCommands.Effect(0x1F, 0x05, wave, DeviceCommands.NoStore)));
+        Assert.Equal("0f 04 [03] 00 05 ff", Hex(DeviceCommands.Brightness(0x1F, 0x05, 100, DeviceCommands.NoStore)));
+    }
+
+    [Fact]
     public void Brightness_is_a_percentage_of_255()
     {
         Assert.Equal("0f 04 [03] 01 04 ff", Hex(DeviceCommands.Brightness(0x1F, 0x04, 100)));

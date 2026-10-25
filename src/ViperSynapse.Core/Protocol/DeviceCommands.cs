@@ -5,12 +5,16 @@ namespace ViperSynapse.Core.Protocol;
 /// <summary>
 /// The "set" commands Viper Synapse sends, built byte for byte as the OpenRazer driver builds them for the same
 /// devices: extended-matrix lighting (class 0x0F), sensitivity (class 0x04), polling rate (class 0x00) and power
-/// (class 0x07). Every one stores to the device's variable storage, as Synapse and OpenRazer do. Device mode
+/// (class 0x07). Every one stores to the device's variable storage, as Synapse and OpenRazer do; lighting can also go
+/// to the live slot (<see cref="NoStore"/>), which is what a keypad shows. Device mode
 /// (0x00/0x04) is deliberately absent: some keypads reset on it.
 /// </summary>
 public static class DeviceCommands
 {
     public const byte VarStore = 0x01;
+
+    /// <summary>The live slot: shown, not kept. The per-key frame runs here.</summary>
+    public const byte NoStore = 0x00;
 
     /// <summary>LED ids by zone name, as the catalogue names zones. "main" is the backlight on keyboards and
     /// keypads and the whole device on mice.</summary>
@@ -27,10 +31,10 @@ public static class DeviceCommands
         _ => 0x00,
     };
 
-    public static RazerReport Effect(byte tid, byte led, ZoneEffect e)
+    public static RazerReport Effect(byte tid, byte led, ZoneEffect e, byte store = VarStore)
     {
         var a = new byte[12];
-        a[0] = VarStore;
+        a[0] = store;
         a[1] = led;
         byte size;
         switch (e.Kind)
@@ -141,8 +145,8 @@ public static class DeviceCommands
     }
 
     /// <summary>Brightness 0-100 % as the device's 0-255.</summary>
-    public static RazerReport Brightness(byte tid, byte led, int percent) =>
-        RazerReport.Create(tid, 0x0F, 0x04, VarStore, led, (byte)Math.Round(Math.Clamp(percent, 0, 100) * 255 / 100.0, MidpointRounding.AwayFromZero));
+    public static RazerReport Brightness(byte tid, byte led, int percent, byte store = VarStore) =>
+        RazerReport.Create(tid, 0x0F, 0x04, store, led, (byte)Math.Round(Math.Clamp(percent, 0, 100) * 255 / 100.0, MidpointRounding.AwayFromZero));
 
     public static RazerReport Dpi(byte tid, int x, int y)
     {

@@ -98,10 +98,10 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             }
             else
             {
-                Send(DeviceCommands.Effect(transactionId, led, settings.Effect), $"{zone} effect");
+                SendBoth(store => DeviceCommands.Effect(transactionId, led, settings.Effect, store), $"{zone} effect");
             }
             if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
-                Send(DeviceCommands.Brightness(transactionId, led, lighting.Off || _dimmed ? 0 : settings.Brightness), $"{zone} brightness");
+                SendBoth(store => DeviceCommands.Brightness(transactionId, led, lighting.Off || _dimmed ? 0 : settings.Brightness, store), $"{zone} brightness");
         }
     }
 
@@ -126,7 +126,7 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             string type = model?.Type ?? "keyboard";
             foreach (var (zone, settings) in lighting.Zones)
                 if (model == null || !model.Zones.TryGetValue(zone, out var known) || known.Brightness)
-                    Send(DeviceCommands.Brightness(transactionId, DeviceCommands.LedId(zone, type), lighting.Off || dimmed ? 0 : settings.Brightness), $"{zone} brightness");
+                    SendBoth(store => DeviceCommands.Brightness(transactionId, DeviceCommands.LedId(zone, type), lighting.Off || dimmed ? 0 : settings.Brightness, store), $"{zone} brightness");
         }
     }
 
@@ -198,6 +198,15 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         Send(DeviceCommands.IdleTime(transactionId, p.SleepSeconds), "sleep timer");
         if (model?.Has("low_battery_threshold") == true)
             Send(DeviceCommands.LowBatteryThreshold(transactionId, p.LowBatteryPercent), "low battery threshold");
+    }
+
+    /// <summary>Lighting to the device's storage, then to its live slot. The Tartarus V2 Pro keeps the two apart and shows
+    /// the live one: an effect stored alone is saved but not shown while the per-key frame (sent live) is up, and the
+    /// keys stay on the frame. Mice with one slot (the Naga, the Basilisk) answer both alike.</summary>
+    void SendBoth(Func<byte, RazerReport> build, string what)
+    {
+        Send(build(DeviceCommands.VarStore), what);
+        Send(build(DeviceCommands.NoStore), what);
     }
 
     void Send(RazerReport request, string what)
