@@ -215,7 +215,7 @@ public sealed class DeviceDrawing : Control
     {
         // The left column: the clicks and the thumb side, front to back (the Basilisk V4 Pro's front side
         // button has a second one just below it, nearer the bottom edge).
-        ["Cycle Up Profile"] = (new Point(8, 38), true, -1),           // (the "M1 edge" button, top left)
+        ["Top Left Button"] = (new Point(8, 38), true, -1),            // (on the left click's outer edge)
         ["Left Click"] = (new Point(38, 60), true, 0),
         ["Scroll Click"] = (new Point(75, 58), true, 1),
         ["Repeat Scroll Left"] = (new Point(68, 46), true, 2),
@@ -228,7 +228,7 @@ public sealed class DeviceDrawing : Control
         ["Scroll Up"] = (new Point(75, 34), false, 1),
         ["Repeat Scroll Right"] = (new Point(82, 46), false, 2),
         ["Scroll Down"] = (new Point(75, 84), false, 3),
-        ["Scroll Mode Toggle"] = (new Point(75, 100), false, 4),
+        ["Cycle Up Profile"] = (new Point(75, 100), false, 4),         // (the two buttons behind the wheel)
         ["Cycle Up Sensitivity Stages"] = (new Point(75, 122), false, 5),
     };
 
@@ -255,7 +255,7 @@ public sealed class DeviceDrawing : Control
             _body.Add((new RectangleGeometry(new Rect(-4, 116, 8, 24), 4, 4), KeyFill, KeyPen));
         if (device.Rows.Any(r => r.Key.Label == "Side Button 4"))      // (below the front side button)
             _body.Add((new RectangleGeometry(new Rect(6, 117, 7, 22), 3.5, 3.5), KeyFill, KeyPen));
-        if (device.Rows.Any(r => r.Key.Label == "Cycle Up Profile"))   // (the small button on the left click's outer edge)
+        if (device.Rows.Any(r => r.Key.Label == "Top Left Button"))    // (the small button on the left click's outer edge)
             _body.Add((new RectangleGeometry(new Rect(4, 28, 8, 20), 4, 4), KeyFill, KeyPen));
         _body.Add((new RectangleGeometry(new Rect(-4, 144, 8, 38), 4, 4), KeyFill, KeyPen));
         _body.Add((new RectangleGeometry(new Rect(-4, 184, 8, 34), 4, 4), KeyFill, KeyPen));
