@@ -174,7 +174,14 @@ public sealed class DeviceManager : IDisposable
                 try
                 {
                     var transport = new RazerTransport(HidrawDevice.Open(control.DevicePath));
-                    device.Identity = RazerProbe.Identify(transport);
+                    // (a wireless mouse can miss the first questions, waking up or with a receiver still handing
+                    // back old answers: a few tries before calling it silent)
+                    for (int attempt = 0; attempt < 4 && device.Identity == null; attempt++)
+                    {
+                        if (attempt > 0)
+                            Thread.Sleep(400);
+                        device.Identity = RazerProbe.Identify(transport);
+                    }
                     if (device.Identity == null)
                     {
                         transport.Dispose();

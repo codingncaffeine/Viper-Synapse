@@ -19,7 +19,8 @@ public sealed record DeviceState(
     int SleepSeconds = 0,
     int LowBatteryPercent = 0,
     bool? ScrollAcceleration = null,
-    bool? SmartReel = null);
+    bool? SmartReel = null,
+    IReadOnlyDictionary<string, string>? Onboard = null);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(DeviceState))]
@@ -296,8 +297,37 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             {
                 LastProblem = e.Message;
             }
-            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel);
+            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel, ReadOnboard());
         }
+    }
+
+    Dictionary<string, string>? _onboard;
+
+    /// <summary>What the mouse's own memory has on each button (by its hardware id, hex; "+h" for the Hypershift
+    /// layer), read once: it only changes when something writes it. A stale or missing answer is tried again.</summary>
+    Dictionary<string, string>? ReadOnboard()
+    {
+        if (_onboard != null || model == null || model.Type != "mouse" || !model.Keys.Any(k => k.HardwareId != 0))
+            return _onboard;
+        var found = new Dictionary<string, string>();
+        foreach (var key in model.Keys.Where(k => k.HardwareId != 0))
+        {
+            foreach (bool layer in new[] { false, true })
+            {
+                for (int attempt = 0; attempt < 3; attempt++)
+                {
+                    var answer = transport.Send(OnboardButtons.Get(transactionId, key.HardwareId, layer));
+                    if (answer.Status == ReportStatus.Successful && OnboardButtons.Describe(answer, key.HardwareId) is { } text)
+                    {
+                        found[$"{key.HardwareId:x2}{(layer ? "+h" : "")}"] = text;
+                        break;
+                    }
+                }
+            }
+        }
+        if (found.Count > 0)
+            _onboard = found;
+        return found;
     }
 
     RazerReport? ReadRaw(byte commandClass, byte id, params byte[] arguments)

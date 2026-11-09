@@ -538,6 +538,11 @@ public sealed partial class DeviceViewModel : TabViewModel
                 if (state.BatteryPercent != null)
                     ShowBattery(state.BatteryPercent, state.Charging);
                 _liftOff = state.LiftOffLevel;
+                if (state.Onboard is { Count: > 0 } onboard)
+                {
+                    _onboard = onboard;
+                    RefreshRows();
+                }
                 if (state.SleepSeconds > 0)
                     _devicePower = new Core.Lighting.PowerSettings(state.SleepSeconds, state.LowBatteryPercent > 0 ? state.LowBatteryPercent : Core.Lighting.PowerSettings.Default.LowBatteryPercent);
                 if (state.ScrollAcceleration != null || state.SmartReel != null)
@@ -561,14 +566,26 @@ public sealed partial class DeviceViewModel : TabViewModel
 
     Keymap CurrentKeymap => _settings.ActiveKeymapOrFirst;
 
+    IReadOnlyDictionary<string, string> _onboard = new Dictionary<string, string>();
+
+    /// <summary>What the mouse's own memory has on this button (on the layer shown), if it was read.</summary>
+    string? Onboard(KeyRowViewModel row) =>
+        row.Key.HardwareId != 0 && _onboard.TryGetValue($"{row.Key.HardwareId:x2}{(Hypershift ? "+h" : "")}", out var text) ? text : null;
+
     void RefreshRows()
     {
         foreach (var row in Rows)
         {
             var binding = CurrentKeymap.Resolve(row.Key.Source, Hypershift);
+            var onboard = Onboard(row);
             if (!row.Bindable)
             {
-                (row.Category, row.Value, row.Changed) = ("DEVICE FUNCTION", row.Key.Label, false);
+                (row.Category, row.Value, row.Changed) = onboard != null ? ("ON THE MOUSE", onboard, onboard != row.Key.Label) : ("DEVICE FUNCTION", row.Key.Label, false);
+                continue;
+            }
+            if (binding is DefaultBinding && onboard != null && onboard != row.Key.Label)
+            {
+                (row.Category, row.Value, row.Changed) = ("ON THE MOUSE", onboard, true);
                 continue;
             }
             var (category, value) = BindingText.Describe(binding, row.Key.Code, id => _main.MacroLibrary.Find(id)?.Name);
