@@ -29,6 +29,12 @@ public interface IEngineHost
 
     /// <summary>The global shortcuts, checked before the keymap on every press.</summary>
     Bindings.ShortcutList Shortcuts { get; }
+    /// <summary>A sensitivity key went down or up (the device changes stage, or holds the clutch DPI while down).</summary>
+    void Sensitivity(Bindings.SensitivityBinding binding, bool down) { }
+
+    /// <summary>A scroll-mode key was pressed.</summary>
+    void ScrollMode(Bindings.ScrollModeAction action) { }
+
     /// <summary>A macro or turbo task failed; the engine keeps running.</summary>
     void Report(Exception error);
 }

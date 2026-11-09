@@ -307,6 +307,120 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         }
     }
 
+    // ---- the mouse's own button memory (0x02/0x8C read, 0x02/0x0C write) ----
+
+    /// <summary>A button's stored function on the standard layer: type, data length and data (the bytes after the
+    /// echoed profile, button and layer); null when the mouse does not answer for it.</summary>
+    public byte[]? ReadButton(byte hw)
+    {
+        lock (_gate)
+        {
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                var answer = transport.Send(OnboardButtons.Get(transactionId, hw, false));
+                var a = answer.Arguments;
+                if (answer.Status == ReportStatus.Successful && a[1] == hw && 5 + a[4] <= a.Length)
+                    return a[3..(5 + a[4])].ToArray();
+            }
+            return null;
+        }
+    }
+
+    /// <summary>Stores a function on a button (standard layer): type, data length, data. True when the mouse took it.</summary>
+    public bool WriteButton(byte hw, byte[] function)
+    {
+        lock (_gate)
+        {
+            var args = new byte[10];
+            args[0] = 0x01;
+            args[1] = hw;
+            args[2] = 0x00;
+            function.AsSpan(0, Math.Min(function.Length, 7)).CopyTo(args.AsSpan(3));
+            var answer = transport.Send(RazerReport.Create(transactionId, 0x02, 0x0C, args, 0x0A));
+            if (answer.Status != ReportStatus.Successful)
+            {
+                LastProblem = $"button {hw:x2}: {answer.Status}";
+                return false;
+            }
+            _onboard = null;          // (read again next time: it changed)
+            return true;
+        }
+    }
+
+    /// <summary>The keyboard-key function a relayed button is set to: no modifiers, that HID usage.</summary>
+    public static byte[] KeyFunction(byte usage) => [0x02, 0x02, 0x00, usage];
+
+    // ---- what the sensitivity and scroll-mode bindings do ----
+
+    PerformanceSettings? _stagesNow;
+    int _clutchHeld;
+
+    /// <summary>Steps the sensitivity stage, or holds a DPI while a clutch key is down (back to the stage after).</summary>
+    public void Sensitivity(SensitivityBinding binding, bool down)
+    {
+        lock (_gate)
+        {
+            try
+            {
+                if (_stagesNow == null && Read(Commands.GetDpiStages) is { } table)
+                    _stagesNow = DeviceCommands.ReadStages(table, 0);
+                var p = _stagesNow;
+                if (binding.Action == SensitivityAction.Clutch)
+                {
+                    _clutchHeld = Math.Max(0, _clutchHeld + (down ? 1 : -1));
+                    if (down)
+                        Send(DeviceCommands.Dpi(transactionId, binding.Dpi, binding.Dpi), "sensitivity clutch");
+                    else if (_clutchHeld == 0 && p is { Stages.Count: > 0 })
+                    {
+                        var s = p.Stages[Math.Clamp(p.ActiveStage, 0, p.Stages.Count - 1)];
+                        Send(DeviceCommands.Dpi(transactionId, s.X, s.Y), "sensitivity");
+                    }
+                    return;
+                }
+                if (!down || p is not { Stages.Count: > 0 })
+                    return;
+                int n = p.Stages.Count, i = p.ActiveStage;
+                i = binding.Action switch
+                {
+                    SensitivityAction.StageUp => Math.Min(n - 1, i + 1),
+                    SensitivityAction.StageDown => Math.Max(0, i - 1),
+                    SensitivityAction.CycleUp => (i + 1) % n,
+                    _ => (i + n - 1) % n,
+                };
+                _stagesNow = p with { ActiveStage = i };
+                SendPerformance(_stagesNow);
+            }
+            catch (IOException e)
+            {
+                LastProblem = e.Message;
+            }
+        }
+    }
+
+    /// <summary>Changes the scroll wheel's mode (0 Tactile, 1 Free-Spin, 2 Precision Tactile).</summary>
+    public void ScrollMode(ScrollModeAction action)
+    {
+        lock (_gate)
+        {
+            try
+            {
+                int now = ReadRaw(0x02, 0xB0, DeviceCommands.VarStore) is { } r ? r.Arguments[1] : 0;
+                int next = action switch
+                {
+                    ScrollModeAction.Tactile => 0,
+                    ScrollModeAction.FreeSpin => 1,
+                    ScrollModeAction.PrecisionTactile => 2,
+                    _ => now == 1 ? 0 : 1,
+                };
+                Send(DeviceCommands.ScrollMode(transactionId, next), "scrolling mode");
+            }
+            catch (IOException e)
+            {
+                LastProblem = e.Message;
+            }
+        }
+    }
+
     Dictionary<string, string>? _onboard;
 
     /// <summary>What the mouse's own memory has on each button (by its hardware id, hex; "+h" for the Hypershift

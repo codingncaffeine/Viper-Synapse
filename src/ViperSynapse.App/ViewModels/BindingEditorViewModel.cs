@@ -18,6 +18,8 @@ public enum FunctionKind
     SwitchKeymap,
     Launch,
     Multimedia,
+    Sensitivity,
+    ScrollMode,
     Text,
     Disable,
 }
@@ -50,6 +52,8 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         new(FunctionKind.SwitchKeymap, "SWITCH KEYMAP", "▦"),
         new(FunctionKind.Launch, "LAUNCH PROGRAM", "▶"),
         new(FunctionKind.Multimedia, "MULTIMEDIA", "♪"),
+        new(FunctionKind.Sensitivity, "SENSITIVITY", "◎"),
+        new(FunctionKind.ScrollMode, "SCROLL MODE", "↕"),
         new(FunctionKind.Text, "TEXT FUNCTION", "T"),
         new(FunctionKind.Disable, "DISABLE", "⊘"),
     ];
@@ -74,6 +78,12 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         "KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_MICMUTE", "KEY_PLAYPAUSE", "KEY_PREVIOUSSONG", "KEY_NEXTSONG", "KEY_STOPCD",
     }.Select(n => KeyCodes.TryParse(n, out var c) ? new Choice<ushort>(c, BindingText.KeyLabel(c)) : null).OfType<Choice<ushort>>().ToList();
 
+    public static IReadOnlyList<Choice<SensitivityAction>> SensitivityChoices { get; } =
+        Enum.GetValues<SensitivityAction>().Select(a => new Choice<SensitivityAction>(a, BindingText.SensitivityLabel(new SensitivityBinding(a)).Replace(" (400 DPI)", ""))).ToList();
+
+    public static IReadOnlyList<Choice<ScrollModeAction>> ScrollModeChoices { get; } =
+        Enum.GetValues<ScrollModeAction>().Select(a => new Choice<ScrollModeAction>(a, BindingText.ScrollModeLabel(a))).ToList();
+
     public IReadOnlyList<Choice<Guid?>> ProfileChoices { get; }
     public IReadOnlyList<Choice<int>> KeymapChoices { get; }
     public IReadOnlyList<Choice<Guid>> MacroChoices { get; }
@@ -95,6 +105,8 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         SelectedPlayback = Playbacks[0];
         SelectedMedia = MediaKeys[0];
         SelectedGamepad = GamepadControls[0];
+        SelectedSensitivity = SensitivityChoices[2];
+        SelectedScrollMode = ScrollModeChoices[0];
         SelectedProfileChoice = ProfileChoices[0];
         SelectedKeymapChoice = KeymapChoices[0];
         SelectedMacro = MacroChoices.FirstOrDefault();
@@ -133,6 +145,14 @@ public sealed partial class BindingEditorViewModel : ObservableObject
     public bool TimesVisible => SelectedPlayback.Value == MacroPlayback.Times;
 
     partial void OnSelectedPlaybackChanged(Choice<MacroPlayback> value) => OnPropertyChanged(nameof(TimesVisible));
+
+    // Sensitivity and scroll mode
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClutchVisible))]
+    public partial Choice<SensitivityAction> SelectedSensitivity { get; set; }
+    [ObservableProperty] public partial double ClutchDpi { get; set; } = 400;
+    public bool ClutchVisible => SelectedSensitivity.Value == SensitivityAction.Clutch;
+    [ObservableProperty] public partial Choice<ScrollModeAction> SelectedScrollMode { get; set; }
 
     // Switches, launch, media, text
     [ObservableProperty] public partial Choice<Guid?> SelectedProfileChoice { get; set; }
@@ -220,6 +240,15 @@ public sealed partial class BindingEditorViewModel : ObservableObject
             case DisableBinding:
                 kind = FunctionKind.Disable;
                 break;
+            case SensitivityBinding s:
+                kind = FunctionKind.Sensitivity;
+                SelectedSensitivity = SensitivityChoices.First(c => c.Value == s.Action);
+                ClutchDpi = s.Dpi;
+                break;
+            case ScrollModeBinding m:
+                kind = FunctionKind.ScrollMode;
+                SelectedScrollMode = ScrollModeChoices.First(c => c.Value == m.Action);
+                break;
         }
         SelectedFunction = Functions.First(f => f.Kind == kind);
     }
@@ -250,6 +279,8 @@ public sealed partial class BindingEditorViewModel : ObservableObject
             FunctionKind.Gamepad => new GamepadBinding(SelectedGamepad.Value),
             FunctionKind.Text => new TextBinding(Text),
             FunctionKind.Disable => new DisableBinding(),
+            FunctionKind.Sensitivity => new SensitivityBinding(SelectedSensitivity.Value, (int)Math.Round(ClutchDpi / 50) * 50),
+            FunctionKind.ScrollMode => new ScrollModeBinding(SelectedScrollMode.Value),
             _ => DefaultBinding.Instance,
         };
     }

@@ -83,6 +83,19 @@
                         <TextBlock Text="The key works this control of a virtual Xbox 360 pad, for games that take a controller." Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
                     </StackPanel>
 
+                    <StackPanel Spacing="8" IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=Sensitivity}">
+                        <ComboBox ItemsSource="{x:Static vm:BindingEditorViewModel.SensitivityChoices}" SelectedItem="{Binding SelectedSensitivity}" HorizontalAlignment="Stretch" />
+                        <StackPanel Spacing="4" IsVisible="{Binding ClutchVisible}">
+                            <TextBlock Classes="caption" Text="DPI WHILE HELD" />
+                            <NumericUpDown Minimum="50" Maximum="50000" Increment="50" Value="{Binding ClutchDpi}" FormatString="0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8" IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=ScrollMode}">
+                        <ComboBox ItemsSource="{x:Static vm:BindingEditorViewModel.ScrollModeChoices}" SelectedItem="{Binding SelectedScrollMode}" HorizontalAlignment="Stretch" />
+                        <TextBlock Text="Toggle switches between Tactile and Free-Spin, as the button below the wheel does." Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+
                     <ComboBox IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=Multimedia}"
                               ItemsSource="{x:Static vm:BindingEditorViewModel.MediaKeys}" SelectedItem="{Binding SelectedMedia}" HorizontalAlignment="Stretch" />
 

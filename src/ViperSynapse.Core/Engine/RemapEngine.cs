@@ -196,6 +196,12 @@ public sealed class RemapEngine
             case GamepadBinding pad:
                 _host.Gamepad(pad.Control, true);
                 break;
+            case SensitivityBinding s:
+                _host.Sensitivity(s, true);
+                break;
+            case ScrollModeBinding m:
+                _host.ScrollMode(m.Action);
+                break;
         }
     }
 
@@ -224,6 +230,9 @@ public sealed class RemapEngine
                 break;
             case HypershiftBinding:
                 _hypershiftHeld = Math.Max(0, _hypershiftHeld - 1);
+                break;
+            case SensitivityBinding { Action: SensitivityAction.Clutch } clutch:
+                _host.Sensitivity(clutch, false);
                 break;
             case GamepadBinding pad:
                 _host.Gamepad(pad.Control, false);

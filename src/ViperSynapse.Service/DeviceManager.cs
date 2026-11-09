@@ -85,6 +85,7 @@ public sealed class DeviceManager : IDisposable
         public DeviceSession? Session { get; set; }
         public DeviceControl? Control { get; set; }
         public KeypadButtons? Buttons { get; set; }
+        public RelayButtons? Relay { get; set; }
         public ThumbstickMode SessionStick { get; set; }
         public StickMonitor? Monitor { get; set; }
         public DateTime StickWatchedUntil { get; set; }
@@ -138,6 +139,7 @@ public sealed class DeviceManager : IDisposable
                 _devices[gone].Session?.Dispose();
                 _devices[gone].Control?.Dispose();
                 _devices[gone].Buttons?.Dispose();
+                _devices[gone].Relay?.Dispose();
                 _devices[gone].Monitor?.Dispose();
                 _devices.Remove(gone);
                 changed = true;
@@ -222,6 +224,12 @@ public sealed class DeviceManager : IDisposable
     bool Real(string port) => _includeTestDevices || !port.StartsWith(TestPortPrefix, StringComparison.Ordinal);
 
     public DeviceSettings GetSettings(string key) => _store.LoadDevice(key);
+
+    List<DeviceControl> ControlsOf(string key)
+    {
+        lock (_gate)
+            return _devices.Values.Where(d => d.Key == key && d.Control != null).Select(d => d.Control!).ToList();
+    }
 
     /// <summary>The device's own sensitivity, polling rate and battery, read now. Null when no device of the model is
     /// plugged in or it has no control interface.</summary>
@@ -341,17 +349,119 @@ public sealed class DeviceManager : IDisposable
             }
         }
         // Lighting, sensitivity and power talk to the hardware: outside the lock.
-        List<DeviceControl> controls;
+        List<Connected> connected;
         lock (_gate)
-            controls = _devices.Values.Where(d => d.Key == key && d.Control != null).Select(d => d.Control!).ToList();
-        foreach (var control in controls)
+            connected = _devices.Values.Where(d => d.Key == key && d.Control != null).ToList();
+        foreach (var device in connected)
         {
+            var control = device.Control!;
             control.Apply(settings.Active, settings.ActiveKeymap);
+            ProgramRelays(device, keymap);
+            SyncRelayListener(device);
             if (control.LastProblem != null)
                 Console.Error.WriteLine($"{key}: {control.LastProblem}");
         }
         if (changed)
             DevicesChanged?.Invoke();
+    }
+
+    // ---- firmware-only buttons the app takes over (DeviceKey.RelayUsage) ----
+
+    /// <summary>A relayed button the keymap binds is told to send its relay key (F13 and up) so the engine can do the
+    /// binding; one left at default gets its own function back, from the backup taken the first time.</summary>
+    void ProgramRelays(Connected device, Keymap keymap)
+    {
+        if (device.Model is not { } model || device.Control is not { } control || device.Identity is not { } id)
+            return;
+        var relayed = model.Keys.Where(k => k.RelayUsage != 0 && k.HardwareId != 0).ToList();
+        if (relayed.Count == 0)
+            return;
+        var backup = LoadOnboardBackup(id.Serial);
+        bool saved = false;
+        foreach (var key in relayed)
+        {
+            bool bound = keymap.Standard.TryGetValue(key.Source, out var a) && a is not DefaultBinding
+                         || keymap.Hypershift.TryGetValue(key.Source, out var b) && b is not DefaultBinding;
+            var now = control.ReadButton(key.HardwareId);
+            var relay = DeviceControl.KeyFunction(key.RelayUsage);
+            string hw = key.HardwareId.ToString("x2", CultureInfo.InvariantCulture);
+            // The first time: keep what the mouse had (unless it is already our relay key, from a run that ended early).
+            if (now != null && !backup.ContainsKey(hw) && !now.AsSpan().SequenceEqual(relay))
+            {
+                backup[hw] = Convert.ToHexString(now);
+                saved = true;
+            }
+            byte[]? want = bound ? relay : backup.TryGetValue(hw, out var orig) ? Convert.FromHexString(orig) : null;
+            if (want != null && (now == null || !now.AsSpan().SequenceEqual(want)))
+                control.WriteButton(key.HardwareId, want);
+        }
+        if (saved)
+            SaveOnboardBackup(id.Serial, backup);
+    }
+
+    string OnboardBackupPath(string serial) => Path.Combine(_store.Root, "onboard", string.Concat(serial.Where(char.IsLetterOrDigit)) + ".json");
+
+    Dictionary<string, string> LoadOnboardBackup(string serial)
+    {
+        try
+        {
+            var path = OnboardBackupPath(serial);
+            if (File.Exists(path))
+                return System.Text.Json.JsonSerializer.Deserialize(File.ReadAllText(path), OnboardJson.Default.DictionaryStringString) ?? [];
+        }
+        catch (Exception e) when (e is IOException or System.Text.Json.JsonException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"onboard backup: {e.Message}");
+        }
+        return [];
+    }
+
+    void SaveOnboardBackup(string serial, Dictionary<string, string> backup)
+    {
+        try
+        {
+            var path = OnboardBackupPath(serial);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(backup, OnboardJson.Default.DictionaryStringString));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"onboard backup: {e.Message}");
+        }
+    }
+
+    /// <summary>While the engine runs, the relay keys are read from the mouse's keyboard interface (hidraw, interface 2)
+    /// and fed to it; without an engine nothing listens.</summary>
+    void SyncRelayListener(Connected device)
+    {
+        var model = device.Model;
+        var relayed = model?.Keys.Where(k => k.RelayUsage != 0).ToDictionary(k => k.RelayUsage, k => k.Source);
+        bool want = device.Session != null && relayed is { Count: > 0 };
+        if (!want)
+        {
+            device.Relay?.Dispose();
+            device.Relay = null;
+            return;
+        }
+        if (device.Relay != null)
+            return;
+        var node = HidrawNode.Enumerate().FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 2);
+        if (node == null)
+            return;
+        try
+        {
+            var relay = RelayButtons.Start(node.DevicePath, relayed!.Keys.ToHashSet());
+            relay.Changed += (usage, down) =>
+            {
+                if (relayed.TryGetValue(usage, out var source))
+                    device.Session?.WithEngine(e => e.Key(source, down ? 1 : 0));
+            };
+            device.Relay = relay;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"{device.Key}: relay keys: {e.Message}");
+        }
     }
 
     /// <summary>Listens to a keypad's own buttons: Hypershift held switches the engine's layer, the keymap button moves
@@ -553,6 +663,13 @@ public sealed class DeviceManager : IDisposable
 
         public void Gamepad(GamepadControl control, bool down) => manager._pad.Set(control, down);
 
+        // Device commands are kept off the engine's input thread.
+        public void Sensitivity(SensitivityBinding binding, bool down) =>
+            ThreadPool.QueueUserWorkItem(_ => manager.ControlsOf(key).ForEach(c => c.Sensitivity(binding, down)));
+
+        public void ScrollMode(ScrollModeAction action) =>
+            ThreadPool.QueueUserWorkItem(_ => manager.ControlsOf(key).ForEach(c => c.ScrollMode(action)));
+
         public void Report(Exception error) => Console.Error.WriteLine($"{key}: {error.Message}");
     }
 
@@ -565,6 +682,7 @@ public sealed class DeviceManager : IDisposable
                 device.Session?.Dispose();
                 device.Control?.Dispose();
                 device.Buttons?.Dispose();
+                device.Relay?.Dispose();
                 device.Monitor?.Dispose();
             }
             _devices.Clear();
@@ -572,3 +690,6 @@ public sealed class DeviceManager : IDisposable
         _pad.Dispose();
     }
 }
+
+[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string>))]
+internal sealed partial class OnboardJson : System.Text.Json.Serialization.JsonSerializerContext;

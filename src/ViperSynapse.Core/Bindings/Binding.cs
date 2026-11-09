@@ -41,6 +41,27 @@ public enum MacroPlayback
     Toggle,
 }
 
+/// <summary>The sensitivity functions Synapse lists: step through the stages, or a clutch that holds a set DPI while
+/// the key is down.</summary>
+public enum SensitivityAction
+{
+    StageUp,
+    StageDown,
+    CycleUp,
+    CycleDown,
+    Clutch,
+}
+
+/// <summary>What a scroll-mode key does: switch between Tactile and Free-Spin (from Precision Tactile it goes to
+/// Free-Spin), or set one mode.</summary>
+public enum ScrollModeAction
+{
+    Toggle,
+    Tactile,
+    FreeSpin,
+    PrecisionTactile,
+}
+
 public enum CycleDirection
 {
     Next,
@@ -60,6 +81,8 @@ public enum CycleDirection
 [JsonDerivedType(typeof(SwitchKeymapBinding), "switch-keymap")]
 [JsonDerivedType(typeof(LaunchBinding), "launch")]
 [JsonDerivedType(typeof(TextBinding), "text")]
+[JsonDerivedType(typeof(SensitivityBinding), "sensitivity")]
+[JsonDerivedType(typeof(ScrollModeBinding), "scroll-mode")]
 [JsonDerivedType(typeof(GamepadBinding), "gamepad")]
 public abstract record Binding;
 
@@ -94,3 +117,9 @@ public sealed record TextBinding(string Text) : Binding;
 
 /// <summary>Works a control of the virtual gamepad (Synapse's Quick remapping and controller functions).</summary>
 public sealed record GamepadBinding(Input.GamepadControl Control) : Binding;
+
+/// <summary>Changes the mouse's sensitivity stage, or (Clutch) holds <see cref="Dpi"/> while the key is down.</summary>
+public sealed record SensitivityBinding(SensitivityAction Action, int Dpi = 400) : Binding;
+
+/// <summary>Changes the scroll wheel's mode.</summary>
+public sealed record ScrollModeBinding(ScrollModeAction Action = ScrollModeAction.Toggle) : Binding;

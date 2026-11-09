@@ -53,9 +53,12 @@ public class CatalogueTests
         Assert.Equal([0x04, 0x01, 0x0A], new[] { "logo", "scroll", "underglow" }.Select(z => (int)Core.Protocol.DeviceCommands.LedId(z, "mouse")));
         Assert.Equal(8000, basilisk.PollRates.Max());
         Assert.True(basilisk.Has("scroll_wheel") && basilisk.Has("battery") && basilisk.Has("idle_time"));
-        // Nine buttons Linux sees, five the firmware keeps (DPI, profile, scroll mode, clutch, M1).
-        Assert.Equal(9, basilisk.Keys.Count(k => k.Source != 0));
+        // Nine buttons Linux sees, five the firmware keeps (sensitivity, profile on the M1 edge, scroll mode, the two
+        // front side buttons): those are bindable through their relay keys, F13 to F17 (HID 0x68 to 0x6C).
+        Assert.Equal(14, basilisk.Keys.Count(k => k.Source != 0));
         Assert.Equal(14, basilisk.Keys.Count);
+        Assert.Equal([0x68, 0x69, 0x6A, 0x6B, 0x6C], basilisk.Keys.Where(k => k.RelayUsage != 0).Select(k => (int)k.RelayUsage).Order());
+        Assert.All(basilisk.Keys.Where(k => k.RelayUsage != 0), k => Assert.NotEqual(0, k.HardwareId));
     }
 
     [Fact]
@@ -67,5 +70,36 @@ public class CatalogueTests
         foreach (var m in DeviceCatalogue.Parse(Json("imported")).Concat(DeviceCatalogue.Parse(Json("ours"))))
             merged[m.ProductId] = m;
         Assert.Equal("ours", merged[1].Name);
+    }
+}
+
+public class RelayAndOnboardTests
+{
+    [Fact]
+    public void Relay_reports_raise_one_change_per_press_and_release()
+    {
+        var seen = new List<(byte, bool)>();
+        // (no device: Handle is fed reports directly)
+        var relay = (Hardware.RelayButtons)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Hardware.RelayButtons));
+        typeof(Hardware.RelayButtons).GetField("_watched", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(relay, new HashSet<byte> { 0x68, 0x69 });
+        typeof(Hardware.RelayButtons).GetField("_down", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(relay, new HashSet<byte>());
+        relay.Changed += (u, d) => seen.Add((u, d));
+        relay.Handle([0, 0, 0x68, 0, 0, 0, 0, 0]);
+        relay.Handle([0, 0, 0x68, 0x59, 0, 0, 0, 0]);   // (Keypad 1 is not watched)
+        relay.Handle([0, 0, 0, 0, 0, 0, 0, 0]);
+        Assert.Equal([((byte)0x68, true), ((byte)0x68, false)], seen);
+    }
+
+    [Fact]
+    public void Onboard_functions_read_as_synapse_names_them()
+    {
+        static Core.Protocol.RazerReport Answer(params byte[] args) => Core.Protocol.RazerReport.Create(0x1F, 0x02, 0x8C, args);
+        Assert.Equal("Keypad 2", Core.Protocol.OnboardButtons.Describe(Answer(0x01, 0x39, 0x00, 0x02, 0x02, 0x00, 0x5A), 0x39));
+        Assert.Equal("Cycle Up Sensitivity Stages", Core.Protocol.OnboardButtons.Describe(Answer(0x01, 0x60, 0x00, 0x06, 0x01, 0x06), 0x60));
+        Assert.Equal("Cycle Up Profile", Core.Protocol.OnboardButtons.Describe(Answer(0x01, 0x6A, 0x00, 0x12, 0x01, 0x01), 0x6A));
+        Assert.Equal("Repeat Scroll Left", Core.Protocol.OnboardButtons.Describe(Answer(0x01, 0x34, 0x00, 0x0E, 0x01, 0x68, 0x00, 0x14), 0x34));
+        Assert.Null(Core.Protocol.OnboardButtons.Describe(Answer(0x01, 0x39, 0x00, 0x02, 0x02, 0x00, 0x5A), 0x80));   // (a stale answer)
     }
 }

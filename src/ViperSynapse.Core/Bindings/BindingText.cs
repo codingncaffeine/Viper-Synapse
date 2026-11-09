@@ -31,7 +31,26 @@ public static class BindingText
         LaunchBinding l => ("LAUNCH PROGRAM", ProgramName(l.Command)),
         TextBinding t => ("TEXT FUNCTION", t.Text.Length > 24 ? t.Text[..24] + "…" : t.Text),
         GamepadBinding g => ("GAMEPAD FUNCTION", GamepadState.Label(g.Control)),
+        SensitivityBinding s => ("SENSITIVITY", SensitivityLabel(s)),
+        ScrollModeBinding m => ("SCROLL MODE", ScrollModeLabel(m.Action)),
         _ => ("", ""),
+    };
+
+    public static string SensitivityLabel(SensitivityBinding s) => s.Action switch
+    {
+        SensitivityAction.StageUp => "Sensitivity Stage Up",
+        SensitivityAction.StageDown => "Sensitivity Stage Down",
+        SensitivityAction.CycleUp => "Cycle Up Sensitivity Stages",
+        SensitivityAction.CycleDown => "Cycle Down Sensitivity Stages",
+        _ => $"Sensitivity Clutch ({s.Dpi} DPI)",
+    };
+
+    public static string ScrollModeLabel(ScrollModeAction a) => a switch
+    {
+        ScrollModeAction.Toggle => "Scroll Mode Toggle",
+        ScrollModeAction.Tactile => "Tactile Scrolling",
+        ScrollModeAction.FreeSpin => "Free-Spin Scrolling",
+        _ => "Precision Tactile Scrolling",
     };
 
     public static string Chord(Modifiers modifiers, ushort key)
