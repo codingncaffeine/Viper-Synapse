@@ -20,7 +20,8 @@ public sealed record DeviceState(
     int LowBatteryPercent = 0,
     bool? ScrollAcceleration = null,
     bool? SmartReel = null,
-    IReadOnlyDictionary<string, string>? Onboard = null);
+    IReadOnlyDictionary<string, string>? Onboard = null,
+    int? ScrollMode = null);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(DeviceState))]
@@ -67,6 +68,8 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             {
                 Send(DeviceCommands.ScrollAcceleration(transactionId, scroll.Acceleration), "scroll acceleration");
                 Send(DeviceCommands.SmartReel(transactionId, scroll.SmartReel), "Smart-Reel");
+                if (scroll.Mode >= 0 && model.Has("scroll_mode"))
+                    Send(DeviceCommands.ScrollMode(transactionId, scroll.Mode), "scrolling mode");
             }
         }
     }
@@ -250,6 +253,7 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             bool? charging = null;
             int liftOff = -1, sleep = 0, lowBattery = 0;
             bool? acceleration = null, smartReel = null;
+            int? scrollMode = null;
             try
             {
                 if (model?.Has("poll_rate") == true)
@@ -291,13 +295,15 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                         acceleration = accel.Arguments[1] != 0;
                     if (ReadRaw(0x02, 0x97, DeviceCommands.VarStore) is { } reel)
                         smartReel = reel.Arguments[1] != 0;
+                    if (model.Has("scroll_mode") && ReadRaw(0x02, 0xB0, DeviceCommands.VarStore) is { } mode && mode.Arguments[1] <= 2)
+                        scrollMode = mode.Arguments[1];
                 }
             }
             catch (IOException e)
             {
                 LastProblem = e.Message;
             }
-            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel, ReadOnboard());
+            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel, ReadOnboard(), scrollMode);
         }
     }
 

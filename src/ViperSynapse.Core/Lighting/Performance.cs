@@ -27,8 +27,9 @@ public sealed record CalibrationSettings(int LiftOffLevel)
 }
 
 /// <summary>A mouse's Scroll Wheel card. <see cref="LinesPerNotch"/> is applied in software (each notch of the wheel
-/// scrolls that many times as far); acceleration and Smart-Reel are the firmware's own, on mice that have them.</summary>
-public sealed record ScrollSettings(int LinesPerNotch = 1, bool Acceleration = false, bool SmartReel = false)
+/// scrolls that many times as far); acceleration, Smart-Reel and the scrolling mode are the firmware's own, on mice that
+/// have them. Mode: 0 Tactile, 1 Free-Spin, 2 Precision Tactile (the Basilisk V4 Pro's 0x02/0x30); -1 leaves the mouse's.</summary>
+public sealed record ScrollSettings(int LinesPerNotch = 1, bool Acceleration = false, bool SmartReel = false, int Mode = -1)
 {
     public const int MaxLinesPerNotch = 10;
 

@@ -506,7 +506,7 @@ public sealed partial class DeviceViewModel : TabViewModel
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
             Power.Load(settings.Active.Power ?? _devicePower ?? Core.Lighting.PowerSettings.Default);
             OnPropertyChanged(nameof(BatteryBrush));
-            ScrollWheel.Load(settings.Active.Scroll ?? _deviceScroll ?? Core.Lighting.ScrollSettings.Default);
+            ScrollWheel.Load(WithDeviceMode(settings.Active.Scroll) ?? _deviceScroll ?? Core.Lighting.ScrollSettings.Default);
             Calibration.Load(settings.Active.Calibration ?? new Core.Lighting.CalibrationSettings(_liftOff));
         }
         finally
@@ -520,6 +520,10 @@ public sealed partial class DeviceViewModel : TabViewModel
     int _liftOff = -1;
     Core.Lighting.PowerSettings? _devicePower;
     Core.Lighting.ScrollSettings? _deviceScroll;
+
+    /// <summary>A saved scroll card without a scrolling mode shows the mouse's own.</summary>
+    Core.Lighting.ScrollSettings? WithDeviceMode(Core.Lighting.ScrollSettings? saved) =>
+        saved is { Mode: < 0 } && _deviceScroll is { Mode: >= 0 } device ? saved with { Mode = device.Mode } : saved;
 
     /// <summary>Reads what the device itself is set to, so Performance and Power show real values before the user
     /// changes anything.</summary>
@@ -546,7 +550,7 @@ public sealed partial class DeviceViewModel : TabViewModel
                 if (state.SleepSeconds > 0)
                     _devicePower = new Core.Lighting.PowerSettings(state.SleepSeconds, state.LowBatteryPercent > 0 ? state.LowBatteryPercent : Core.Lighting.PowerSettings.Default.LowBatteryPercent);
                 if (state.ScrollAcceleration != null || state.SmartReel != null)
-                    _deviceScroll = new Core.Lighting.ScrollSettings(1, state.ScrollAcceleration == true, state.SmartReel == true);
+                    _deviceScroll = new Core.Lighting.ScrollSettings(1, state.ScrollAcceleration == true, state.SmartReel == true, state.ScrollMode ?? -1);
                 Load(_settings);
             });
         }
