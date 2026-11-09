@@ -97,7 +97,15 @@ public sealed class DeviceSession : IDisposable
                     node.Dispose();
                     continue;
                 }
-                GrabIfIdle(node);
+                // Another program may already hold the node (a hotkey daemon grabbing every keyboard): its events go
+                // there, not here, so the session goes on without it. Buttons that matter on such a node come in
+                // another way (a mouse's relay keys are read over hidraw).
+                if (!TryGrabIfIdle(node))
+                {
+                    Console.Error.WriteLine($"{node.Path}: held by another program; left to it");
+                    node.Dispose();
+                    continue;
+                }
                 session._nodes.Add(node);
             }
             foreach (var node in session._nodes)
@@ -141,6 +149,19 @@ public sealed class DeviceSession : IDisposable
     /// from its release: the desktop saw the press from the real device, the release would come from the virtual
     /// one, and the desktop would hold the button forever (a slider dragged by the click that turned this on stuck
     /// to the pointer). A held node is taken by its own thread once everything is let go.</summary>
+    static bool TryGrabIfIdle(EvdevDevice node)
+    {
+        try
+        {
+            GrabIfIdle(node);
+            return true;
+        }
+        catch (IOException e) when (e.Message.Contains("busy", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+    }
+
     static void GrabIfIdle(EvdevDevice node)
     {
         if (!node.AnyKeyDown())
