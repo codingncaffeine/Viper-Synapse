@@ -45,6 +45,8 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         new(FunctionKind.Default, "DEFAULT", "↺"),
         new(FunctionKind.Keyboard, "KEYBOARD FUNCTION", "⌨"),
         new(FunctionKind.Mouse, "MOUSE FUNCTION", "🖱"),
+        new(FunctionKind.Sensitivity, "SENSITIVITY", "DPI"),
+        new(FunctionKind.ScrollMode, "SCROLL MODE", "⇳"),
         new(FunctionKind.Gamepad, "GAMEPAD FUNCTION", "🎮"),
         new(FunctionKind.Macro, "MACRO", "M"),
         new(FunctionKind.Hypershift, "RAZER HYPERSHIFT", "⇧"),
@@ -52,8 +54,6 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         new(FunctionKind.SwitchKeymap, "SWITCH KEYMAP", "▦"),
         new(FunctionKind.Launch, "LAUNCH PROGRAM", "▶"),
         new(FunctionKind.Multimedia, "MULTIMEDIA", "♪"),
-        new(FunctionKind.Sensitivity, "SENSITIVITY", "◎"),
-        new(FunctionKind.ScrollMode, "SCROLL MODE", "↕"),
         new(FunctionKind.Text, "TEXT FUNCTION", "T"),
         new(FunctionKind.Disable, "DISABLE", "⊘"),
     ];
