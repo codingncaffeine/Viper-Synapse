@@ -128,6 +128,7 @@ static class Program
             || bytes[0] == 0x04 && bytes[1] is 0x05 or 0x06
             || bytes[0] == 0x00 && bytes[1] is 0x05 or 0x40
             || bytes[0] == 0x02 && bytes[1] is 0x14 or 0x16 or 0x17 or 0x22 or 0x23 or 0x30   // scroll wheel settings
+            || bytes[0] == 0x02 && bytes[1] is 0x0C   // a button's function in the mouse's memory
             // Sensor settings: calibration mode, tracking mode, lift-off table. Never 0x09 (starts surface sampling).
             || bytes[0] == 0x0B && bytes[1] is 0x03 or 0x05 or 0x0B
             // Selecting a keymap (as the keypad's own keymap button does), for reading each preset.

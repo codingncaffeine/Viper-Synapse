@@ -215,6 +215,7 @@ public sealed class DeviceDrawing : Control
     {
         // The left column: the clicks and the thumb side, front to back (the Basilisk V4 Pro's front side
         // button has a second one just below it, nearer the bottom edge).
+        ["Cycle Up Profile"] = (new Point(8, 38), true, -1),           // (the "M1 edge" button, top left)
         ["Left Click"] = (new Point(38, 60), true, 0),
         ["Scroll Click"] = (new Point(75, 58), true, 1),
         ["Repeat Scroll Left"] = (new Point(68, 46), true, 2),
@@ -222,14 +223,13 @@ public sealed class DeviceDrawing : Control
         ["Side Button 4"] = (new Point(9, 128), true, 4),
         ["Mouse Button 5"] = (new Point(0, 163), true, 5),
         ["Mouse Button 4"] = (new Point(0, 201), true, 6),
-        // The right column: the wheel, the buttons behind it, and the profile button on the underside.
+        // The right column: the wheel and the buttons behind it.
         ["Right Click"] = (new Point(112, 60), false, 0),
         ["Scroll Up"] = (new Point(75, 34), false, 1),
         ["Repeat Scroll Right"] = (new Point(82, 46), false, 2),
         ["Scroll Down"] = (new Point(75, 84), false, 3),
         ["Scroll Mode Toggle"] = (new Point(75, 100), false, 4),
         ["Cycle Up Sensitivity Stages"] = (new Point(75, 122), false, 5),
-        ["Cycle Up Profile"] = (new Point(75, 296), false, 6),
     };
 
     /// <summary>A mouse with no side grid, as Synapse 4 shows one: the top-down mouse in the middle, each button's
@@ -255,8 +255,8 @@ public sealed class DeviceDrawing : Control
             _body.Add((new RectangleGeometry(new Rect(-4, 116, 8, 24), 4, 4), KeyFill, KeyPen));
         if (device.Rows.Any(r => r.Key.Label == "Side Button 4"))      // (below the front side button)
             _body.Add((new RectangleGeometry(new Rect(6, 117, 7, 22), 3.5, 3.5), KeyFill, KeyPen));
-        if (device.Rows.Any(r => r.Key.Label == "Cycle Up Profile"))   // (on the underside: a dashed button at the tail)
-            _body.Add((new RectangleGeometry(new Rect(68, 284, 14, 10), 3, 3), Brushes.Transparent, KeyPen));
+        if (device.Rows.Any(r => r.Key.Label == "Cycle Up Profile"))   // (the small button on the left click's outer edge)
+            _body.Add((new RectangleGeometry(new Rect(4, 28, 8, 20), 4, 4), KeyFill, KeyPen));
         _body.Add((new RectangleGeometry(new Rect(-4, 144, 8, 38), 4, 4), KeyFill, KeyPen));
         _body.Add((new RectangleGeometry(new Rect(-4, 184, 8, 34), 4, 4), KeyFill, KeyPen));
 

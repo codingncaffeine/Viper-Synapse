@@ -103,7 +103,7 @@
         { "number" : 8, "label" : "Mouse Button 4", "hw" : "04", "code" : "BTN_SIDE", "group" : "mouse" },
         { "number" : 9, "label" : "Mouse Button 5", "hw" : "05", "code" : "BTN_EXTRA", "group" : "mouse" },
         { "number" : 10, "label" : "Hypershift Clutch", "hw" : "80", "code" : "", "group" : "mouse" },
-        { "number" : 11, "label" : "Scroll Mode Toggle", "code" : "", "group" : "mouse" },
+        { "number" : 11, "label" : "Scroll Mode Toggle", "hw" : "0e", "code" : "", "group" : "mouse" },
         { "number" : 12, "label" : "Cycle Up Sensitivity Stages", "hw" : "60", "code" : "", "group" : "mouse" },
         { "number" : 13, "label" : "Cycle Up Profile", "hw" : "6a", "code" : "", "group" : "mouse" },
         { "number" : 14, "label" : "Side Button 4", "hw" : "39", "code" : "", "group" : "mouse" }
@@ -117,7 +117,7 @@
       "dpi_max" : 50000,
       "poll_rates" : [ 125, 250, 500, 1000, 2000, 4000, 8000 ],
       "verified" : [ "tid 0x1F, control interface 3 (HyperSpeed dongle)", "LEDs 01 scroll, 04 logo, 0A underglow", "HyperPolling 00/C0", "scroll acceleration 02/16 + Smart-Reel 02/17 on/off read back" ],
-      "source" : "Viper Synapse probe + Razer master guide; button ids read from the mouse (02/8C): 80 front side button, 39 the one below it, 04/05 side, 60 sensitivity, 6a profile (underside)"
+      "source" : "Viper Synapse probe + Razer master guide; button ids read from the mouse (02/8C): 80 front side button, 39 the one below it, 04/05 side, 60 sensitivity, 6a profile (the M1 edge button, top left), 0e scroll mode button"
     }
   ]
 }
