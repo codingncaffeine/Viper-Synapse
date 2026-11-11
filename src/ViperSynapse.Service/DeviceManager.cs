@@ -211,7 +211,7 @@ public sealed class DeviceManager : IDisposable
 
         foreach (var device in added.Where(d => d.Model?.Has("keypad_buttons") == true))
             StartButtons(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
-        foreach (var device in added.Where(d => d.Model?.Type == "mouse" && d.Model.Has("dpi_stages")))
+        foreach (var device in added.Where(d => d.Model?.Has("dpi_reports") == true))
             StartMouseReports(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
         foreach (var (key, keymap) in adopt)
             FollowDeviceKeymap(key, keymap);
@@ -339,7 +339,7 @@ public sealed class DeviceManager : IDisposable
                     bool wheel = scrollLines > 1 || bound.Any(SourceKeys.IsWheel) || keymap.Standard.Concat(keymap.Hypershift).Any(kv => kv.Value is MouseBinding { Function: MouseFunction.ScrollUp or MouseFunction.ScrollDown or MouseFunction.ScrollLeft or MouseFunction.ScrollRight });
                     bool hypershiftAnywhere = keymap.Hypershift.Values.Any(b => b is not DefaultBinding);
                     device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick,
-                        model?.Type == "mouse" && !hypershiftAnywhere
+                        model?.Type == "mouse" && !hypershiftAnywhere && profile.Interruption != MacroInterruption.AnyKey
                             ? (keys, hasWheel) => keys.Any(bound.Contains) || hasWheel && wheel
                             : null);
                     var watched = device;
