@@ -86,6 +86,7 @@ public sealed class DeviceManager : IDisposable
         public DeviceControl? Control { get; set; }
         public KeypadButtons? Buttons { get; set; }
         public RelayButtons? Relay { get; set; }
+        public MouseReports? Reports { get; set; }
         public ThumbstickMode SessionStick { get; set; }
         public StickMonitor? Monitor { get; set; }
         public DateTime StickWatchedUntil { get; set; }
@@ -140,6 +141,7 @@ public sealed class DeviceManager : IDisposable
                 _devices[gone].Control?.Dispose();
                 _devices[gone].Buttons?.Dispose();
                 _devices[gone].Relay?.Dispose();
+                _devices[gone].Reports?.Dispose();
                 _devices[gone].Monitor?.Dispose();
                 _devices.Remove(gone);
                 changed = true;
@@ -209,6 +211,8 @@ public sealed class DeviceManager : IDisposable
 
         foreach (var device in added.Where(d => d.Model?.Has("keypad_buttons") == true))
             StartButtons(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
+        foreach (var device in added.Where(d => d.Model?.Type == "mouse" && d.Model.Has("dpi_stages")))
+            StartMouseReports(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
         foreach (var (key, keymap) in adopt)
             FollowDeviceKeymap(key, keymap);
 
@@ -486,6 +490,43 @@ public sealed class DeviceManager : IDisposable
         }
     }
 
+    /// <summary>Listens to what a mouse says about itself: when its own DPI button changes the stage, the profile's
+    /// active stage follows (the stage with that sensitivity), so the window shows the stage the mouse is on.</summary>
+    void StartMouseReports(Connected device, HidrawNode? node)
+    {
+        if (node == null)
+            return;
+        try
+        {
+            var reports = MouseReports.Start(node.DevicePath);
+            string key = device.Key;
+            reports.DpiChanged += (x, y) => ThreadPool.QueueUserWorkItem(_ => FollowMouseDpi(key, device, x, y));
+            device.Reports = reports;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"{device.Key}: mouse reports: {e.Message}");
+        }
+    }
+
+    void FollowMouseDpi(string key, Connected device, int x, int y)
+    {
+        device.Control?.NoteDpi(x, y);
+        var settings = _store.LoadDevice(key);
+        if (settings.Active.Performance is { Stages.Count: > 0 } p)
+        {
+            int stage = p.Stages.ToList().FindIndex(s => s.X == x && s.Y == y);
+            if (stage >= 0 && stage != p.ActiveStage)
+            {
+                var profile = settings.Active with { Performance = p with { ActiveStage = stage } };
+                SetSettings(key, settings with { Profiles = settings.Profiles.Select(q => q.Id == profile.Id ? profile : q).ToList() });
+                return;
+            }
+        }
+        // (no stages of our own, or not one of them: the window reads the mouse's own state again)
+        SettingsChanged?.Invoke(key);
+    }
+
     /// <summary>Listens to a keypad's own buttons: Hypershift held switches the engine's layer, the keymap button moves
     /// the profile to that keymap.</summary>
     void StartButtons(Connected device, HidrawNode? node)
@@ -705,6 +746,7 @@ public sealed class DeviceManager : IDisposable
                 device.Control?.Dispose();
                 device.Buttons?.Dispose();
                 device.Relay?.Dispose();
+                device.Reports?.Dispose();
                 device.Monitor?.Dispose();
             }
             _devices.Clear();

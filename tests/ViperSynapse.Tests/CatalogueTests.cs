@@ -148,3 +148,17 @@ public class KeyNameTests
         Assert.Equal("Numpad +", Core.Bindings.BindingText.KeyLabel(plus));
     }
 }
+
+public class MouseReportTests
+{
+    [Fact]
+    public void A_dpi_report_gives_the_sensitivity_the_mouse_switched_to()
+    {
+        var reports = (Hardware.MouseReports)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Hardware.MouseReports));
+        var seen = new List<(int, int)>();
+        reports.DpiChanged += (x, y) => seen.Add((x, y));
+        reports.Handle([0x05, 0x02, 0x04, 0xB0, 0x04, 0xB0, 0, 0]);   // 1200
+        reports.Handle([0x05, 0x56, 0x04, 0x00, 0x00, 0x00, 0, 0]);   // (something else)
+        Assert.Equal([(1200, 1200)], seen);
+    }
+}

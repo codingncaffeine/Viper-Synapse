@@ -355,6 +355,18 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
     PerformanceSettings? _stagesNow;
     int _clutchHeld;
 
+    /// <summary>The mouse changed stage by itself (its DPI button): the stage the sensitivity bindings step from.</summary>
+    public void NoteDpi(int x, int y)
+    {
+        lock (_gate)
+        {
+            if (_stagesNow is { Stages.Count: > 0 } p && p.Stages.ToList().FindIndex(s => s.X == x && s.Y == y) is >= 0 and var i)
+                _stagesNow = p with { ActiveStage = i };
+            else
+                _stagesNow = null;          // (read again when next needed)
+        }
+    }
+
     /// <summary>Steps the sensitivity stage, or holds a DPI while a clutch key is down (back to the stage after).</summary>
     public void Sensitivity(SensitivityBinding binding, bool down)
     {
