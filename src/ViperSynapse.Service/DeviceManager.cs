@@ -327,7 +327,17 @@ public sealed class DeviceManager : IDisposable
                 };
                 try
                 {
-                    device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick);
+                    // Only the nodes something bound lives on (relay keys come over hidraw, not from a node).
+                    var bound = keymap.Standard.Concat(keymap.Hypershift).Where(kv => kv.Value is not DefaultBinding).Select(kv => kv.Key)
+                        .Concat(_shortcuts.Shortcuts.SelectMany(s => s.Keys)).ToHashSet();
+                    var relays = model?.Keys.Where(k => k.RelayUsage != 0).Select(k => k.Source).ToHashSet() ?? [];
+                    bound.ExceptWith(relays);
+                    bool wheel = scrollLines > 1 || bound.Any(SourceKeys.IsWheel) || keymap.Standard.Concat(keymap.Hypershift).Any(kv => kv.Value is MouseBinding { Function: MouseFunction.ScrollUp or MouseFunction.ScrollDown or MouseFunction.ScrollLeft or MouseFunction.ScrollRight });
+                    bool hypershiftAnywhere = keymap.Hypershift.Values.Any(b => b is not DefaultBinding);
+                    device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick,
+                        model?.Type == "mouse" && !hypershiftAnywhere
+                            ? (keys, hasWheel) => keys.Any(bound.Contains) || hasWheel && wheel
+                            : null);
                     var watched = device;
                     device.Session.StickMoved += (x, y) => SendStick(watched, x, y);
                     device.Session.KeyPressed += source => watched.Control?.Press(source);

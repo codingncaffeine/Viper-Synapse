@@ -73,7 +73,11 @@ public sealed class DeviceSession : IDisposable
     /// <param name="engine">Where its keys go.</param>
     /// <param name="stick">Analog leaves the keypad's gamepad node to the system; 4-way and 8-way take it over and
     /// turn the stick into direction presses.</param>
-    public static DeviceSession Start(IEnumerable<string> nodePaths, RemapEngine engine, ThumbstickMode stick = ThumbstickMode.Analog)
+    /// <param name="needs">Which nodes the session takes: given a node's key codes and whether it has a wheel, true when
+    /// something bound is on it. Null takes every node. A node left out goes straight to the desktop: a mouse whose
+    /// remapped buttons are all elsewhere keeps its motion off the virtual device (no added latency).</param>
+    public static DeviceSession Start(IEnumerable<string> nodePaths, RemapEngine engine, ThumbstickMode stick = ThumbstickMode.Analog,
+        Func<IReadOnlyCollection<ushort>, bool, bool>? needs = null)
     {
         var session = new DeviceSession(engine, stick);
         try
@@ -93,6 +97,11 @@ public sealed class DeviceSession : IDisposable
                 // Otherwise gamepad and joystick nodes (the Tartarus V2 Pro's analog mode) carry axes the engine does
                 // not pass on: grabbing one would freeze its sticks. They are left to the system.
                 if (keys.Count == 0 && node.Capabilities(EventTypes.Rel).Count == 0 || gamepad)
+                {
+                    node.Dispose();
+                    continue;
+                }
+                if (needs != null && !needs(keys.ToList(), node.Capabilities(EventTypes.Rel).Any(c => c == 0x08)))
                 {
                     node.Dispose();
                     continue;
