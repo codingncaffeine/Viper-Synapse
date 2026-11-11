@@ -33,6 +33,7 @@ public static class BindingText
         GamepadBinding g => ("GAMEPAD FUNCTION", GamepadState.Label(g.Control)),
         SensitivityBinding s => ("SENSITIVITY", SensitivityLabel(s)),
         ScrollModeBinding m => ("SCROLL MODE", ScrollModeLabel(m.Action)),
+        Perfect180Binding p => ("PERFECT 180", $"Perfect 180 ({p.Counts} counts, {(p.Left ? "left" : "right")})"),
         _ => ("", ""),
     };
 
@@ -70,6 +71,17 @@ public static class BindingText
         string name = KeyCodes.Name(code);
         if (Special.TryGetValue(name, out var special))
             return special;
+        if (name.StartsWith("KEY_KP", StringComparison.Ordinal))
+        {
+            string rest = name[6..];
+            return "Numpad " + (rest switch
+            {
+                "PLUS" => "+", "MINUS" => "-", "ASTERISK" => "*", "SLASH" => "/", "DOT" => ".", "EQUAL" => "=", "COMMA" => ",",
+                "LEFTPAREN" => "(", "RIGHTPAREN" => ")", "PLUSMINUS" => "±", "JPCOMMA" => "JP ,",
+                _ when rest.Length == 1 => rest,
+                _ => char.ToUpperInvariant(rest[0]) + rest[1..].ToLowerInvariant(),
+            });
+        }
         if (name.StartsWith("KEY_", StringComparison.Ordinal))
             name = name[4..];
         else if (name.StartsWith("BTN_", StringComparison.Ordinal))

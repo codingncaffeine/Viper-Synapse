@@ -33,6 +33,10 @@
                                 Cursor="Hand">
                             <TextBlock Text="{Binding CapturedText}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#44D62C" />
                         </Border>
+                        <TextBlock Classes="caption" Text="OR PICK A KEY" />
+                        <AutoCompleteBox ItemsSource="{x:Static vm:BindingEditorViewModel.AllKeys}" SelectedItem="{Binding PickedKey}"
+                                         FilterMode="Contains" MinimumPrefixLength="0" MaxDropDownHeight="260"
+                                         Watermark="Type to search, e.g. Num 3, F13, Print" HorizontalAlignment="Stretch" />
                         <WrapPanel>
                             <CheckBox Content="Ctrl" IsChecked="{Binding Ctrl}" Margin="0,0,10,0" />
                             <CheckBox Content="Shift" IsChecked="{Binding Shift}" Margin="0,0,10,0" />
@@ -94,6 +98,27 @@
                     <StackPanel Spacing="8" IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=ScrollMode}">
                         <ComboBox ItemsSource="{x:Static vm:BindingEditorViewModel.ScrollModeChoices}" SelectedItem="{Binding SelectedScrollMode}" HorizontalAlignment="Stretch" />
                         <TextBlock Text="Toggle switches between Tactile and Free-Spin, as the button below the wheel does." Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8" IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=Perfect180}">
+                        <TextBlock Text="Turns your view exactly half way round with one press." Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
+                        <TextBlock Classes="caption" Text="GAME" />
+                        <ComboBox ItemsSource="{x:Static vm:BindingEditorViewModel.TurnGames}" SelectedItem="{Binding SelectedTurnGame}" HorizontalAlignment="Stretch" />
+                        <StackPanel Spacing="4" IsVisible="{Binding TurnGameChosen}">
+                            <TextBlock Classes="caption" Text="IN-GAME SENSITIVITY" />
+                            <NumericUpDown Minimum="0.001" Maximum="1000" Increment="0.05" Value="{Binding TurnSensitivity}" FormatString="0.###" />
+                        </StackPanel>
+                        <TextBlock Classes="caption" Text="TOTAL COUNT" />
+                        <NumericUpDown Minimum="1" Maximum="200000" Increment="10" Value="{Binding TurnCounts}" FormatString="0" />
+                        <TextBlock Text="{Binding TurnHint}" Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
+                        <TextBlock Classes="caption" Text="DIRECTION" />
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton GroupName="turn" Content="Right" IsChecked="{Binding TurnRight}" />
+                            <RadioButton GroupName="turn" Content="Left" IsChecked="{Binding TurnLeft}" />
+                        </StackPanel>
+                        <TextBlock Classes="caption" Text="TURN TIME (MS)" />
+                        <NumericUpDown Minimum="0" Maximum="500" Increment="5" Value="{Binding TurnDuration}" FormatString="0" />
+                        <TextBlock Text="0 sends the whole turn at once; a few ms spreads it out, which some games take better." Foreground="#AAAAAA" FontSize="11" TextWrapping="Wrap" />
                     </StackPanel>
 
                     <ComboBox IsVisible="{Binding Kind, Converter={x:Static views:Converters.Is}, ConverterParameter=Multimedia}"

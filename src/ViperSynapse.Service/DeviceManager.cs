@@ -338,6 +338,12 @@ public sealed class DeviceManager : IDisposable
                         device.Monitor = null;
                     }
                     device.SessionStick = stick;
+                    // A mouse's motion now comes out of our virtual device: give it the mouse's own acceleration.
+                    if (model?.Type == "mouse")
+                    {
+                        string mouseName = model.Name;
+                        ThreadPool.QueueUserWorkItem(_ => { Thread.Sleep(500); PointerMirror.Apply(mouseName); });
+                    }
                     device.Session.NodeLost += (_, _) => ThreadPool.QueueUserWorkItem(_ => Refresh());
                     device.Problem = null;
                 }

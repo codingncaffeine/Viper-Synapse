@@ -103,3 +103,48 @@ public class RelayAndOnboardTests
         Assert.Null(Core.Protocol.OnboardButtons.Describe(Answer(0x01, 0x39, 0x00, 0x02, 0x02, 0x00, 0x5A), 0x80));   // (a stale answer)
     }
 }
+
+public class Perfect180Tests
+{
+    [Theory]
+    [InlineData(2000, 10)]
+    [InlineData(-2000, 7)]
+    [InlineData(4091, 1)]
+    [InlineData(13, 40)]
+    public void The_steps_add_up_to_the_whole_turn(int total, int steps)
+    {
+        var parts = Core.Bindings.Perfect180.Steps(total, steps).ToList();
+        Assert.Equal(Math.Max(1, steps), parts.Count);
+        Assert.Equal(total, parts.Sum());
+    }
+
+    [Fact]
+    public void Known_games_turn_half_way_round()
+    {
+        // CS2 at sensitivity 2: 180 / (0.022 x 2) = 4090.9; Valorant at 1: 180 / 0.07 = 2571.4
+        Assert.Equal(4091, Core.Bindings.Perfect180.CountsFor(0.022, 2));
+        Assert.Equal(2571, Core.Bindings.Perfect180.CountsFor(0.07, 1));
+        Assert.Equal(0, Core.Bindings.Perfect180.CountsFor(0.022, 0));
+    }
+
+    [Fact]
+    public void A_perfect_180_binding_survives_a_round_trip_through_the_settings_file()
+    {
+        Core.Bindings.Binding b = new Core.Bindings.Perfect180Binding(4091, true, 15, "Counter-Strike 2 / CS:GO", 2);
+        var json = System.Text.Json.JsonSerializer.Serialize(b);
+        Assert.Contains("perfect-180", json);
+        Assert.Equal(b, System.Text.Json.JsonSerializer.Deserialize<Core.Bindings.Binding>(json));
+    }
+}
+
+public class KeyNameTests
+{
+    [Fact]
+    public void Numpad_keys_read_as_numpad()
+    {
+        Core.Input.KeyCodes.TryParse("KEY_KP3", out var kp3);
+        Core.Input.KeyCodes.TryParse("KEY_KPPLUS", out var plus);
+        Assert.Equal("Numpad 3", Core.Bindings.BindingText.KeyLabel(kp3));
+        Assert.Equal("Numpad +", Core.Bindings.BindingText.KeyLabel(plus));
+    }
+}
