@@ -409,7 +409,11 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
         }
     }
 
-    /// <summary>Changes the scroll wheel's mode (0 Tactile, 1 Free-Spin, 2 Precision Tactile).</summary>
+    /// <summary>The notched mode the wheel was in before a toggle took it to Free-Spin (0 Tactile, 2 Precision Tactile).</summary>
+    int _notchedMode;
+
+    /// <summary>Changes the scroll wheel's mode (0 Tactile, 1 Free-Spin, 2 Precision Tactile). Toggle goes to Free-Spin
+    /// and back to whichever notched mode the wheel was in.</summary>
     public void ScrollMode(ScrollModeAction action)
     {
         lock (_gate)
@@ -422,8 +426,10 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                     ScrollModeAction.Tactile => 0,
                     ScrollModeAction.FreeSpin => 1,
                     ScrollModeAction.PrecisionTactile => 2,
-                    _ => now == 1 ? 0 : 1,
+                    _ => now == 1 ? _notchedMode : 1,
                 };
+                if (now != 1)
+                    _notchedMode = now;
                 Send(DeviceCommands.ScrollMode(transactionId, next), "scrolling mode");
             }
             catch (IOException e)
