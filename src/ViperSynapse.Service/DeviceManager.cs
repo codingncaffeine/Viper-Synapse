@@ -85,6 +85,8 @@ public sealed class DeviceManager : IDisposable
         public DeviceSession? Session { get; set; }
         public DeviceControl? Control { get; set; }
         public KeypadButtons? Buttons { get; set; }
+        public RelayButtons? Relay { get; set; }
+        public MouseReports? Reports { get; set; }
         public ThumbstickMode SessionStick { get; set; }
         public StickMonitor? Monitor { get; set; }
         public DateTime StickWatchedUntil { get; set; }
@@ -138,6 +140,8 @@ public sealed class DeviceManager : IDisposable
                 _devices[gone].Session?.Dispose();
                 _devices[gone].Control?.Dispose();
                 _devices[gone].Buttons?.Dispose();
+                _devices[gone].Relay?.Dispose();
+                _devices[gone].Reports?.Dispose();
                 _devices[gone].Monitor?.Dispose();
                 _devices.Remove(gone);
                 changed = true;
@@ -174,7 +178,14 @@ public sealed class DeviceManager : IDisposable
                 try
                 {
                     var transport = new RazerTransport(HidrawDevice.Open(control.DevicePath));
-                    device.Identity = RazerProbe.Identify(transport);
+                    // (a wireless mouse can miss the first questions, waking up or with a receiver still handing
+                    // back old answers: a few tries before calling it silent)
+                    for (int attempt = 0; attempt < 4 && device.Identity == null; attempt++)
+                    {
+                        if (attempt > 0)
+                            Thread.Sleep(400);
+                        device.Identity = RazerProbe.Identify(transport);
+                    }
                     if (device.Identity == null)
                     {
                         transport.Dispose();
@@ -200,6 +211,8 @@ public sealed class DeviceManager : IDisposable
 
         foreach (var device in added.Where(d => d.Model?.Has("keypad_buttons") == true))
             StartButtons(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
+        foreach (var device in added.Where(d => d.Model?.Has("dpi_reports") == true))
+            StartMouseReports(device, hidraw.FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 1));
         foreach (var (key, keymap) in adopt)
             FollowDeviceKeymap(key, keymap);
 
@@ -215,6 +228,12 @@ public sealed class DeviceManager : IDisposable
     bool Real(string port) => _includeTestDevices || !port.StartsWith(TestPortPrefix, StringComparison.Ordinal);
 
     public DeviceSettings GetSettings(string key) => _store.LoadDevice(key);
+
+    List<DeviceControl> ControlsOf(string key)
+    {
+        lock (_gate)
+            return _devices.Values.Where(d => d.Key == key && d.Control != null).Select(d => d.Control!).ToList();
+    }
 
     /// <summary>The device's own sensitivity, polling rate and battery, read now. Null when no device of the model is
     /// plugged in or it has no control interface.</summary>
@@ -312,7 +331,17 @@ public sealed class DeviceManager : IDisposable
                 };
                 try
                 {
-                    device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick);
+                    // Only the nodes something bound lives on (relay keys come over hidraw, not from a node).
+                    var bound = keymap.Standard.Concat(keymap.Hypershift).Where(kv => kv.Value is not DefaultBinding).Select(kv => kv.Key)
+                        .Concat(_shortcuts.Shortcuts.SelectMany(s => s.Keys)).ToHashSet();
+                    var relays = model?.Keys.Where(k => k.RelayUsage != 0).Select(k => k.Source).ToHashSet() ?? [];
+                    bound.ExceptWith(relays);
+                    bool wheel = scrollLines > 1 || bound.Any(SourceKeys.IsWheel) || keymap.Standard.Concat(keymap.Hypershift).Any(kv => kv.Value is MouseBinding { Function: MouseFunction.ScrollUp or MouseFunction.ScrollDown or MouseFunction.ScrollLeft or MouseFunction.ScrollRight });
+                    bool hypershiftAnywhere = keymap.Hypershift.Values.Any(b => b is not DefaultBinding);
+                    device.Session = DeviceSession.Start(device.InputNodes, device.Engine, stick,
+                        model?.Type == "mouse" && !hypershiftAnywhere && profile.Interruption != MacroInterruption.AnyKey
+                            ? (keys, hasWheel) => keys.Any(bound.Contains) || hasWheel && wheel
+                            : null);
                     var watched = device;
                     device.Session.StickMoved += (x, y) => SendStick(watched, x, y);
                     device.Session.KeyPressed += source => watched.Control?.Press(source);
@@ -323,6 +352,12 @@ public sealed class DeviceManager : IDisposable
                         device.Monitor = null;
                     }
                     device.SessionStick = stick;
+                    // A mouse's motion now comes out of our virtual device: give it the mouse's own acceleration.
+                    if (model?.Type == "mouse")
+                    {
+                        string mouseName = model.Name;
+                        ThreadPool.QueueUserWorkItem(_ => { Thread.Sleep(500); PointerMirror.Apply(mouseName); });
+                    }
                     device.Session.NodeLost += (_, _) => ThreadPool.QueueUserWorkItem(_ => Refresh());
                     device.Problem = null;
                 }
@@ -334,17 +369,162 @@ public sealed class DeviceManager : IDisposable
             }
         }
         // Lighting, sensitivity and power talk to the hardware: outside the lock.
-        List<DeviceControl> controls;
+        List<Connected> connected;
         lock (_gate)
-            controls = _devices.Values.Where(d => d.Key == key && d.Control != null).Select(d => d.Control!).ToList();
-        foreach (var control in controls)
+            connected = _devices.Values.Where(d => d.Key == key && d.Control != null).ToList();
+        foreach (var device in connected)
         {
+            var control = device.Control!;
             control.Apply(settings.Active, settings.ActiveKeymap);
+            ProgramRelays(device, keymap);
+            SyncRelayListener(device);
             if (control.LastProblem != null)
                 Console.Error.WriteLine($"{key}: {control.LastProblem}");
         }
         if (changed)
             DevicesChanged?.Invoke();
+    }
+
+    // ---- firmware-only buttons the app takes over (DeviceKey.RelayUsage) ----
+
+    /// <summary>A relayed button the keymap binds is told to send its relay key (F13 and up) so the engine can do the
+    /// binding; one left at default gets its own function back, from the backup taken the first time.</summary>
+    void ProgramRelays(Connected device, Keymap keymap)
+    {
+        if (device.Model is not { } model || device.Control is not { } control || device.Identity is not { } id)
+            return;
+        var relayed = model.Keys.Where(k => k.RelayUsage != 0 && k.HardwareId != 0).ToList();
+        if (relayed.Count == 0)
+            return;
+        var backup = LoadOnboardBackup(id.Serial);
+        bool saved = false;
+        foreach (var key in relayed)
+        {
+            bool bound = keymap.Standard.TryGetValue(key.Source, out var a) && a is not DefaultBinding
+                         || keymap.Hypershift.TryGetValue(key.Source, out var b) && b is not DefaultBinding;
+            var now = control.ReadButton(key.HardwareId);
+            var relay = DeviceControl.KeyFunction(key.RelayUsage);
+            string hw = key.HardwareId.ToString("x2", CultureInfo.InvariantCulture);
+            // The first time: keep what the mouse had (unless it is already our relay key, from a run that ended early).
+            if (now != null && !backup.ContainsKey(hw) && !now.AsSpan().SequenceEqual(relay))
+            {
+                backup[hw] = Convert.ToHexString(now);
+                saved = true;
+            }
+            byte[]? want = bound ? relay : backup.TryGetValue(hw, out var orig) ? Convert.FromHexString(orig) : null;
+            if (want != null && (now == null || !now.AsSpan().SequenceEqual(want)))
+                control.WriteButton(key.HardwareId, want);
+        }
+        if (saved)
+            SaveOnboardBackup(id.Serial, backup);
+    }
+
+    string OnboardBackupPath(string serial) => Path.Combine(_store.Root, "onboard", string.Concat(serial.Where(char.IsLetterOrDigit)) + ".json");
+
+    Dictionary<string, string> LoadOnboardBackup(string serial)
+    {
+        try
+        {
+            var path = OnboardBackupPath(serial);
+            if (File.Exists(path))
+                return System.Text.Json.JsonSerializer.Deserialize(File.ReadAllText(path), OnboardJson.Default.DictionaryStringString) ?? [];
+        }
+        catch (Exception e) when (e is IOException or System.Text.Json.JsonException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"onboard backup: {e.Message}");
+        }
+        return [];
+    }
+
+    void SaveOnboardBackup(string serial, Dictionary<string, string> backup)
+    {
+        try
+        {
+            var path = OnboardBackupPath(serial);
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(backup, OnboardJson.Default.DictionaryStringString));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"onboard backup: {e.Message}");
+        }
+    }
+
+    /// <summary>While the engine runs, the relay keys are read from the mouse's keyboard interface (hidraw, interface 2)
+    /// and fed to it; without an engine nothing listens.</summary>
+    void SyncRelayListener(Connected device)
+    {
+        var model = device.Model;
+        var relayed = model?.Keys.Where(k => k.RelayUsage != 0).ToDictionary(k => k.RelayUsage, k => k.Source);
+        bool want = device.Session != null && relayed is { Count: > 0 };
+        if (!want)
+        {
+            device.Relay?.Dispose();
+            device.Relay = null;
+            return;
+        }
+        if (device.Relay != null)
+            return;
+        var node = HidrawNode.Enumerate().FirstOrDefault(n => n.PortPath == device.Port && n.Interface == 2);
+        if (node == null)
+        {
+            Console.Error.WriteLine($"{device.Key}: no keyboard interface (2) to read relay keys from");
+            return;
+        }
+        try
+        {
+            var relay = RelayButtons.Start(node.DevicePath, relayed!.Keys.ToHashSet());
+            relay.Changed += (usage, down) =>
+            {
+                if (Environment.GetEnvironmentVariable("VIPER_DEBUG_RELAY") == "1")
+                    Console.Error.WriteLine($"relay key 0x{usage:x2} {(down ? "down" : "up")} -> session {(device.Session != null ? "yes" : "no")}");
+                if (relayed.TryGetValue(usage, out var source))
+                    device.Session?.WithEngine(e => e.Key(source, down ? 1 : 0));
+            };
+            device.Relay = relay;
+            Console.Error.WriteLine($"{device.Key}: relay keys read from {node.DevicePath}");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"{device.Key}: relay keys: {e.Message}");
+        }
+    }
+
+    /// <summary>Listens to what a mouse says about itself: when its own DPI button changes the stage, the profile's
+    /// active stage follows (the stage with that sensitivity), so the window shows the stage the mouse is on.</summary>
+    void StartMouseReports(Connected device, HidrawNode? node)
+    {
+        if (node == null)
+            return;
+        try
+        {
+            var reports = MouseReports.Start(node.DevicePath);
+            string key = device.Key;
+            reports.DpiChanged += (x, y) => ThreadPool.QueueUserWorkItem(_ => FollowMouseDpi(key, device, x, y));
+            device.Reports = reports;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"{device.Key}: mouse reports: {e.Message}");
+        }
+    }
+
+    void FollowMouseDpi(string key, Connected device, int x, int y)
+    {
+        device.Control?.NoteDpi(x, y);
+        var settings = _store.LoadDevice(key);
+        if (settings.Active.Performance is { Stages.Count: > 0 } p)
+        {
+            int stage = p.Stages.ToList().FindIndex(s => s.X == x && s.Y == y);
+            if (stage >= 0 && stage != p.ActiveStage)
+            {
+                var profile = settings.Active with { Performance = p with { ActiveStage = stage } };
+                SetSettings(key, settings with { Profiles = settings.Profiles.Select(q => q.Id == profile.Id ? profile : q).ToList() });
+                return;
+            }
+        }
+        // (no stages of our own, or not one of them: the window reads the mouse's own state again)
+        SettingsChanged?.Invoke(key);
     }
 
     /// <summary>Listens to a keypad's own buttons: Hypershift held switches the engine's layer, the keymap button moves
@@ -546,6 +726,13 @@ public sealed class DeviceManager : IDisposable
 
         public void Gamepad(GamepadControl control, bool down) => manager._pad.Set(control, down);
 
+        // Device commands are kept off the engine's input thread.
+        public void Sensitivity(SensitivityBinding binding, bool down) =>
+            ThreadPool.QueueUserWorkItem(_ => manager.ControlsOf(key).ForEach(c => c.Sensitivity(binding, down)));
+
+        public void ScrollMode(ScrollModeAction action) =>
+            ThreadPool.QueueUserWorkItem(_ => manager.ControlsOf(key).ForEach(c => c.ScrollMode(action)));
+
         public void Report(Exception error) => Console.Error.WriteLine($"{key}: {error.Message}");
     }
 
@@ -558,6 +745,8 @@ public sealed class DeviceManager : IDisposable
                 device.Session?.Dispose();
                 device.Control?.Dispose();
                 device.Buttons?.Dispose();
+                device.Relay?.Dispose();
+                device.Reports?.Dispose();
                 device.Monitor?.Dispose();
             }
             _devices.Clear();
@@ -565,3 +754,6 @@ public sealed class DeviceManager : IDisposable
         _pad.Dispose();
     }
 }
+
+[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, string>))]
+internal sealed partial class OnboardJson : System.Text.Json.Serialization.JsonSerializerContext;

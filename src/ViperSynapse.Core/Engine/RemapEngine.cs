@@ -196,6 +196,15 @@ public sealed class RemapEngine
             case GamepadBinding pad:
                 _host.Gamepad(pad.Control, true);
                 break;
+            case SensitivityBinding s:
+                _host.Sensitivity(s, true);
+                break;
+            case ScrollModeBinding m:
+                _host.ScrollMode(m.Action);
+                break;
+            case Perfect180Binding turn:
+                Run(code, ct => TurnAsync(turn, ct));
+                break;
         }
     }
 
@@ -224,6 +233,9 @@ public sealed class RemapEngine
                 break;
             case HypershiftBinding:
                 _hypershiftHeld = Math.Max(0, _hypershiftHeld - 1);
+                break;
+            case SensitivityBinding { Action: SensitivityAction.Clutch } clutch:
+                _host.Sensitivity(clutch, false);
                 break;
             case GamepadBinding pad:
                 _host.Gamepad(pad.Control, false);
@@ -283,6 +295,25 @@ public sealed class RemapEngine
 
     /// <summary>Runs a task that belongs to a held key: releasing the key (or <see cref="Reset"/>) cancels it.
     /// A task that ends on its own clears its slot.</summary>
+    const ushort RelX = 0x00;
+
+    /// <summary>Perfect 180: the turn's counts as horizontal movement, in 1 ms steps over its duration.</summary>
+    async Task TurnAsync(Perfect180Binding turn, CancellationToken ct)
+    {
+        int total = Math.Clamp(turn.Counts, 1, Perfect180.MaxCounts) * (turn.Left ? -1 : 1);
+        int steps = Math.Max(1, turn.DurationMs);
+        foreach (int step in Perfect180.Steps(total, steps))
+        {
+            if (step != 0)
+            {
+                _sink.Relative(RelX, step);
+                _sink.Sync();
+            }
+            if (steps > 1)
+                await Task.Delay(1, ct).ConfigureAwait(false);
+        }
+    }
+
     void Run(ushort code, Func<CancellationToken, Task> work)
     {
         var cts = new CancellationTokenSource();

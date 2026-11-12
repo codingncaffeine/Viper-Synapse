@@ -9,7 +9,8 @@ namespace ViperSynapse.App.Services;
 /// <summary>A connected device as the service describes it.</summary>
 /// <summary>The device's own sensitivity, polling rate and battery.</summary>
 public sealed record DeviceState(IReadOnlyList<ViperSynapse.Core.Lighting.DpiStage>? Stages, int ActiveStage, int PollingRate, int? BatteryPercent, bool? Charging, int LiftOffLevel = -1,
-    int SleepSeconds = 0, int LowBatteryPercent = 0, bool? ScrollAcceleration = null, bool? SmartReel = null);
+    int SleepSeconds = 0, int LowBatteryPercent = 0, bool? ScrollAcceleration = null, bool? SmartReel = null,
+    IReadOnlyDictionary<string, string>? Onboard = null, int? ScrollMode = null);
 
 public sealed record DeviceInfo(
     string Key, string ProductId, string Name, string Type, string Port, bool Known, bool Verified,

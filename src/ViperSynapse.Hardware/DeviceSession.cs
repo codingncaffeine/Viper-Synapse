@@ -73,7 +73,11 @@ public sealed class DeviceSession : IDisposable
     /// <param name="engine">Where its keys go.</param>
     /// <param name="stick">Analog leaves the keypad's gamepad node to the system; 4-way and 8-way take it over and
     /// turn the stick into direction presses.</param>
-    public static DeviceSession Start(IEnumerable<string> nodePaths, RemapEngine engine, ThumbstickMode stick = ThumbstickMode.Analog)
+    /// <param name="needs">Which nodes the session takes: given a node's key codes and whether it has a wheel, true when
+    /// something bound is on it. Null takes every node. A node left out goes straight to the desktop: a mouse whose
+    /// remapped buttons are all elsewhere keeps its motion off the virtual device (no added latency).</param>
+    public static DeviceSession Start(IEnumerable<string> nodePaths, RemapEngine engine, ThumbstickMode stick = ThumbstickMode.Analog,
+        Func<IReadOnlyCollection<ushort>, bool, bool>? needs = null)
     {
         var session = new DeviceSession(engine, stick);
         try
@@ -97,7 +101,20 @@ public sealed class DeviceSession : IDisposable
                     node.Dispose();
                     continue;
                 }
-                GrabIfIdle(node);
+                if (needs != null && !needs(keys.ToList(), node.Capabilities(EventTypes.Rel).Any(c => c == 0x08)))
+                {
+                    node.Dispose();
+                    continue;
+                }
+                // Another program may already hold the node (a hotkey daemon grabbing every keyboard): its events go
+                // there, not here, so the session goes on without it. Buttons that matter on such a node come in
+                // another way (a mouse's relay keys are read over hidraw).
+                if (!TryGrabIfIdle(node))
+                {
+                    Console.Error.WriteLine($"{node.Path}: held by another program; left to it");
+                    node.Dispose();
+                    continue;
+                }
                 session._nodes.Add(node);
             }
             foreach (var node in session._nodes)
@@ -141,6 +158,19 @@ public sealed class DeviceSession : IDisposable
     /// from its release: the desktop saw the press from the real device, the release would come from the virtual
     /// one, and the desktop would hold the button forever (a slider dragged by the click that turned this on stuck
     /// to the pointer). A held node is taken by its own thread once everything is let go.</summary>
+    static bool TryGrabIfIdle(EvdevDevice node)
+    {
+        try
+        {
+            GrabIfIdle(node);
+            return true;
+        }
+        catch (IOException e) when (e.Message.Contains("busy", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+    }
+
     static void GrabIfIdle(EvdevDevice node)
     {
         if (!node.AnyKeyDown())

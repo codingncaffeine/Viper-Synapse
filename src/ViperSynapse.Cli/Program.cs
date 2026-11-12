@@ -48,7 +48,7 @@ static class Program
             viper-cli probe NODE      read-only commands against a control node (e.g. /dev/hidraw17)
             viper-cli scan NODE       every "get" command (id 0x80-0xFF) in classes 0x00-0x0F; prints the supported ones
             viper-cli get NODE CLASS ID [ARG...]   one "get" command (hex bytes; the id must have bit 7 set)
-            viper-cli set NODE CLASS ID [ARG...]   one "set": lighting (0F), DPI (04 05/06) and polling rate (00 05/40) only
+            viper-cli set NODE CLASS ID [ARG...]   one "set": lighting (0F), DPI (04 05/06), polling rate (00 05/40) and scroll wheel (02 14/16/17/22/23/30) only
             viper-cli inputs          Razer input nodes and what each can send
             viper-cli watch NODE...   print events from input nodes (no grab)
             viper-cli raw HIDRAW...    print input reports from hidraw nodes (changes only), e.g. a vendor interface
@@ -127,6 +127,8 @@ static class Program
         bool allowed = bytes[0] == 0x0F && bytes[1] is 0x02 or 0x03 or 0x04
             || bytes[0] == 0x04 && bytes[1] is 0x05 or 0x06
             || bytes[0] == 0x00 && bytes[1] is 0x05 or 0x40
+            || bytes[0] == 0x02 && bytes[1] is 0x14 or 0x16 or 0x17 or 0x22 or 0x23 or 0x30   // scroll wheel settings
+            || bytes[0] == 0x02 && bytes[1] is 0x0C   // a button's function in the mouse's memory
             // Sensor settings: calibration mode, tracking mode, lift-off table. Never 0x09 (starts surface sampling).
             || bytes[0] == 0x0B && bytes[1] is 0x03 or 0x05 or 0x0B
             // Selecting a keymap (as the keypad's own keymap button does), for reading each preset.

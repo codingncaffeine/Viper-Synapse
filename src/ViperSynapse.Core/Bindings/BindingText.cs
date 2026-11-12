@@ -31,7 +31,27 @@ public static class BindingText
         LaunchBinding l => ("LAUNCH PROGRAM", ProgramName(l.Command)),
         TextBinding t => ("TEXT FUNCTION", t.Text.Length > 24 ? t.Text[..24] + "…" : t.Text),
         GamepadBinding g => ("GAMEPAD FUNCTION", GamepadState.Label(g.Control)),
+        SensitivityBinding s => ("SENSITIVITY", SensitivityLabel(s)),
+        ScrollModeBinding m => ("SCROLL MODE", ScrollModeLabel(m.Action)),
+        Perfect180Binding p => ("PERFECT 180", $"Perfect 180 ({p.Counts} counts, {(p.Left ? "left" : "right")})"),
         _ => ("", ""),
+    };
+
+    public static string SensitivityLabel(SensitivityBinding s) => s.Action switch
+    {
+        SensitivityAction.StageUp => "Sensitivity Stage Up",
+        SensitivityAction.StageDown => "Sensitivity Stage Down",
+        SensitivityAction.CycleUp => "Cycle Up Sensitivity Stages",
+        SensitivityAction.CycleDown => "Cycle Down Sensitivity Stages",
+        _ => $"Sensitivity Clutch ({s.Dpi} DPI)",
+    };
+
+    public static string ScrollModeLabel(ScrollModeAction a) => a switch
+    {
+        ScrollModeAction.Toggle => "Scroll Mode Toggle",
+        ScrollModeAction.Tactile => "Tactile Scrolling",
+        ScrollModeAction.FreeSpin => "Free-Spin Scrolling",
+        _ => "Precision Tactile Scrolling",
     };
 
     public static string Chord(Modifiers modifiers, ushort key)
@@ -51,6 +71,17 @@ public static class BindingText
         string name = KeyCodes.Name(code);
         if (Special.TryGetValue(name, out var special))
             return special;
+        if (name.StartsWith("KEY_KP", StringComparison.Ordinal))
+        {
+            string rest = name[6..];
+            return "Numpad " + (rest switch
+            {
+                "PLUS" => "+", "MINUS" => "-", "ASTERISK" => "*", "SLASH" => "/", "DOT" => ".", "EQUAL" => "=", "COMMA" => ",",
+                "LEFTPAREN" => "(", "RIGHTPAREN" => ")", "PLUSMINUS" => "±", "JPCOMMA" => "JP ,",
+                _ when rest.Length == 1 => rest,
+                _ => char.ToUpperInvariant(rest[0]) + rest[1..].ToLowerInvariant(),
+            });
+        }
         if (name.StartsWith("KEY_", StringComparison.Ordinal))
             name = name[4..];
         else if (name.StartsWith("BTN_", StringComparison.Ordinal))

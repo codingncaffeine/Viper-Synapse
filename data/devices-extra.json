@@ -93,31 +93,31 @@
       "image" : "https://medias-p1.phoenix.razer.com/sys-master-phoenix-images-container/hd0/hb2/10458042105886/basilisk-v4-pro-black-500x500.png",
       "type" : "mouse",
       "keys" : [
-        { "number" : 1, "label" : "Left Click", "code" : "BTN_LEFT", "group" : "mouse" },
-        { "number" : 2, "label" : "Right Click", "code" : "BTN_RIGHT", "group" : "mouse" },
-        { "number" : 3, "label" : "Scroll Click", "code" : "BTN_MIDDLE", "group" : "mouse" },
-        { "number" : 4, "label" : "Scroll Up", "code" : "", "source" : "wheel-up", "group" : "mouse" },
-        { "number" : 5, "label" : "Scroll Down", "code" : "", "source" : "wheel-down", "group" : "mouse" },
-        { "number" : 6, "label" : "Repeat Scroll Left", "code" : "", "source" : "wheel-left", "group" : "mouse" },
-        { "number" : 7, "label" : "Repeat Scroll Right", "code" : "", "source" : "wheel-right", "group" : "mouse" },
-        { "number" : 8, "label" : "Mouse Button 4", "code" : "BTN_SIDE", "group" : "mouse" },
-        { "number" : 9, "label" : "Mouse Button 5", "code" : "BTN_EXTRA", "group" : "mouse" },
-        { "number" : 10, "label" : "Hypershift Clutch", "code" : "", "group" : "mouse" },
-        { "number" : 11, "label" : "Scroll Mode Toggle", "code" : "", "group" : "mouse" },
-        { "number" : 12, "label" : "Cycle Up Sensitivity Stages", "code" : "", "group" : "mouse" },
-        { "number" : 13, "label" : "Cycle Up Profile", "code" : "", "group" : "mouse" },
-        { "number" : 14, "label" : "AI Prompt Master", "code" : "", "group" : "mouse" }
+        { "number" : 1, "label" : "Left Click", "hw" : "01", "code" : "BTN_LEFT", "group" : "mouse" },
+        { "number" : 2, "label" : "Right Click", "hw" : "02", "code" : "BTN_RIGHT", "group" : "mouse" },
+        { "number" : 3, "label" : "Scroll Click", "hw" : "03", "code" : "BTN_MIDDLE", "group" : "mouse" },
+        { "number" : 4, "label" : "Scroll Up", "hw" : "09", "code" : "", "source" : "wheel-up", "group" : "mouse" },
+        { "number" : 5, "label" : "Scroll Down", "hw" : "0a", "code" : "", "source" : "wheel-down", "group" : "mouse" },
+        { "number" : 6, "label" : "Repeat Scroll Left", "hw" : "34", "code" : "", "source" : "wheel-left", "group" : "mouse" },
+        { "number" : 7, "label" : "Repeat Scroll Right", "hw" : "35", "code" : "", "source" : "wheel-right", "group" : "mouse" },
+        { "number" : 8, "label" : "Mouse Button 4", "hw" : "04", "code" : "BTN_SIDE", "group" : "mouse" },
+        { "number" : 9, "label" : "Mouse Button 5", "hw" : "05", "code" : "BTN_EXTRA", "group" : "mouse" },
+        { "number" : 10, "label" : "Hypershift Clutch", "relay" : "KEY_F13", "hw" : "80", "code" : "", "group" : "mouse" },
+        { "number" : 11, "label" : "Top Left Button", "relay" : "KEY_F15", "hw" : "0e", "code" : "", "group" : "mouse" },
+        { "number" : 12, "label" : "Cycle Up Sensitivity Stages", "relay" : "KEY_F16", "hw" : "60", "code" : "", "group" : "mouse" },
+        { "number" : 13, "label" : "Cycle Up Profile", "relay" : "KEY_F17", "hw" : "6a", "code" : "", "group" : "mouse" },
+        { "number" : 14, "label" : "Side Button 4", "relay" : "KEY_F14", "hw" : "39", "code" : "", "group" : "mouse" }
       ],
       "zones" : {
         "logo" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] },
         "scroll" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] },
         "underglow" : { "brightness" : true, "effects" : [ "breath_dual", "breath_random", "breath_single", "none", "reactive", "spectrum", "static", "wave" ] }
       },
-      "features" : [ "dpi", "dpi_stages", "poll_rate", "battery", "charging", "idle_time", "low_battery_threshold", "lift_off", "scroll_wheel", "dpi_stage_third" ],
+      "features" : [ "dpi", "dpi_stages", "poll_rate", "battery", "charging", "idle_time", "low_battery_threshold", "lift_off", "scroll_wheel", "scroll_mode", "dpi_reports", "dpi_stage_third" ],
       "dpi_max" : 50000,
       "poll_rates" : [ 125, 250, 500, 1000, 2000, 4000, 8000 ],
       "verified" : [ "tid 0x1F, control interface 3 (HyperSpeed dongle)", "LEDs 01 scroll, 04 logo, 0A underglow", "HyperPolling 00/C0", "scroll acceleration 02/16 + Smart-Reel 02/17 on/off read back" ],
-      "source" : "Viper Synapse probe + Razer master guide"
+      "source" : "Viper Synapse probe + Razer master guide; button ids read from the mouse (02/8C): 80 front side button, 39 the one below it, 04/05 side, 0e the top-left button on the left click's edge, 6a and 60 the two behind the wheel (profile, then sensitivity); no separate scroll mode button (pressed and checked on the user's mouse)"
     }
   ]
 }

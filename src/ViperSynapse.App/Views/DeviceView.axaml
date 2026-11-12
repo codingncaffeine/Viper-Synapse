@@ -218,7 +218,12 @@
                                         <Border Height="1" Background="#2A2A2A" Margin="0,4" />
                                         <TextBlock Text="SCROLLING MODE" Foreground="#FFFFFF" FontSize="12" />
                                         <TextBlock Foreground="#CCCCCC" FontSize="12" TextWrapping="Wrap"
-                                                   Text="Tactile, Free-Spin and Precision Tactile switch with the button below the wheel." />
+                                                   Text="How the wheel turns: notched, spinning freely, or with finer, lighter notches." />
+                                        <StackPanel Orientation="Horizontal" Spacing="16">
+                                            <RadioButton GroupName="scrollmode" Content="Tactile" IsChecked="{Binding Tactile}" />
+                                            <RadioButton GroupName="scrollmode" Content="Free-Spin" IsChecked="{Binding FreeSpin}" />
+                                            <RadioButton GroupName="scrollmode" Content="Precision Tactile" IsChecked="{Binding PrecisionTactile}" />
+                                        </StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="10">
                                             <TextBlock Text="SCROLL ACCELERATION" Foreground="#FFFFFF" FontSize="12" VerticalAlignment="Center" />
                                             <ToggleSwitch IsChecked="{Binding Acceleration}" OnContent="" OffContent="" MinWidth="0" Margin="0,-4,0,0" />

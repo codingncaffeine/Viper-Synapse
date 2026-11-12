@@ -13,6 +13,10 @@ public sealed record LightingZone(IReadOnlyList<string> Effects, bool Brightness
 /// code the remap engine knows it by: its key code, or a wheel direction for controls that send no key.</summary>
 public sealed record DeviceKey(int Number, string Label, ushort Code, byte HardwareId, string Group, ushort Source)
 {
+    /// <summary>A button only the firmware handles (sensitivity, profile, scroll mode...) that the app takes over by
+    /// telling the mouse to send this HID keyboard usage (F13 and up) instead: 0 for ordinary keys.</summary>
+    public byte RelayUsage { get; init; }
+
     /// <summary>The cells of the LED grid under this key (row, column): two for the long keys.</summary>
     public IReadOnlyList<(int Row, int Column)> Leds { get; init; } = [];
 }
@@ -89,6 +93,7 @@ public sealed class DeviceCatalogue
                     string.IsNullOrEmpty(k.Code) ? (ushort)0 : Input.KeyCodes.TryParse(k.Code, out var code) ? code : throw new InvalidDataException($"{d.Name}: unknown key code {k.Code}"),
                     byte.Parse(k.Hw ?? "0", NumberStyles.HexNumber, CultureInfo.InvariantCulture),
                     k.Group ?? "main",
+                    !string.IsNullOrEmpty(k.Relay) ? (Input.KeyCodes.TryParse(k.Relay, out var relay) ? relay : throw new InvalidDataException($"{d.Name}: unknown relay key {k.Relay}")) :
                     k.Source switch
                     {
                         null or "" => string.IsNullOrEmpty(k.Code) ? (ushort)0 : Input.KeyCodes.TryParse(k.Code, out var c) ? c : (ushort)0,
@@ -102,7 +107,7 @@ public sealed class DeviceCatalogue
                         "stick-right" => Bindings.SourceKeys.StickRight,
                         "stick-click" => Bindings.SourceKeys.StickClick,
                         _ => throw new InvalidDataException($"{d.Name}: unknown key source {k.Source}"),
-                    }) { Leds = (k.Led ?? []).Where(c => c.Count == 2).Select(c => (c[0], c[1])).ToList() }).ToList(),
+                    }) { Leds = (k.Led ?? []).Where(c => c.Count == 2).Select(c => (c[0], c[1])).ToList(), RelayUsage = RelayUsageOf(k.Relay) }).ToList(),
                 d.Image);
         }
     }
@@ -124,7 +129,12 @@ public sealed class DeviceCatalogue
         List<KeyJson>? Keys,
         string? Image);
 
-    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group, string? Source, List<List<int>>? Led);
+    internal sealed record KeyJson(int Number, string Label, string? Code, string? Hw, string? Group, string? Source, List<List<int>>? Led, string? Relay = null);
+
+    /// <summary>KEY_F13..KEY_F24 as HID keyboard usages 0x68..0x73.</summary>
+    static byte RelayUsageOf(string? relay) =>
+        string.IsNullOrEmpty(relay) || !relay.StartsWith("KEY_F", StringComparison.Ordinal) || !int.TryParse(relay[5..], out int n) || n is < 13 or > 24
+            ? (byte)0 : (byte)(0x68 + n - 13);
 }
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]

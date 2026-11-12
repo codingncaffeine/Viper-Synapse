@@ -277,6 +277,10 @@ public static class DeviceCommands
     /// <summary>Smart-Reel on or off (0x02/0x17; read back with 0x02/0x97).</summary>
     public static RazerReport SmartReel(byte tid, bool on) => RazerReport.Create(tid, 0x02, 0x17, VarStore, on ? (byte)1 : (byte)0);
 
+    /// <summary>The scrolling mode, 0 Tactile, 1 Free-Spin, 2 Precision Tactile (0x02/0x30; read back with 0x02/0xB0),
+    /// found on the Basilisk V4 Pro by setting each value and feeling the wheel.</summary>
+    public static RazerReport ScrollMode(byte tid, int mode) => RazerReport.Create(tid, 0x02, 0x30, VarStore, (byte)Math.Clamp(mode, 0, 2));
+
     public static int ReadBatteryPercent(RazerReport answer) => (int)Math.Round(answer.Arguments[1] / 2.55);
 
     static void Put(byte[] a, int at, Rgb c)

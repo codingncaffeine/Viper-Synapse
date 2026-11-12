@@ -506,7 +506,7 @@ public sealed partial class DeviceViewModel : TabViewModel
             Performance.Load(settings.Active.Performance ?? _deviceDefaults ?? Core.Lighting.PerformanceSettings.Default);
             Power.Load(settings.Active.Power ?? _devicePower ?? Core.Lighting.PowerSettings.Default);
             OnPropertyChanged(nameof(BatteryBrush));
-            ScrollWheel.Load(settings.Active.Scroll ?? _deviceScroll ?? Core.Lighting.ScrollSettings.Default);
+            ScrollWheel.Load(WithDeviceMode(settings.Active.Scroll) ?? _deviceScroll ?? Core.Lighting.ScrollSettings.Default);
             Calibration.Load(settings.Active.Calibration ?? new Core.Lighting.CalibrationSettings(_liftOff));
         }
         finally
@@ -520,6 +520,10 @@ public sealed partial class DeviceViewModel : TabViewModel
     int _liftOff = -1;
     Core.Lighting.PowerSettings? _devicePower;
     Core.Lighting.ScrollSettings? _deviceScroll;
+
+    /// <summary>A saved scroll card without a scrolling mode shows the mouse's own.</summary>
+    Core.Lighting.ScrollSettings? WithDeviceMode(Core.Lighting.ScrollSettings? saved) =>
+        saved is { Mode: < 0 } && _deviceScroll is { Mode: >= 0 } device ? saved with { Mode = device.Mode } : saved;
 
     /// <summary>Reads what the device itself is set to, so Performance and Power show real values before the user
     /// changes anything.</summary>
@@ -538,10 +542,15 @@ public sealed partial class DeviceViewModel : TabViewModel
                 if (state.BatteryPercent != null)
                     ShowBattery(state.BatteryPercent, state.Charging);
                 _liftOff = state.LiftOffLevel;
+                if (state.Onboard is { Count: > 0 } onboard)
+                {
+                    _onboard = onboard;
+                    RefreshRows();
+                }
                 if (state.SleepSeconds > 0)
                     _devicePower = new Core.Lighting.PowerSettings(state.SleepSeconds, state.LowBatteryPercent > 0 ? state.LowBatteryPercent : Core.Lighting.PowerSettings.Default.LowBatteryPercent);
                 if (state.ScrollAcceleration != null || state.SmartReel != null)
-                    _deviceScroll = new Core.Lighting.ScrollSettings(1, state.ScrollAcceleration == true, state.SmartReel == true);
+                    _deviceScroll = new Core.Lighting.ScrollSettings(1, state.ScrollAcceleration == true, state.SmartReel == true, state.ScrollMode ?? -1);
                 Load(_settings);
             });
         }
@@ -561,14 +570,26 @@ public sealed partial class DeviceViewModel : TabViewModel
 
     Keymap CurrentKeymap => _settings.ActiveKeymapOrFirst;
 
+    IReadOnlyDictionary<string, string> _onboard = new Dictionary<string, string>();
+
+    /// <summary>What the mouse's own memory has on this button (on the layer shown), if it was read.</summary>
+    string? Onboard(KeyRowViewModel row) =>
+        row.Key.HardwareId != 0 && _onboard.TryGetValue($"{row.Key.HardwareId:x2}{(Hypershift ? "+h" : "")}", out var text) ? text : null;
+
     void RefreshRows()
     {
         foreach (var row in Rows)
         {
             var binding = CurrentKeymap.Resolve(row.Key.Source, Hypershift);
+            var onboard = Onboard(row);
             if (!row.Bindable)
             {
-                (row.Category, row.Value, row.Changed) = ("DEVICE FUNCTION", row.Key.Label, false);
+                (row.Category, row.Value, row.Changed) = onboard != null ? ("ON THE MOUSE", onboard, onboard != row.Key.Label) : ("DEVICE FUNCTION", row.Key.Label, false);
+                continue;
+            }
+            if (binding is DefaultBinding && onboard != null && onboard != row.Key.Label)
+            {
+                (row.Category, row.Value, row.Changed) = ("ON THE MOUSE", onboard, true);
                 continue;
             }
             var (category, value) = BindingText.Describe(binding, row.Key.Code, id => _main.MacroLibrary.Find(id)?.Name);

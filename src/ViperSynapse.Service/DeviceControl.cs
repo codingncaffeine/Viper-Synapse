@@ -19,7 +19,9 @@ public sealed record DeviceState(
     int SleepSeconds = 0,
     int LowBatteryPercent = 0,
     bool? ScrollAcceleration = null,
-    bool? SmartReel = null);
+    bool? SmartReel = null,
+    IReadOnlyDictionary<string, string>? Onboard = null,
+    int? ScrollMode = null);
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(DeviceState))]
@@ -66,6 +68,8 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             {
                 Send(DeviceCommands.ScrollAcceleration(transactionId, scroll.Acceleration), "scroll acceleration");
                 Send(DeviceCommands.SmartReel(transactionId, scroll.SmartReel), "Smart-Reel");
+                if (scroll.Mode >= 0 && model.Has("scroll_mode"))
+                    Send(DeviceCommands.ScrollMode(transactionId, scroll.Mode), "scrolling mode");
             }
         }
     }
@@ -249,6 +253,7 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
             bool? charging = null;
             int liftOff = -1, sleep = 0, lowBattery = 0;
             bool? acceleration = null, smartReel = null;
+            int? scrollMode = null;
             try
             {
                 if (model?.Has("poll_rate") == true)
@@ -290,14 +295,177 @@ public sealed class DeviceControl(RazerTransport transport, byte transactionId, 
                         acceleration = accel.Arguments[1] != 0;
                     if (ReadRaw(0x02, 0x97, DeviceCommands.VarStore) is { } reel)
                         smartReel = reel.Arguments[1] != 0;
+                    if (model.Has("scroll_mode") && ReadRaw(0x02, 0xB0, DeviceCommands.VarStore) is { } mode && mode.Arguments[1] <= 2)
+                        scrollMode = mode.Arguments[1];
                 }
             }
             catch (IOException e)
             {
                 LastProblem = e.Message;
             }
-            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel);
+            return new DeviceState(stages, active, rate, battery, charging, liftOff, sleep, lowBattery, acceleration, smartReel, ReadOnboard(), scrollMode);
         }
+    }
+
+    // ---- the mouse's own button memory (0x02/0x8C read, 0x02/0x0C write) ----
+
+    /// <summary>A button's stored function on the standard layer: type, data length and data (the bytes after the
+    /// echoed profile, button and layer); null when the mouse does not answer for it.</summary>
+    public byte[]? ReadButton(byte hw)
+    {
+        lock (_gate)
+        {
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                var answer = transport.Send(OnboardButtons.Get(transactionId, hw, false));
+                var a = answer.Arguments;
+                if (answer.Status == ReportStatus.Successful && a[1] == hw && 5 + a[4] <= a.Length)
+                    return a[3..(5 + a[4])].ToArray();
+            }
+            return null;
+        }
+    }
+
+    /// <summary>Stores a function on a button (standard layer): type, data length, data. True when the mouse took it.</summary>
+    public bool WriteButton(byte hw, byte[] function)
+    {
+        lock (_gate)
+        {
+            var args = new byte[10];
+            args[0] = 0x01;
+            args[1] = hw;
+            args[2] = 0x00;
+            function.AsSpan(0, Math.Min(function.Length, 7)).CopyTo(args.AsSpan(3));
+            var answer = transport.Send(RazerReport.Create(transactionId, 0x02, 0x0C, args, 0x0A));
+            if (answer.Status != ReportStatus.Successful)
+            {
+                LastProblem = $"button {hw:x2}: {answer.Status}";
+                return false;
+            }
+            _onboard = null;          // (read again next time: it changed)
+            return true;
+        }
+    }
+
+    /// <summary>The keyboard-key function a relayed button is set to: no modifiers, that HID usage.</summary>
+    public static byte[] KeyFunction(byte usage) => [0x02, 0x02, 0x00, usage];
+
+    // ---- what the sensitivity and scroll-mode bindings do ----
+
+    PerformanceSettings? _stagesNow;
+    int _clutchHeld;
+
+    /// <summary>The mouse changed stage by itself (its DPI button): the stage the sensitivity bindings step from.</summary>
+    public void NoteDpi(int x, int y)
+    {
+        lock (_gate)
+        {
+            if (_stagesNow is { Stages.Count: > 0 } p && p.Stages.ToList().FindIndex(s => s.X == x && s.Y == y) is >= 0 and var i)
+                _stagesNow = p with { ActiveStage = i };
+            else
+                _stagesNow = null;          // (read again when next needed)
+        }
+    }
+
+    /// <summary>Steps the sensitivity stage, or holds a DPI while a clutch key is down (back to the stage after).</summary>
+    public void Sensitivity(SensitivityBinding binding, bool down)
+    {
+        lock (_gate)
+        {
+            try
+            {
+                if (_stagesNow == null && Read(Commands.GetDpiStages) is { } table)
+                    _stagesNow = DeviceCommands.ReadStages(table, 0);
+                var p = _stagesNow;
+                if (binding.Action == SensitivityAction.Clutch)
+                {
+                    _clutchHeld = Math.Max(0, _clutchHeld + (down ? 1 : -1));
+                    if (down)
+                        Send(DeviceCommands.Dpi(transactionId, binding.Dpi, binding.Dpi), "sensitivity clutch");
+                    else if (_clutchHeld == 0 && p is { Stages.Count: > 0 })
+                    {
+                        var s = p.Stages[Math.Clamp(p.ActiveStage, 0, p.Stages.Count - 1)];
+                        Send(DeviceCommands.Dpi(transactionId, s.X, s.Y), "sensitivity");
+                    }
+                    return;
+                }
+                if (!down || p is not { Stages.Count: > 0 })
+                    return;
+                int n = p.Stages.Count, i = p.ActiveStage;
+                i = binding.Action switch
+                {
+                    SensitivityAction.StageUp => Math.Min(n - 1, i + 1),
+                    SensitivityAction.StageDown => Math.Max(0, i - 1),
+                    SensitivityAction.CycleUp => (i + 1) % n,
+                    _ => (i + n - 1) % n,
+                };
+                _stagesNow = p with { ActiveStage = i };
+                SendPerformance(_stagesNow);
+            }
+            catch (IOException e)
+            {
+                LastProblem = e.Message;
+            }
+        }
+    }
+
+    /// <summary>The notched mode the wheel was in before a toggle took it to Free-Spin (0 Tactile, 2 Precision Tactile).</summary>
+    int _notchedMode;
+
+    /// <summary>Changes the scroll wheel's mode (0 Tactile, 1 Free-Spin, 2 Precision Tactile). Toggle goes to Free-Spin
+    /// and back to whichever notched mode the wheel was in.</summary>
+    public void ScrollMode(ScrollModeAction action)
+    {
+        lock (_gate)
+        {
+            try
+            {
+                int now = ReadRaw(0x02, 0xB0, DeviceCommands.VarStore) is { } r ? r.Arguments[1] : 0;
+                int next = action switch
+                {
+                    ScrollModeAction.Tactile => 0,
+                    ScrollModeAction.FreeSpin => 1,
+                    ScrollModeAction.PrecisionTactile => 2,
+                    _ => now == 1 ? _notchedMode : 1,
+                };
+                if (now != 1)
+                    _notchedMode = now;
+                Send(DeviceCommands.ScrollMode(transactionId, next), "scrolling mode");
+            }
+            catch (IOException e)
+            {
+                LastProblem = e.Message;
+            }
+        }
+    }
+
+    Dictionary<string, string>? _onboard;
+
+    /// <summary>What the mouse's own memory has on each button (by its hardware id, hex; "+h" for the Hypershift
+    /// layer), read once: it only changes when something writes it. A stale or missing answer is tried again.</summary>
+    Dictionary<string, string>? ReadOnboard()
+    {
+        if (_onboard != null || model == null || model.Type != "mouse" || !model.Keys.Any(k => k.HardwareId != 0))
+            return _onboard;
+        var found = new Dictionary<string, string>();
+        foreach (var key in model.Keys.Where(k => k.HardwareId != 0))
+        {
+            foreach (bool layer in new[] { false, true })
+            {
+                for (int attempt = 0; attempt < 3; attempt++)
+                {
+                    var answer = transport.Send(OnboardButtons.Get(transactionId, key.HardwareId, layer));
+                    if (answer.Status == ReportStatus.Successful && OnboardButtons.Describe(answer, key.HardwareId) is { } text)
+                    {
+                        found[$"{key.HardwareId:x2}{(layer ? "+h" : "")}"] = text;
+                        break;
+                    }
+                }
+            }
+        }
+        if (found.Count > 0)
+            _onboard = found;
+        return found;
     }
 
     RazerReport? ReadRaw(byte commandClass, byte id, params byte[] arguments)

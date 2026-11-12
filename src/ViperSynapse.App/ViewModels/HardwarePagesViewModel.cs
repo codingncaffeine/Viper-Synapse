@@ -598,9 +598,19 @@ public sealed partial class ScrollWheelViewModel(Action<ScrollSettings> save) : 
     [ObservableProperty] public partial bool Acceleration { get; set; }
     [ObservableProperty] public partial bool SmartReel { get; set; }
 
+    /// <summary>0 Tactile, 1 Free-Spin, 2 Precision Tactile; -1 not known (the mouse's own is left alone).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Tactile), nameof(FreeSpin), nameof(PrecisionTactile))]
+    public partial int Mode { get; set; } = -1;
+
+    public bool Tactile { get => Mode == 0; set { if (value) Mode = 0; } }
+    public bool FreeSpin { get => Mode == 1; set { if (value) Mode = 1; } }
+    public bool PrecisionTactile { get => Mode == 2; set { if (value) Mode = 2; } }
+
     public void Load(ScrollSettings settings)
     {
         _loading = true;
+        Mode = settings.Mode;
         LinesPerNotch = settings.LinesPerNotch;
         Acceleration = settings.Acceleration;
         SmartReel = settings.SmartReel;
@@ -610,11 +620,12 @@ public sealed partial class ScrollWheelViewModel(Action<ScrollSettings> save) : 
     partial void OnLinesPerNotchChanged(double value) => Changed();
     partial void OnAccelerationChanged(bool value) => Changed();
     partial void OnSmartReelChanged(bool value) => Changed();
+    partial void OnModeChanged(int value) => Changed();
 
     void Changed()
     {
         if (!_loading)
-            save(new ScrollSettings(Math.Clamp((int)Math.Round(LinesPerNotch), 1, ScrollSettings.MaxLinesPerNotch), Acceleration, SmartReel));
+            save(new ScrollSettings(Math.Clamp((int)Math.Round(LinesPerNotch), 1, ScrollSettings.MaxLinesPerNotch), Acceleration, SmartReel, Mode));
     }
 }
 

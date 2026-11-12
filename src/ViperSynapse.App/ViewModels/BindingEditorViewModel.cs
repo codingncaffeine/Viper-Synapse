@@ -18,6 +18,9 @@ public enum FunctionKind
     SwitchKeymap,
     Launch,
     Multimedia,
+    Sensitivity,
+    ScrollMode,
+    Perfect180,
     Text,
     Disable,
 }
@@ -43,6 +46,9 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         new(FunctionKind.Default, "DEFAULT", "↺"),
         new(FunctionKind.Keyboard, "KEYBOARD FUNCTION", "⌨"),
         new(FunctionKind.Mouse, "MOUSE FUNCTION", "🖱"),
+        new(FunctionKind.Sensitivity, "SENSITIVITY", "DPI"),
+        new(FunctionKind.ScrollMode, "SCROLL MODE", "⇳"),
+        new(FunctionKind.Perfect180, "PERFECT 180", "180"),
         new(FunctionKind.Gamepad, "GAMEPAD FUNCTION", "🎮"),
         new(FunctionKind.Macro, "MACRO", "M"),
         new(FunctionKind.Hypershift, "RAZER HYPERSHIFT", "⇧"),
@@ -74,6 +80,25 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         "KEY_VOLUMEUP", "KEY_VOLUMEDOWN", "KEY_MUTE", "KEY_MICMUTE", "KEY_PLAYPAUSE", "KEY_PREVIOUSSONG", "KEY_NEXTSONG", "KEY_STOPCD",
     }.Select(n => KeyCodes.TryParse(n, out var c) ? new Choice<ushort>(c, BindingText.KeyLabel(c)) : null).OfType<Choice<ushort>>().ToList();
 
+    public static IReadOnlyList<Choice<SensitivityAction>> SensitivityChoices { get; } =
+        Enum.GetValues<SensitivityAction>().Select(a => new Choice<SensitivityAction>(a, BindingText.SensitivityLabel(new SensitivityBinding(a)).Replace(" (400 DPI)", ""))).ToList();
+
+    public static IReadOnlyList<Choice<ScrollModeAction>> ScrollModeChoices { get; } =
+        Enum.GetValues<ScrollModeAction>().Select(a => new Choice<ScrollModeAction>(a, BindingText.ScrollModeLabel(a))).ToList();
+
+    /// <summary>Every keyboard key, by its keycap name, to pick one this keyboard doesn't have (a numpad key, F13...).</summary>
+    public static IReadOnlyList<Choice<ushort>> AllKeys { get; } =
+        KeyCodes.All.Where(c => c is > 0 and < 0x100 or >= 0x160 and < 0x2C0)
+            .Select(c => new Choice<ushort>(c, BindingText.KeyLabel(c)))
+            .Where(c => !c.Label.StartsWith("KEY_", StringComparison.Ordinal))
+            .GroupBy(c => c.Label).Select(g => g.First())
+            .OrderBy(c => c.Label.Length > 1 ? 1 : 0).ThenBy(c => c.Label, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>Perfect 180's games: Custom (type the count), then the ones whose turn per count is known.</summary>
+    public static IReadOnlyList<Choice<double>> TurnGames { get; } =
+        [new(0, "Custom (set the count yourself)"), .. Perfect180.Games.Select(g => new Choice<double>(g.Yaw, g.Name))];
+
     public IReadOnlyList<Choice<Guid?>> ProfileChoices { get; }
     public IReadOnlyList<Choice<int>> KeymapChoices { get; }
     public IReadOnlyList<Choice<Guid>> MacroChoices { get; }
@@ -95,6 +120,9 @@ public sealed partial class BindingEditorViewModel : ObservableObject
         SelectedPlayback = Playbacks[0];
         SelectedMedia = MediaKeys[0];
         SelectedGamepad = GamepadControls[0];
+        SelectedSensitivity = SensitivityChoices[2];
+        SelectedScrollMode = ScrollModeChoices[0];
+        SelectedTurnGame = TurnGames[0];
         SelectedProfileChoice = ProfileChoices[0];
         SelectedKeymapChoice = KeymapChoices[0];
         SelectedMacro = MacroChoices.FirstOrDefault();
@@ -119,7 +147,22 @@ public sealed partial class BindingEditorViewModel : ObservableObject
 
     public string CapturedText => CapturedKey == 0 ? "Press a key" : BindingText.KeyLabel(CapturedKey);
 
-    partial void OnCapturedKeyChanged(ushort value) => OnPropertyChanged(nameof(CapturedText));
+    partial void OnCapturedKeyChanged(ushort value)
+    {
+        OnPropertyChanged(nameof(CapturedText));
+        var match = AllKeys.FirstOrDefault(k => k.Value == value);
+        if (!Equals(PickedKey, match))
+            PickedKey = match;
+    }
+
+    /// <summary>The key picked from the list (the same key as <see cref="CapturedKey"/>, either way round).</summary>
+    [ObservableProperty] public partial Choice<ushort>? PickedKey { get; set; }
+
+    partial void OnPickedKeyChanged(Choice<ushort>? value)
+    {
+        if (value != null && value.Value != CapturedKey)
+            CapturedKey = value.Value;
+    }
 
     // Mouse function
     [ObservableProperty] public partial Choice<MouseFunction> SelectedMouse { get; set; }
@@ -133,6 +176,44 @@ public sealed partial class BindingEditorViewModel : ObservableObject
     public bool TimesVisible => SelectedPlayback.Value == MacroPlayback.Times;
 
     partial void OnSelectedPlaybackChanged(Choice<MacroPlayback> value) => OnPropertyChanged(nameof(TimesVisible));
+
+    // Sensitivity and scroll mode
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClutchVisible))]
+    public partial Choice<SensitivityAction> SelectedSensitivity { get; set; }
+    [ObservableProperty] public partial double ClutchDpi { get; set; } = 400;
+    public bool ClutchVisible => SelectedSensitivity.Value == SensitivityAction.Clutch;
+    [ObservableProperty] public partial Choice<ScrollModeAction> SelectedScrollMode { get; set; }
+
+    // Perfect 180
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TurnGameChosen), nameof(TurnHint))]
+    public partial Choice<double> SelectedTurnGame { get; set; }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TurnHint))]
+    public partial double TurnSensitivity { get; set; } = 1;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TurnHint))]
+    public partial double TurnCounts { get; set; } = 2000;
+    [ObservableProperty] public partial bool TurnLeft { get; set; }
+    [ObservableProperty] public partial double TurnDuration { get; set; } = 10;
+    public bool TurnRight { get => !TurnLeft; set { if (value) TurnLeft = false; } }
+    public bool TurnGameChosen => SelectedTurnGame.Value > 0;
+
+    /// <summary>What the count turns: degrees in the chosen game, or a reminder to tune it in-game.</summary>
+    public string TurnHint => TurnGameChosen && TurnSensitivity > 0
+        ? $"{TurnCounts:0} counts turn {TurnCounts * TurnSensitivity * SelectedTurnGame.Value:0.#}° at sensitivity {TurnSensitivity:0.###}."
+        : "Turn in the game with the button, then raise the count if it turns less than half way round, lower it if more.";
+
+    partial void OnTurnLeftChanged(bool value) => OnPropertyChanged(nameof(TurnRight));
+    partial void OnSelectedTurnGameChanged(Choice<double> value) => FillTurnCounts();
+    partial void OnTurnSensitivityChanged(double value) => FillTurnCounts();
+
+    void FillTurnCounts()
+    {
+        if (TurnGameChosen && Perfect180.CountsFor(SelectedTurnGame.Value, TurnSensitivity) is > 0 and var counts)
+            TurnCounts = counts;
+    }
 
     // Switches, launch, media, text
     [ObservableProperty] public partial Choice<Guid?> SelectedProfileChoice { get; set; }
@@ -220,6 +301,23 @@ public sealed partial class BindingEditorViewModel : ObservableObject
             case DisableBinding:
                 kind = FunctionKind.Disable;
                 break;
+            case SensitivityBinding s:
+                kind = FunctionKind.Sensitivity;
+                SelectedSensitivity = SensitivityChoices.First(c => c.Value == s.Action);
+                ClutchDpi = s.Dpi;
+                break;
+            case ScrollModeBinding m:
+                kind = FunctionKind.ScrollMode;
+                SelectedScrollMode = ScrollModeChoices.First(c => c.Value == m.Action);
+                break;
+            case Perfect180Binding t:
+                kind = FunctionKind.Perfect180;
+                SelectedTurnGame = TurnGames.FirstOrDefault(g => g.Label == t.Game) ?? TurnGames[0];
+                if (t.Sensitivity > 0)
+                    TurnSensitivity = t.Sensitivity;
+                TurnCounts = t.Counts;          // (after the game and sensitivity: a hand-tuned count stays)
+                (TurnLeft, TurnDuration) = (t.Left, t.DurationMs);
+                break;
         }
         SelectedFunction = Functions.First(f => f.Kind == kind);
     }
@@ -250,6 +348,10 @@ public sealed partial class BindingEditorViewModel : ObservableObject
             FunctionKind.Gamepad => new GamepadBinding(SelectedGamepad.Value),
             FunctionKind.Text => new TextBinding(Text),
             FunctionKind.Disable => new DisableBinding(),
+            FunctionKind.Sensitivity => new SensitivityBinding(SelectedSensitivity.Value, (int)Math.Round(ClutchDpi / 50) * 50),
+            FunctionKind.ScrollMode => new ScrollModeBinding(SelectedScrollMode.Value),
+            FunctionKind.Perfect180 => new Perfect180Binding((int)Math.Clamp(Math.Round(TurnCounts), 1, Perfect180.MaxCounts), TurnLeft,
+                (int)Math.Clamp(Math.Round(TurnDuration), 0, 500), TurnGameChosen ? SelectedTurnGame.Label : "", TurnGameChosen ? TurnSensitivity : 0),
             _ => DefaultBinding.Instance,
         };
     }
